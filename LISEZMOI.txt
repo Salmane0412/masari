@@ -1,0 +1,9 @@
+MASARI — مساري
+Application web installable (PWA), gratuite, sans compte. Les données restent sur ton appareil.
+
+Ouvrir : héberge ce dossier tel quel (GitHub Pages ou Cloudflare Pages, gratuits), puis sur le téléphone
+"Ajouter à l'écran d'accueil". Après la première visite, l'app marche hors-ligne.
+Test rapide sur ordinateur : ouvre index.html dans Chrome (les rappels et l'installation demandent un vrai hébergement).
+
+Sauvegarde : Réglages > Exporter (à faire régulièrement).
+Texte coranique : Tanzil Project (tanzil.net), CC BY 3.0, reproduit sans modification.
