@@ -4,7 +4,7 @@
   --mem:#2a9d84; --rel:#d98b2b; --prog:#5b7fd6; --none:#cdd7da;
   --shadow:0 1px 2px rgba(20,35,43,.08);
   --quran:"Amiri Quran","Noto Naskh Arabic","Geeza Pro","Traditional Arabic","Scheherazade New",serif;
-  --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --ui:"Cairo",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
 }
 @media (prefers-color-scheme:dark){
   :root{
@@ -49,7 +49,7 @@ h2 .count{font-weight:400}
 .row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:start}
 .row .main{flex:1;min-width:0}
 .row .t,.row .m{display:block}
-.row .t.ar{text-align:left}
+.row .t.ar{text-align:right}
 .row .t{font-size:19px;line-height:1.5}
 .row .t.lat{font-size:16px;font-weight:600}
 .row .m{font-size:13px;color:var(--mute)}
@@ -144,3 +144,25 @@ summary{font-weight:600;cursor:pointer}
 .opt.wrong{border-color:#c0392b;background:color-mix(in srgb,#c0392b 14%,var(--surface))}
 .opt:disabled{cursor:default;color:inherit}
 #tabs a{font-size:11px}
+
+/* arabe / RTL */
+.hero-title,h2,.brand{letter-spacing:0}
+#top .brand .ar{margin:0;font-size:28px}
+.mushaf{text-align:justify;text-align-last:right}
+.mushaf .n{font-family:var(--ui);font-size:.55em;color:var(--gold)}
+.verse{border-radius:8px;transition:background .2s}
+.verse.playing{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.w i{font-style:normal}
+.w.hid,.w.hid i{color:transparent!important}
+.w.f-ok{background:color-mix(in srgb,var(--mem) 22%,transparent);border-radius:5px}
+.w.f-bad{background:color-mix(in srgb,#c0392b 24%,transparent);border-radius:5px;text-decoration:underline wavy #c0392b;text-underline-offset:6px}
+.w.f-cur{outline:2px solid var(--accent);outline-offset:1px;border-radius:5px}
+.tjlist{border-top:1px solid var(--line)}
+.tjrow{display:flex;align-items:center;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.tjrow .tjn{flex:1;font-size:15px}
+.tjrow .tjn i{font-family:var(--quran);font-style:normal;font-size:24px;margin-inline-end:8px}
+.tjrow input[type=color]{width:46px;height:34px;padding:0;border:1px solid var(--line);border-radius:7px;background:none}
+.tjrow input[type=checkbox],.check input{width:20px;height:20px;accent-color:var(--accent)}
+.check{display:flex;gap:10px;align-items:center;margin:8px 0;font-weight:600}
+.quran-text{font-family:var(--quran)}
+.opt{text-align:right}
