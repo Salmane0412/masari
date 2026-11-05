@@ -57,6 +57,8 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {};
+  if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
@@ -166,7 +168,8 @@ function plan() {
   keys.sort((a, b) => a - b);
   const queue = keys.filter(isPri).sort((a, b) => (newRank(a) - newRank(b)) || a - b).concat(keys.filter(i => !isPri(i) && (S.units[i].s === 'rel' || S.units[i].s === 'prog')), keys.filter(i => !isPri(i) && S.units[i].s === 'none'));
   const doneNew = L.new.length;
-  const quota = (queue.length + doneNew) === 0 ? 0 : Math.ceil((queue.length + doneNew) / daysLeft);
+  let quota = (queue.length + doneNew) === 0 ? 0 : Math.ceil((queue.length + doneNew) / daysLeft);
+  const normalQuota = quota; if (S.settings.maxNew > 0) quota = Math.min(quota, S.settings.maxNew);
   const newList = queue.slice(0, Math.max(0, quota - doneNew));
   const dueAll = keys.filter(i => S.units[i].s === 'mem' && S.units[i].due && S.units[i].due <= t)
     .sort((a, b) => (revRank(a) - revRank(b)) || (S.units[a].due < S.units[b].due ? -1 : S.units[a].due > S.units[b].due ? 1 : (S.units[b].weak - S.units[a].weak) || a - b));
@@ -182,7 +185,7 @@ function plan() {
     b.portions.forEach((p, j) => { if (p.s === 'mem' && p.due && p.due <= t) brev.push([b.id, j, p.due]); });
   });
   brev.sort((a, b) => (a[2] < b[2] ? -1 : 1));
-  return { t, L, daysLeft, queue, quota, newList, dueAll, revList, bnew, brev: brev.slice(0, Math.max(0, S.settings.bookCap - L.brev.length)), remaining: queue.length };
+  return { t, L, daysLeft, queue, quota, normalQuota, newList, dueAll, revList, bnew, brev: brev.slice(0, Math.max(0, S.settings.bookCap - L.brev.length)), remaining: queue.length };
 }
 
 /* ---------- rendu utilitaires ---------- */
@@ -280,6 +283,7 @@ views.today = () => {
   <div class="hero-title">اليوم ${Math.min(dayN, total)} من ${total}</div>
   <div class="sub">الهدف: الانتهاء في ${fmtD(S.settings.end, { day: 'numeric', month: 'long', year: 'numeric' })} · بقي ${P.daysLeft} يوم</div>
   ${weave()}${legend()}
+  ${behindBanner()}
   <div class="kpis">
     <div class="kpi"><b>${c.mem}</b><span>أرباع محفوظة (≈ ${Math.round(pagesOf('mem'))} ص)</span></div>
     <div class="kpi"><b>${P.remaining}</b><span>أرباع للحفظ (≈ ${Math.round(pagesOf('none') + pagesOf('rel') + pagesOf('prog'))} ص)</span></div>
@@ -595,8 +599,146 @@ views.quiz = () => {
   ${ans !== undefined ? `<div class="note">${q.opts[ans].ok ? 'أحسنت، إجابة صحيحة.' : 'الجواب: ' + esc(q.opts.find(o => o.ok).t)} · ${q.ref}<div class="ar" dir="rtl" style="margin-top:6px;font-size:${Math.max(20, S.settings.font - 6)}px;line-height:2">${esc(q.full)}</div></div><button class="btn pri block" data-act="quiz-next">${quiz.i + 1 >= quiz.qs.length ? 'عرض النتيجة' : 'السؤال التالي'}</button>` : ''}`;
 };
 
+/* ---------- الخطة المفصّلة والاستدراك ---------- */
+function backlog() {
+  const t = todayStr(), s = S.settings, total = Math.max(1, diffDays(s.start, s.end) + 1), el = Math.max(0, diffDays(s.start, t));
+  const P = plan(), remStart = P.remaining + P.L.new.length;
+  const expected = Math.max(0, Math.round((s.base || remStart) * (1 - Math.min(el, total) / total)));
+  const baseQ = Math.ceil((s.base || remStart) / total);
+  return { behind: Math.max(0, remStart - expected), expected, remStart, P, baseQ, overdue: P.dueAll.length - P.revList.length - 0 };
+}
+function behindBanner() {
+  const b = backlog(), out = [];
+  if (b.behind > 0) out.push(`<div class="note warnb">⚠ تأخّرتَ عن الخطة بمقدار <b>${b.behind}</b> ${b.behind > 10 ? 'ربعًا' : 'أرباع'}. أُضيف التأخر تلقائيًا إلى الأيام القادمة: هدف اليوم <b>${b.P.quota}</b> (الخطة الأصلية: ${b.baseQ} يوميًا)${b.P.quota < b.P.normalQuota ? ' لكن حدّك اليومي يمنع التعويض الكامل' : ''}. <a href="#/plan">عرض الخطة وخيارات الاستدراك</a></div>`);
+  if (b.P.dueAll.length - b.P.revList.length > 3) out.push(`<div class="note warnb">تراكمت مراجعات مؤجَّلة (${b.P.dueAll.length - b.P.revList.length}). <a href="#/plan">ارفع الحد اليومي أو خصّص يوم استدراك</a></div>`);
+  return out.join('');
+}
+function forecast(n) {
+  const P = plan(), t = todayStr(), out = []; let q = P.queue.slice(); const cap = S.settings.maxNew | 0;
+  const dueOn = (date, first) => S.units.filter(u => u.s === 'mem' && u.due && (first ? u.due <= date : u.due === date)).length;
+  for (let d = 0; d < n; d++) {
+    const date = addDays(t, d), left = Math.max(1, diffDays(date, S.settings.end) + 1); let items;
+    if (d === 0) { items = P.L.new.concat(P.newList); q = q.filter(i => !P.newList.includes(i)); }
+    else { let quota = q.length ? Math.ceil(q.length / left) : 0; if (cap > 0) quota = Math.min(quota, cap); items = q.splice(0, quota); }
+    out.push({ date, items, revs: dueOn(date, d === 0) });
+  }
+  return { days: out, rest: q.length };
+}
+views.plan = () => {
+  const b = backlog(), P = b.P, F = forecast(14), cap = S.settings.maxNew | 0, t = todayStr();
+  const fin = P.remaining ? addDays(t, Math.ceil(P.remaining / Math.max(1, cap > 0 ? cap : P.quota || 1)) - (cap > 0 ? 0 : 0)) : t;
+  const late = cap > 0 && fin > S.settings.end;
+  return `<div class="hero-title">الخطة المفصّلة</div><div class="sub">كل يوم ما سأحفظه وما سأراجعه. إن تأخّرتَ، ينقل مساري ما فاتك إلى الأيام التالية ويُظهر لك الثمن.</div>
+  <div class="kpis"><div class="kpi"><b>${b.remStart}</b><span>أرباع متبقية</span></div><div class="kpi"><b>${b.expected}</b><span>المفروض أن تبقى اليوم</span></div><div class="kpi"><b style="color:${b.behind ? 'var(--rel)' : 'var(--mem)'}">${b.behind ? '+' + b.behind : '✓'}</b><span>${b.behind ? 'تأخر' : 'في الموعد'}</span></div></div>
+  ${behindBanner()}
+  <h2>خيارات الاستدراك</h2>
+  <div class="two"><label class="field"><span>أقصى حفظ جديد يوميًا (0 = بلا حد)</span><input type="number" id="st-maxnew" min="0" max="20" value="${cap}"></label><label class="field"><span>أقصى مراجعات يوميًا</span><input type="number" id="st-cap" min="1" max="60" value="${S.settings.reviewCap}"></label></div>
+  ${late ? `<div class="note warnb">بهذا الحد لن تنتهي في ${fmtD(S.settings.end)} بل حوالي ${fmtD(fin, { day: 'numeric', month: 'long', year: 'numeric' })}.</div>` : ''}
+  <div class="btns"><button class="btn sm" data-act="end-ext" data-d="7">تمديد النهاية أسبوعًا</button><button class="btn sm" data-act="rcap-up">رفع حد المراجعة +4</button></div>
+  <h2>الأيام القادمة</h2>
+  <div class="rows">${F.days.map((d, k) => `<div class="row"><span class="main"><span class="t lat" style="font-size:15px">${k === 0 ? 'اليوم' : fmtD(d.date, { weekday: 'long', day: 'numeric', month: 'short' })}</span><span class="m ar" dir="rtl" style="font-size:15px">${d.items.length ? d.items.map(i => UI[i].label).join(' · ') : 'لا حفظ جديد'}</span><span class="m">مراجعات مستحقة: ${d.revs}</span></span></div>`).join('')}</div>
+  ${F.rest ? `<p class="sub">وبعد هذه الأيام يبقى ${F.rest} ${F.rest > 10 ? 'ربعًا' : 'أرباع'} في الطابور.</p>` : ''}`;
+};
+
+/* ---------- الصحة والرياضة ---------- */
+const ACT = [[1.2, 'خامل (عمل مكتبي بلا رياضة)'], [1.375, 'خفيف (١–٣ حصص أسبوعيًا)'], [1.55, 'متوسط (٣–٥ حصص)'], [1.725, 'نشيط جدًا']];
+function nutrition(h) {
+  const w = +h.w, ht = +h.h, a = +h.age; if (!(w > 0 && ht > 0 && a > 0)) return null;
+  const bmr = 10 * w + 6.25 * ht - 5 * a + (h.sex === 'f' ? -161 : 5), tdee = bmr * (+h.act || 1.375);
+  const pace = Math.min(1, Math.max(0, +h.pace || 0.5)); let def = Math.min(pace * 7700 / 7, tdee * 0.25);
+  const kcal = Math.round(Math.max(h.sex === 'f' ? 1400 : 1600, tdee - def) / 10) * 10, ref = (+h.gw > 0 && +h.gw < w) ? +h.gw : w;
+  const protein = Math.round(1.8 * ref), fat = Math.round(kcal * 0.27 / 9), carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+  const weeks = (+h.gw > 0 && w > +h.gw && pace > 0) ? Math.ceil((w - +h.gw) / pace) : null;
+  return { bmr: Math.round(bmr), tdee: Math.round(tdee), kcal, protein, fat, carbs, water: (w * 0.035).toFixed(1), weeks, deficit: Math.round(tdee - kcal) };
+}
+const SPORT = [
+  ['السبت', 'قوة (أ): جسم كامل', 'سكوات ٣×٨–١٢ · ضغط/بنش ٣×٨–١٢ · تجديف ٣×١٠ · بلانك ٣×٣٠–٤٥ث'],
+  ['الأحد', 'مشي سريع أو دراجة ٤٠ دقيقة', 'نبض مريح تستطيع معه الكلام (المنطقة ٢)'],
+  ['الإثنين', 'قوة (ب): جسم كامل', 'رفعة رومانية ٣×٨–١٠ · ضغط كتف ٣×٨–١٠ · سحب/تجديف ٣×١٠ · اندفاع ٣×١٠ لكل رجل'],
+  ['الثلاثاء', 'راحة نشطة', 'مشي ٨–١٠ آلاف خطوة + تمدد ١٠ دقائق'],
+  ['الأربعاء', 'قوة (أ): جسم كامل', 'زِد الوزن أو التكرار قليلًا عن السبت'],
+  ['الخميس', 'مشي سريع أو دراجة ٤٠ دقيقة', 'نفس الأحد'],
+  ['الجمعة', 'قوة (ب) خفيفة أو راحة', 'اسمع جسمك؛ ونم ٧–٨ ساعات']
+];
+function weightChart(ws) {
+  if (ws.length < 2) return '<div class="empty">سجّل وزنك مرتين على الأقل لتظهر المنحنى.</div>';
+  const a = ws.slice(-60), W = 320, H = 110, mn = Math.min(...a.map(x => x.w)) - 1, mx = Math.max(...a.map(x => x.w)) + 1;
+  const pts = a.map((x, i) => `${(i / (a.length - 1) * (W - 20) + 10).toFixed(1)},${(H - 10 - (x.w - mn) / (mx - mn) * (H - 20)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="منحنى الوزن"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/></svg><div class="sub" style="display:flex;justify-content:space-between"><span>${a[0].w} كغ</span><span>${a[a.length - 1].w} كغ</span></div>`;
+}
+views.health = () => {
+  const h = S.health, n = nutrition(h), t = todayStr(), dow = (parseD(t).getDay() + 1) % 7;
+  const wk = Array.from({ length: 7 }, (_, k) => addDays(t, k - dow));
+  return `<div class="hero-title">الصحة والرياضة</div><div class="sub">حساب تقديري عام للسعرات والبروتين وبرنامج أسبوعي. ليس بديلًا عن طبيب أو مختص تغذية، خصوصًا إن كانت عندك أمراض.</div>
+  <div class="two"><label class="field"><span>الجنس</span><select id="hl-sex"><option value="m" ${h.sex !== 'f' ? 'selected' : ''}>ذكر</option><option value="f" ${h.sex === 'f' ? 'selected' : ''}>أنثى</option></select></label><label class="field"><span>العمر</span><input type="number" id="hl-age" value="${h.age}" min="14" max="90"></label></div>
+  <div class="two"><label class="field"><span>الطول (سم)</span><input type="number" id="hl-h" value="${h.h}" min="120" max="230"></label><label class="field"><span>الوزن الحالي (كغ)</span><input type="number" id="hl-w" value="${h.w}" step="0.1"></label></div>
+  <div class="two"><label class="field"><span>الوزن المستهدف (كغ)</span><input type="number" id="hl-gw" value="${h.gw}" step="0.1"></label><label class="field"><span>النزول أسبوعيًا (كغ)</span><select id="hl-pace">${[0.25, 0.5, 0.75, 1].map(p => `<option ${+h.pace === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label></div>
+  <label class="field"><span>مستوى النشاط</span><select id="hl-act">${ACT.map(([v, l]) => `<option value="${v}" ${+h.act === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+  ${n ? `<h2>هدفك اليومي</h2><div class="kpis"><div class="kpi"><b>${n.kcal}</b><span>سعرة حرارية</span></div><div class="kpi"><b>${n.protein} غ</b><span>بروتين</span></div><div class="kpi"><b>${n.water} ل</b><span>ماء</span></div></div>
+  <p class="sub">كربوهيدرات ≈ ${n.carbs} غ · دهون ≈ ${n.fat} غ · حرق الراحة ${n.bmr} · الحرق الكلي ${n.tdee} · العجز ${n.deficit} سعرة يوميًا${n.weeks ? ' · الوصول للهدف بعد ≈ ' + n.weeks + ' أسبوعًا' : ''}. ٨–١٠ آلاف خطوة يوميًا.</p>` : '<div class="note">املأ العمر والطول والوزن لتظهر أهدافك.</div>'}
+  <h2>الوزن</h2>
+  <div class="two"><label class="field"><span>وزن اليوم (كغ)</span><input type="number" id="hl-newW" step="0.1"></label><div style="display:flex;align-items:end;margin:12px 0"><button class="btn pri block" data-act="hl-weight">تسجيل</button></div></div>
+  ${weightChart(h.weights)}
+  <h2>برنامج الأسبوع</h2>
+  <div class="rows">${SPORT.map(([d, a, det], k) => { const key = wk[k]; const done = !!h.done[key]; return `<label class="row ${done ? 'done' : ''}" style="cursor:pointer"><input type="checkbox" data-hldone="${key}" ${done ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--accent)"><span class="main"><span class="t lat" style="font-size:16px">${d}: ${a}</span><span class="m">${det}</span></span></label>`; }).join('')}</div>`;
+};
+
+/* ---------- وضع التركيز ---------- */
+const foc = { on: false, end: 0, dur: 0, h: null, lock: null };
+function focusRender() {
+  let el = document.getElementById('focus');
+  if (!foc.on) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'focus'; document.body.appendChild(el); }
+  const left = Math.max(0, Math.round((foc.end - Date.now()) / 1000)), m = Math.floor(left / 60), s = left % 60;
+  el.innerHTML = `<div class="fbox"><div class="sub">وضع التركيز</div><div class="ftime">${pad(m)}:${pad(s)}</div><p>فعّل «وضع الطيران» الآن. مساري يعمل دون اتصال.</p><button class="btn warn" data-act="focus-stop">إنهاء مبكر</button></div>`;
+  if (left <= 0) focusDone(true);
+}
+function focusStart(min) { foc.on = true; foc.dur = min; foc.end = Date.now() + min * 60000; clearInterval(foc.h); foc.h = setInterval(focusRender, 1000); try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => { foc.lock = l; }).catch(() => { }); } catch (e) { } focusRender(); }
+function focusDone(full) {
+  clearInterval(foc.h); const mins = full ? foc.dur : Math.floor((Date.now() - (foc.end - foc.dur * 60000)) / 60000);
+  foc.on = false; try { foc.lock && foc.lock.release(); } catch (e) { } if (mins > 0) { S.focus[todayStr()] = (S.focus[todayStr()] || 0) + mins; save(); }
+  focusRender(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) { } toast(full ? 'أحسنت! أتممتَ جلسة التركيز' : 'سُجّلت ' + mins + ' دقيقة'); if (location.hash === '#/focus') route();
+}
+views.focus = () => {
+  const today = S.focus[todayStr()] || 0, week = Array.from({ length: 7 }, (_, k) => S.focus[addDays(todayStr(), -k)] || 0).reduce((a, b) => a + b, 0);
+  return `<div class="hero-title">وضع التركيز</div><div class="sub">جلسة بلا تشتيت: شاشة واحدة ومؤقّت. فعّل وضع الطيران وسيبقى مساري يعمل دون إنترنت.</div>
+  <div class="kpis"><div class="kpi"><b>${today}</b><span>دقيقة اليوم</span></div><div class="kpi"><b>${week}</b><span>دقيقة هذا الأسبوع</span></div></div>
+  <h2>ابدأ جلسة</h2><div class="btns">${[25, 45, 60, 90].map(m => `<button class="btn pri" data-act="focus-start" data-m="${m}">${m} دقيقة</button>`).join('')}</div>
+  <p class="sub" style="margin-top:12px">ملاحظة صريحة: لا يستطيع موقع ويب قفل تطبيقات هاتفك ولا منع حذفه. للقفل الحقيقي انظر خطة «قفل الهاتف» في صفحة المزيد.</p>`;
+};
+
+/* ---------- المزيد ---------- */
+views.more = () => `<div class="hero-title">المزيد</div>
+  <div class="rows">${[['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
+views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
+  <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
+  <h2>ما يمكن فعله فعلًا</h2>
+  <div class="rows">
+  <div class="row"><span class="main"><span class="t lat" style="font-size:16px">أندرويد: تطبيق أصلي صغير (APK)</span><span class="m">خدمة إمكانية الوصول تمنع فتح التطبيقات المحددة حتى يفتح مساري «رمز اليوم» بعد إنهاء الحفظ والاختبار. مجاني بلا متجر، وأبنيه لك. الحذف يُصعَّب بمسؤول الجهاز لكن يمكنك إلغاؤه، فالمنع المطلق غير ممكن بلا إعادة ضبط الهاتف.</span></span></div>
+  <div class="row"><span class="main"><span class="t lat" style="font-size:16px">آيفون: «مدة استخدام الشاشة» + رمز عند شخص تثق به</span><span class="m">تحدّد التطبيقات المقفلة، ويحتفظ زوج/صديق برمز المنع. بناء تطبيق قفل أصلي يحتاج حساب مطوّر مدفوعًا، وقد استبعدناه لأنك تريد حلولًا مجانية.</span></span></div>
+  <div class="row"><span class="main"><span class="t lat" style="font-size:16px">الحل الأقوى: طرف ثالث يحمل المفتاح</span><span class="m">رمز القفل (Family Link أو مدة الشاشة) عند شخص لا يعطيك إياه إلا بعد أن يرى في مساري أنك أنهيت اليوم. أرسل له تقريرك اليومي تلقائيًا.</span></span></div>
+  </div><p class="sub">أخبرني نوع هاتفك وسأبني الخيار المناسب.</p>`;
+
+/* ---------- المكتبة (حزم كتب جاهزة) ---------- */
+views.library = () => views.books() + `<h2>مكتبة مساري</h2><div id="packs" class="rows"><div class="empty">جارٍ التحميل…</div></div>`;
+async function loadPacks() {
+  const box = document.getElementById('packs'); if (!box) return;
+  try {
+    const r = await fetch('library/index.json', { cache: 'no-cache' }); if (!r.ok) throw 0; const idx = await r.json();
+    box.innerHTML = idx.map(p => { const has = S.books.some(b => b.src === p.id); return `<div class="row"><span class="main"><span class="t lat" style="font-size:17px">${esc(p.title)}</span><span class="m">${esc(p.author)} · ${p.parts} جزءًا · المصدر: ${esc(p.source)}</span>${p.note ? `<span class="m" style="color:var(--rel)">${esc(p.note)}</span>` : ''}</span><button class="btn sm ${has ? '' : 'pri'}" data-act="pack-add" data-id="${p.id}" data-file="${p.file}" ${has ? 'disabled' : ''}>${has ? 'مضاف' : 'أضِف'}</button></div>`; }).join('') || '<div class="empty">لا حزم بعد.</div>';
+  } catch (e) { box.innerHTML = '<div class="empty">المكتبة تحتاج اتصالًا بالإنترنت (لا تعمل من ملف محلي).</div>'; }
+}
+async function packAdd(id, file) {
+  try {
+    const p = await (await fetch('library/' + file, { cache: 'no-cache' })).json();
+    S.books.push({ id: 'p_' + id, src: id, title: p.title, kind: p.kind, end: addMonths(todayStr(), 1), portions: p.portions.map(lines => ({ lines, ...blank() })) });
+    save(); toast('أُضيف إلى برنامجك (ينتهي بعد شهر، عدّله من الكتاب)'); route();
+  } catch (e) { toast('تعذّر تحميل الكتاب'); }
+}
+
 /* ---------- routeur ---------- */
-const TABS = [['today', '☀', 'اليوم'], ['map', '▦', 'الخريطة'], ['tests', '✓', 'اختبارات'], ['books', '☰', 'كتب'], ['stats', '↗', 'تقدّم'], ['settings', '⚙', 'إعدادات']];
+const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'المكتبة'], ['more', '⋯', 'المزيد']];
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', quiz: 'more', tests: 'more', stats: 'more', health: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -605,11 +747,12 @@ function route() {
   const inSess = name === 's';
   top.innerHTML = `<span class="brand"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
   if (!inSess) { if (fol.on) followStop(); stopAudio(); }
-  tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${(name === k || (name === 'book' && k === 'books') || (name === 'quiz' && k === 'tests')) ? 'aria-current="page"' : ''}><b>${g}</b>${l}</a>`).join('')}</div>`;
+  tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${g}</b>${l}</a>`).join('')}</div>`;
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }
   else if (name === 'book') view.innerHTML = views.book(a);
   else view.innerHTML = (views[name] || views.today)();
   window.scrollTo(0, 0);
+  if (name === 'library' || name === 'books') loadPacks();
 }
 const go = h => { if (location.hash === h) route(); else location.hash = h; };
 
@@ -665,6 +808,12 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'follow': followStart(); break;
+    case 'end-ext': S.settings.end = addDays(S.settings.end, +d.d); save(); route(); toast('مُدّد الموعد'); break;
+    case 'rcap-up': S.settings.reviewCap += 4; save(); route(); toast('رُفع حد المراجعة اليومي'); break;
+    case 'focus-start': focusStart(+d.m); break;
+    case 'focus-stop': focusDone(false); break;
+    case 'pack-add': packAdd(d.id, d.file); break;
+    case 'hl-weight': { const w = +$('#hl-newW').value; if (!(w > 20)) return toast('اكتب وزنًا صحيحًا'); const a = S.health.weights; const i = a.findIndex(x => x.d === t); if (i >= 0) a[i].w = w; else a.push({ d: t, w }); S.health.w = String(w); save(); route(); toast('سُجّل الوزن'); break; }
     case 'listen': listenStart(); break;
     case 'tj-legend': openSheet(`<h3>مفتاح ألوان التجويد</h3><div class="tjlist">${TJ.rules.map((r, i) => tjOn(i) ? `<div class="tjrow"><span class="tjn"><i class="tj-${i}">${TJ_SAMPLE[i]}</i> ${TJ_AR[i]}</span></div>` : '').join('')}</div><button class="btn block" data-act="close">إغلاق</button>`); break;
     case 'tj-reset': S.settings.tjCol = {}; S.settings.tjOff = {}; save(); applyTj(); route(); toast('أُعيدت الألوان الافتراضية'); break;
@@ -730,7 +879,9 @@ document.addEventListener('change', e => {
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-arep') { s.arep = +v; save(); toast('تم الحفظ'); return; }
-  const map = { 'st-start': () => s.start = v, 'st-end': () => s.end = v, 'st-cap': () => s.reviewCap = Math.max(1, +v || 8), 'st-rep': () => s.rep = Math.max(1, +v || 20), 'st-bcap': () => s.bookCap = Math.max(0, +v || 0), 'st-font': () => s.font = Math.min(56, Math.max(20, +v || 30)), 'st-t0': () => s.times[0] = v, 'st-t1': () => s.times[1] = v };
+  if (e.target.dataset && e.target.dataset.hldone) { S.health.done[e.target.dataset.hldone] = e.target.checked; save(); return route(); }
+  if (id && id.startsWith('hl-') && id !== 'hl-newW') { S.health[id.slice(3)] = v; save(); const y = scrollY; $('#view').innerHTML = views.health(); scrollTo(0, y); return; }
+  const map = { 'st-maxnew': () => { s.maxNew = Math.max(0, +v || 0); route(); }, 'st-start': () => s.start = v, 'st-end': () => s.end = v, 'st-cap': () => s.reviewCap = Math.max(1, +v || 8), 'st-rep': () => s.rep = Math.max(1, +v || 20), 'st-bcap': () => s.bookCap = Math.max(0, +v || 0), 'st-font': () => s.font = Math.min(56, Math.max(20, +v || 30)), 'st-t0': () => s.times[0] = v, 'st-t1': () => s.times[1] = v };
   if (map[id]) { map[id](); save(); toast('تم الحفظ'); }
 });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.tj !== undefined) { S.settings.tjCol[e.target.dataset.tj] = e.target.value; applyTj(); return; } if (e.target.id === 'note') { const [, , kind, id] = location.hash.split('/'); if (kind === 'b') { const it = getItem(kind, id); it.st.note = e.target.value; save(); } } });
