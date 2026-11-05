@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">مساري</string>
+    <string name="service_desc">يمنع فتح التطبيقات التي تحددها حتى تُنهي حفظ اليوم وتدخل الرمز، ويحمي مساري من الحذف المتهوّر.</string>
+</resources>
