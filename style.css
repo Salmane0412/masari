@@ -170,3 +170,17 @@ summary{font-weight:600;cursor:pointer}
 .note a{color:var(--accent);font-weight:600}
 #focus{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
 #focus .ftime{font-size:84px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin:10px 0}
+.tbar{height:6px;border-radius:4px;background:var(--none);overflow:hidden;margin:8px 0}
+.tbar i{display:block;height:100%;width:100%;background:var(--rel);transform-origin:right;animation:tb linear forwards}
+@keyframes tb{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+body.inquiz #tabs{display:none}
+.codebig{font-size:64px;font-weight:700;text-align:center;letter-spacing:6px;margin:16px 0;font-variant-numeric:tabular-nums;color:var(--accent)}
+.printdoc{background:#fff;color:#000;padding:18px;border-radius:12px;font-family:var(--quran);line-height:2}
+.printdoc .ptitle{text-align:center;font-size:30px;margin:6px 0}
+.printdoc .psub{text-align:center;color:#555;font-family:var(--ui);font-size:13px;margin-bottom:12px}
+.printdoc .pcat{font-family:var(--ui);font-size:17px;border-bottom:2px solid #000;margin:22px 0 8px;color:#000}
+.printdoc .faida{position:relative;padding:8px 34px 10px 0;border-bottom:1px dotted #aaa;break-inside:avoid}
+.printdoc .fnum{position:absolute;right:0;top:10px;font-family:var(--ui);font-size:13px;color:#555;width:28px}
+.printdoc .ftxt{font-size:20px}
+.printdoc .fsrc{font-family:var(--ui);font-size:12.5px;color:#444;margin-top:2px}
+@media print{#top,#tabs,.noprint,#toast,#sheet{display:none!important}body,#app{background:#fff!important;max-width:none!important;padding:0!important}.printdoc{padding:0;border-radius:0}@page{margin:14mm}}

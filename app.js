@@ -57,7 +57,7 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
-  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {};
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
@@ -368,6 +368,7 @@ views.settings = () => {
   <div class="two"><label class="field"><span>البداية</span><input type="date" id="st-start" value="${s.start}"></label><label class="field"><span>نهاية الهدف</span><input type="date" id="st-end" value="${s.end}"></label></div>
   <div class="two"><label class="field"><span>أقصى مراجعات يوميًا</span><input type="number" id="st-cap" min="1" max="60" value="${s.reviewCap}"></label><label class="field"><span>عدد التكرار في الجلسة</span><input type="number" id="st-rep" min="1" max="100" value="${s.rep}"></label></div>
   <div class="two"><label class="field"><span>أجزاء الكتب للمراجعة يوميًا</span><input type="number" id="st-bcap" min="0" max="30" value="${s.bookCap}"></label><label class="field"><span>حجم خط المصحف</span><input type="number" id="st-font" min="20" max="56" value="${s.font}"></label></div>
+  <div class="two"><label class="field"><span>مهلة كل سؤال في الاختبار (ثوانٍ)</span><input type="number" id="st-qsec" min="5" max="120" value="${s.quizSec || 20}"></label></div>
   <h2>المصحف وألوان التجويد</h2>
   <label class="check"><input type="checkbox" id="st-tj" ${s.tjOn !== false ? 'checked' : ''}> تلوين أحكام التجويد في المصحف</label>
   <p class="sub">فعّل أو عطّل كل حكم، وغيّر لونه كما تشاء. التغيير فوري.</p>
@@ -521,6 +522,7 @@ function poolFor(scope, h) {
   const out = new Set(), addUnit = i => { for (let g = qStart[i]; g < qStart[i + 1]; g++) out.add(g); };
   if (scope === 'weak') weakAyas().forEach(g => out.add(g));
   else if (scope === 'due') { const P = plan(); [...P.dueAll, ...P.L.rev, ...P.L.new].forEach(addUnit); }
+  else if (scope === 'unit') addUnit(h);
   else if (scope === 'hizb') { for (let r = 0; r < 4; r++) addUnit((h - 1) * 4 + r); }
   else S.units.forEach((u, i) => { if (u.s === 'mem') addUnit(i); });
   return [...out];
@@ -562,15 +564,33 @@ function buildQuiz(scope, h, n) {
   return qs.length ? qs : null;
 }
 let quiz = null;
-const SCOPE_L = { weak: 'مواضع ضعفي', due: 'مراجعات اليوم', all: 'كل ما حفظته', hizb: 'حزب محدد' };
+const SCOPE_L = { gate: 'بوابة الحفظ', weak: 'مواضع ضعفي', due: 'مراجعات اليوم', all: 'كل ما حفظته', hizb: 'حزب محدد' };
 function finishQuiz() {
   const n = quiz.qs.length, ok = quiz.score;
   S.tests.push({ d: todayStr(), scope: quiz.scope, n, ok }); S.tests = S.tests.slice(-60);
   logOf(todayStr()).quiz = (logOf(todayStr()).quiz || 0) + 1;
   const by = {}; quiz.qs.forEach(q => { const i = bs(qStart, q.g); (by[i] = by[i] || [0, 0]); by[i][1]++; if (q.right) by[i][0]++; });
   Object.entries(by).forEach(([i, [a, b]]) => { if (b >= 2 && a / b >= 0.8) S.units[i].vdate = todayStr(); });
-  save(); quiz.done = true;
+  quiz.done = true;
+  if (quiz.gate) {
+    const g = quiz.gate, st = S.units[g.id], pass = ok / n >= 0.8; quiz.pass = pass;
+    if (pass) { markLearned(st, todayStr()); const L = logOf(todayStr()); if (!L.new.includes(g.id)) L.new.push(g.id); commitErrors(g.id); }
+    else { if (st.s === 'none') st.s = 'prog'; }
+  }
+  save();
 }
+let quizTimer = null;
+function quizAnswer(k) {
+  if (!quiz || quiz.done || quiz.ans !== undefined) return; clearTimeout(quizTimer);
+  const q = quiz.qs[quiz.i]; quiz.ans = k; q.right = k >= 0 && !!q.opts[k].ok;
+  if (q.right) { quiz.score++; noteOk(q.g); } else noteError(q.g);
+  save(); $('#view').innerHTML = views.quiz();
+}
+function armQuiz() {
+  clearTimeout(quizTimer);
+  if (quiz && !quiz.done && quiz.ans === undefined) quizTimer = setTimeout(() => quizAnswer(-1), (S.settings.quizSec || 20) * 1000);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && quiz && !quiz.done && quiz.ans === undefined && location.hash === '#/quiz') quizAnswer(-1); });
 views.tests = () => {
   const w = weakAyas().length, mem = S.units.filter(u => u.s === 'mem'), val = mem.filter(u => u.vdate).length;
   const last = S.tests.slice(-5).reverse();
@@ -585,6 +605,9 @@ views.quiz = () => {
   if (!quiz) return '<div class="empty">لا اختبار جارٍ. <a href="#/tests">اختر اختبارًا</a></div>';
   if (quiz.done) {
     const n = quiz.qs.length, ok = quiz.score, pct = Math.round(100 * ok / n), wrong = quiz.qs.filter(q => !q.right), seen = new Set();
+    if (quiz.gate) return `<div class="hero-title">${ok} / ${n}</div><div class="sub">${quiz.pass ? 'اجتزتَ بوابة الحفظ: سُجّل هذا المقطع محفوظًا، وأول مراجعة غدًا.' : 'لم تجتز البوابة (يلزم ٨٠%). لم يُسجَّل حفظًا: بقي قيد الحفظ. ارجع إلى الجلسة وأعد التكرار ثم حاول مرة أخرى.'}</div>
+    ${wrong.length ? '<h2>للمراجعة</h2>' : ''}${wrong.filter(q => !seen.has(q.g) && seen.add(q.g)).map(q => `<div class="mushaf ar" dir="rtl" style="font-size:${Math.max(22, S.settings.font - 6)}px;padding:10px 14px"><span class="surah" style="font-size:.7em">${refOf(q.g)}</span>${esc(Q.ayas[q.g][2])}</div>`).join('')}
+    <div class="btns" style="margin-top:12px">${quiz.pass ? `<a class="btn pri" href="${nextAfter('q', 'new')}" style="text-decoration:none">التالي</a>` : `<a class="btn pri" href="#/s/q/${quiz.gate.id}/new" style="text-decoration:none">العودة إلى الجلسة</a>`}</div>`;
     return `<div class="hero-title">${ok} / ${n}</div><div class="sub">${pct >= 80 ? 'مُثبَت: أنت تتقن هذا المقطع.' : 'يحتاج مراجعة: اقرأ الآيات أدناه ثم أعد الاختبار.'}</div>
     <h2>${wrong.length ? 'للمراجعة' : 'لا أخطاء'}</h2>
     ${wrong.filter(q => !seen.has(q.g) && seen.add(q.g)).map(q => `<div class="mushaf ar" dir="rtl" style="font-size:${Math.max(22, S.settings.font - 6)}px;padding:10px 14px"><span class="surah" style="font-size:.7em">${refOf(q.g)}</span>${esc(Q.ayas[q.g][2])}</div>`).join('')}
@@ -593,10 +616,11 @@ views.quiz = () => {
   const q = quiz.qs[quiz.i], ans = quiz.ans;
   return `<div class="sess-h"><a class="btn sm" href="#/tests">→</a><div class="tt"><b>السؤال ${quiz.i + 1} / ${quiz.qs.length}</b><span class="sub">${esc(SCOPE_L[quiz.scope])} · الصحيح: ${quiz.score}</span></div></div>
   <div class="bar"><i style="width:${100 * quiz.i / quiz.qs.length}%"></i></div>
+  ${ans === undefined ? `<div class="tbar"><i style="animation-duration:${S.settings.quizSec || 20}s"></i></div>` : ''}
   <div class="sub" style="margin:10px 0 6px">${q.ask}</div>
   <div class="mushaf ar" dir="rtl" style="font-size:${S.settings.font}px;padding:12px 14px">${esc(q.prompt)}</div>
   <div class="opts">${q.opts.map((o, k) => `<button class="opt ar${ans !== undefined ? (o.ok ? ' right' : k === ans ? ' wrong' : '') : ''}" data-act="quiz-pick" data-k="${k}" ${ans !== undefined ? 'disabled' : ''} style="font-size:${Math.max(20, S.settings.font - 6)}px">${esc(o.t)}</button>`).join('')}</div>
-  ${ans !== undefined ? `<div class="note">${q.opts[ans].ok ? 'أحسنت، إجابة صحيحة.' : 'الجواب: ' + esc(q.opts.find(o => o.ok).t)} · ${q.ref}<div class="ar" dir="rtl" style="margin-top:6px;font-size:${Math.max(20, S.settings.font - 6)}px;line-height:2">${esc(q.full)}</div></div><button class="btn pri block" data-act="quiz-next">${quiz.i + 1 >= quiz.qs.length ? 'عرض النتيجة' : 'السؤال التالي'}</button>` : ''}`;
+  ${ans !== undefined ? `<div class="note">${ans >= 0 && q.opts[ans].ok ? 'أحسنت، إجابة صحيحة.' : (ans < 0 ? 'انتهى الوقت أو غادرتَ الصفحة، وهذا يُحسب خطأ. الجواب: ' : 'الجواب: ') + esc(q.opts.find(o => o.ok).t)} · ${q.ref}<div class="ar" dir="rtl" style="margin-top:6px;font-size:${Math.max(20, S.settings.font - 6)}px;line-height:2">${esc(q.full)}</div></div><button class="btn pri block" data-act="quiz-next">${quiz.i + 1 >= quiz.qs.length ? 'عرض النتيجة' : 'السؤال التالي'}</button>` : ''}`;
 };
 
 /* ---------- الخطة المفصّلة والاستدراك ---------- */
@@ -709,7 +733,7 @@ views.focus = () => {
 
 /* ---------- المزيد ---------- */
 views.more = () => `<div class="hero-title">المزيد</div>
-  <div class="rows">${[['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
+  <div class="rows">${[['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
 views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
   <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
   <h2>ما يمكن فعله فعلًا</h2>
@@ -736,9 +760,70 @@ async function packAdd(id, file) {
   } catch (e) { toast('تعذّر تحميل الكتاب'); }
 }
 
+/* ---------- رمز اليوم (قفل الهاتف) ---------- */
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function randB32(n = 20) { const a = crypto.getRandomValues(new Uint8Array(n)); let bits = '', o = ''; a.forEach(x => bits += x.toString(2).padStart(8, '0')); for (let i = 0; i + 5 <= bits.length; i += 5) o += B32[parseInt(bits.slice(i, i + 5), 2)]; return o; }
+function b32dec(s) { let bits = ''; for (const c of s.replace(/[=\s]/g, '').toUpperCase()) { const v = B32.indexOf(c); if (v >= 0) bits += v.toString(2).padStart(5, '0'); } const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2)); return new Uint8Array(out); }
+async function hmac(alg, key, msg) { const k = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: alg }, false, ['sign']); return new Uint8Array(await crypto.subtle.sign('HMAC', k, msg)); }
+async function dailyCode() { const sig = await hmac('SHA-256', b32dec(S.lock.secret), new TextEncoder().encode('masari:' + todayStr())); return String(((sig[0] & 0x7f) << 24 | sig[1] << 16 | sig[2] << 8 | sig[3]) % 1000000).padStart(6, '0'); }
+function dayState() { const P = plan(), L = P.L; return { P, left: P.newList.length + P.revList.length + P.bnew.length + P.brev.length, quizzes: L.quiz || 0, done: L.new.length + L.rev.length + L.bnew.length + L.brev.length }; }
+function reportText() {
+  const st = dayState(), P = st.P, t = todayStr(), last = S.tests.filter(x => x.d === t).slice(-1)[0];
+  return `تقرير مساري ${t}\nحفظ جديد منجز: ${P.L.new.length} من ${P.quota}\nمراجعات منجزة: ${P.L.rev.length}\nمتبقٍ من مهام اليوم: ${st.left}\nاختبارات اليوم: ${st.quizzes}${last ? ' (آخرها ' + last.ok + '/' + last.n + ')' : ''}\nتركيز: ${S.focus[t] || 0} دقيقة\n${st.left === 0 && st.quizzes >= 1 ? '✅ أنهيتُ مهام اليوم' : '⏳ لم أنهِ مهام اليوم بعد'}`;
+}
+views.code = () => `<div class="hero-title">رمز اليوم</div><div id="codebox"><div class="empty">جارٍ التحقق…</div></div>`;
+async function fillCode() {
+  const box = document.getElementById('codebox'); if (!box) return;
+  const st = dayState(), ok = st.left === 0 && st.quizzes >= 1;
+  let code = '——';
+  if (ok) { try { code = await dailyCode(); } catch (e) { code = 'يتطلب اتصالًا آمنًا (https)'; } }
+  const partner = S.lock.mode === 'partner';
+  box.innerHTML = `<div class="kpis"><div class="kpi"><b>${st.left}</b><span>مهام متبقية</span></div><div class="kpi"><b>${st.quizzes}</b><span>اختبارات اليوم</span></div><div class="kpi"><b>${ok ? '✓' : '✗'}</b><span>شرط الرمز</span></div></div>
+  <div class="note">${ok ? 'أنهيتَ اليوم. ' : 'الشرط: إنهاء كل مهام اليوم واجتياز اختبار واحد على الأقل. '}${partner ? 'في وضع الشريك لا تظهر لك الشيفرة: أرسل التقرير إلى شريكك، وهو يعطيك الرمز من تطبيق المصادقة عنده.' : 'في الوضع الذاتي يظهر الرمز بعد إنهاء اليوم.'}</div>
+  ${!partner ? `<div class="codebig" dir="ltr">${code}</div>` : ''}
+  <div class="btns"><button class="btn pri" data-act="report-share">إرسال تقرير اليوم إلى الشريك</button></div>
+  <label class="field"><span>الوضع</span><select id="lk-mode"><option value="self" ${!partner ? 'selected' : ''}>ذاتي (يظهر الرمز بعد إنهاء اليوم)</option><option value="partner" ${partner ? 'selected' : ''}>شريك (الرمز عند شخص آخر)</option></select></label>
+  ${!partner ? `<label class="field"><span>المفتاح السري (انسخه إلى تطبيق القفل في أندرويد)</span><input type="text" dir="ltr" id="lk-secret" value="${esc(S.lock.secret)}" readonly></label>` : ''}
+  <p class="sub">ملاحظة: الوضع الذاتي حاجز نفسي لا حماية مطلقة. الحماية القوية هي وضع الشريك.</p>`;
+}
+
+/* ---------- دفتر الفوائد ---------- */
+const faGroups = () => { const g = {}; S.fcats.forEach(c => g[c] = []); S.faidas.forEach(f => { (g[f.cat] = g[f.cat] || []).push(f); }); return g; };
+views.faidas = () => {
+  const g = faGroups(), books = [...new Set(S.faidas.map(f => f.book).filter(Boolean))];
+  return `<div class="hero-title">دفتر الفوائد</div><div class="sub">سجّل الفائدة مع الكتاب والصفحة وصنّفها، ثم اطبع الدفتر كاملًا. يمكنك أيضًا إرسال صور الصفحات إليّ في المحادثة فأكتبها لك بدقة وأعيد لك ملفًا تستورده هنا.</div>
+  <div class="kpis"><div class="kpi"><b>${S.faidas.length}</b><span>فائدة</span></div><div class="kpi"><b>${books.length}</b><span>كتاب</span></div><div class="kpi"><b>${Object.values(g).filter(a => a.length).length}</b><span>تصنيف</span></div></div>
+  <div class="btns" style="margin:12px 0"><button class="btn pri" data-act="fa-new">+ فائدة جديدة</button><a class="btn" href="#/print" style="text-decoration:none">طباعة الدفتر</a><button class="btn" data-act="fa-export">تصدير</button><label class="btn" style="display:inline-flex;align-items:center">استيراد<input type="file" id="fa-imp" accept="application/json" hidden></label></div>
+  ${Object.entries(g).filter(([, a]) => a.length).map(([c, a]) => `<h2>${esc(c)} <span class="count">· ${a.length}</span></h2><div class="rows">${a.map(f => `<button class="row" data-act="fa-edit" data-id="${f.id}"><span class="main"><span class="t ar" dir="rtl" style="font-size:19px;line-height:2">${esc(f.text)}</span><span class="m">${esc(f.book || 'بلا كتاب')}${f.vol ? ' · ج' + esc(f.vol) : ''}${f.page ? ' · ص' + esc(f.page) : ''}</span></span></button>`).join('')}</div>`).join('') || '<div class="empty">لا فوائد بعد. ابدأ بـ «فائدة جديدة».</div>'}`;
+};
+function faSheet(f) {
+  f = f || { text: '', book: '', vol: '', page: '', cat: S.fcats[S.fcats.length - 1] };
+  const books = [...new Set(S.faidas.map(x => x.book).filter(Boolean))];
+  openSheet(`<h3>${f.id ? 'تعديل الفائدة' : 'فائدة جديدة'}</h3>
+  <label class="field"><span>نص الفائدة</span><textarea id="fa-text" dir="rtl" class="ar" style="font-size:20px;line-height:2">${esc(f.text)}</textarea></label>
+  <div class="btns" style="margin-bottom:8px"><label class="btn sm" style="display:inline-flex;align-items:center">📷 من صورة (تجريبي)<input type="file" id="fa-img" accept="image/*" capture="environment" hidden></label></div><div class="sub" id="fa-ocr-st"></div>
+  <label class="field"><span>الكتاب</span><input type="text" id="fa-book" list="fa-books" value="${esc(f.book)}"><datalist id="fa-books">${books.map(b => `<option value="${esc(b)}">`).join('')}</datalist></label>
+  <div class="two"><label class="field"><span>الجزء</span><input type="text" id="fa-vol" value="${esc(f.vol || '')}"></label><label class="field"><span>الصفحة</span><input type="text" id="fa-page" value="${esc(f.page || '')}"></label></div>
+  <label class="field"><span>التصنيف</span><select id="fa-cat">${S.fcats.map(c => `<option ${c === f.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+  <div class="btns"><button class="btn pri" data-act="fa-save" data-id="${f.id || ''}">حفظ</button><button class="btn" data-act="fa-cat">+ تصنيف جديد</button>${f.id ? `<button class="btn warn" data-act="fa-del" data-id="${f.id}">حذف</button>` : ''}<button class="btn" data-act="close">إلغاء</button></div>`);
+}
+function loadScript(u) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = u; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function ocrFile(file) {
+  const st = $('#fa-ocr-st'); try {
+    st.textContent = 'جارٍ تحميل محرّك القراءة (أول مرة فقط)…'; if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+    st.textContent = 'جارٍ قراءة الصورة…'; const r = await Tesseract.recognize(file, 'ara'); $('#fa-text').value = r.data.text.replace(/\n{2,}/g, '\n').trim(); st.textContent = 'راجِع النص وصحّحه قبل الحفظ: القراءة الآلية غير دقيقة مع التشكيل.';
+  } catch (e) { st.textContent = 'تعذّرت القراءة الآلية (تحتاج إنترنت). أرسل الصورة إليّ في المحادثة لأكتبها لك بدقة.'; }
+}
+views.print = () => {
+  const g = faGroups(); let n = 0;
+  return `<div class="noprint btns" style="margin:10px 0"><button class="btn pri" data-act="print">🖨 طباعة / حفظ PDF</button><a class="btn" href="#/faidas" style="text-decoration:none">رجوع</a></div>
+  <div class="printdoc" dir="rtl"><h1 class="ptitle">دفتر الفوائد</h1><div class="psub">${fmtD(todayStr(), { day: 'numeric', month: 'long', year: 'numeric' })} · ${S.faidas.length} فائدة</div>
+  ${Object.entries(g).filter(([, a]) => a.length).map(([c, a]) => `<h2 class="pcat">${esc(c)}</h2>${a.map(f => `<div class="faida"><span class="fnum">${++n}</span><div class="ftxt">${esc(f.text).replace(/\n/g, '<br>')}</div><div class="fsrc">${esc(f.book || '')}${f.vol ? '، ج' + esc(f.vol) : ''}${f.page ? '، ص' + esc(f.page) : ''}</div></div>`).join('')}`).join('') || '<p>لا فوائد.</p>'}</div>`;
+};
+
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'المكتبة'], ['more', '⋯', 'المزيد']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', quiz: 'more', tests: 'more', stats: 'more', health: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -753,6 +838,9 @@ function route() {
   else view.innerHTML = (views[name] || views.today)();
   window.scrollTo(0, 0);
   if (name === 'library' || name === 'books') loadPacks();
+  if (name === 'code') fillCode();
+  document.body.classList.toggle('inquiz', name === 'quiz' && !!quiz && !quiz.done);
+  if (name === 'quiz') armQuiz(); else clearTimeout(quizTimer);
 }
 const go = h => { if (location.hash === h) route(); else location.hash = h; };
 
@@ -790,12 +878,8 @@ document.addEventListener('click', e => {
       if (!qs) return toast(scope === 'weak' ? 'لا مواضع ضعف حتى الآن.' : 'آيات غير كافية لهذا الاختبار (حدّد بعض الأرباع كمحفوظة).');
       quiz = { qs, i: 0, score: 0, scope, ans: undefined }; go('#/quiz'); break;
     }
-    case 'quiz-pick': {
-      if (!quiz || quiz.ans !== undefined) return; const k = +d.k, q = quiz.qs[quiz.i]; quiz.ans = k; q.right = !!q.opts[k].ok;
-      if (q.right) { quiz.score++; noteOk(q.g); } else noteError(q.g);
-      save(); $('#view').innerHTML = views.quiz(); break;
-    }
-    case 'quiz-next': quiz.i++; quiz.ans = undefined; if (quiz.i >= quiz.qs.length) finishQuiz(); $('#view').innerHTML = views.quiz(); window.scrollTo(0, 0); break;
+    case 'quiz-pick': quizAnswer(+d.k); break;
+    case 'quiz-next': quiz.i++; quiz.ans = undefined; if (quiz.i >= quiz.qs.length) finishQuiz(); $('#view').innerHTML = views.quiz(); window.scrollTo(0, 0); armQuiz(); document.body.classList.toggle('inquiz', !quiz.done); break;
     case 'pri': { const u = S.units[+d.id]; u.pri = u.pri ? 0 : 1; save(); closeSheet(); route(); toast(u.pri ? 'أولوية' : 'أُلغيت الأولوية'); break; }
     case 'set': {
       const i = +d.id, list = d.scope === 'hizb' ? [0, 1, 2, 3].map(k => (i >> 2) * 4 + k) : [i];
@@ -810,6 +894,19 @@ document.addEventListener('click', e => {
     case 'follow': followStart(); break;
     case 'end-ext': S.settings.end = addDays(S.settings.end, +d.d); save(); route(); toast('مُدّد الموعد'); break;
     case 'rcap-up': S.settings.reviewCap += 4; save(); route(); toast('رُفع حد المراجعة اليومي'); break;
+    case 'fa-new': faSheet(); break;
+    case 'fa-edit': faSheet(S.faidas.find(x => x.id === d.id)); break;
+    case 'fa-cat': { const c = (prompt('اسم التصنيف الجديد') || '').trim(); if (c && !S.fcats.includes(c)) { S.fcats.push(c); const cur = { text: $('#fa-text').value, book: $('#fa-book').value, vol: $('#fa-vol').value, page: $('#fa-page').value, cat: c, id: d.id || undefined }; save(); faSheet(cur); } break; }
+    case 'fa-save': {
+      const f = { text: $('#fa-text').value.trim(), book: $('#fa-book').value.trim(), vol: $('#fa-vol').value.trim(), page: $('#fa-page').value.trim(), cat: $('#fa-cat').value };
+      if (!f.text) return toast('اكتب نص الفائدة');
+      if (d.id) Object.assign(S.faidas.find(x => x.id === d.id), f); else S.faidas.push({ id: 'f' + Date.now().toString(36), added: t, ...f });
+      save(); closeSheet(); route(); toast('حُفظت الفائدة'); break;
+    }
+    case 'fa-del': if (confirm('حذف هذه الفائدة؟')) { S.faidas = S.faidas.filter(x => x.id !== d.id); save(); closeSheet(); route(); } break;
+    case 'fa-export': download(`faidas-${t}.json`, JSON.stringify({ faidas: S.faidas, cats: S.fcats }), 'application/json'); break;
+    case 'print': window.print(); break;
+    case 'report-share': { const txt = reportText(); if (navigator.share) navigator.share({ text: txt }).catch(() => { }); else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('نُسخ التقرير')); break; }
     case 'focus-start': focusStart(+d.m); break;
     case 'focus-stop': focusDone(false); break;
     case 'pack-add': packAdd(d.id, d.file); break;
@@ -828,6 +925,10 @@ document.addEventListener('click', e => {
       const [, , kind, id, mode] = location.hash.split('/'), it = getItem(kind, id), st = it.st, L = logOf(t), tag = kind === 'q' ? +id : id;
       const note = $('#note'); if (note) st.note = note.value;
       const push = (arr, v) => { if (!arr.includes(v)) arr.push(v); };
+      if (mode === 'new' && d.g === 'learned' && kind === 'q') {
+        const qs = buildQuiz('unit', +id, 5);
+        if (qs) { quiz = { qs, i: 0, score: 0, scope: 'gate', ans: undefined, gate: { id: +id } }; save(); sessState.lastKey = ''; go('#/quiz'); break; }
+      }
       if (mode === 'rev') { gradeItem(st, d.g, t); push(kind === 'q' ? L.rev : L.brev, tag); toast(d.g === 'hard' ? 'تُراجَع غدًا' : 'المراجعة القادمة ' + fmtD(st.due)); }
       else if (d.g === 'learned') { markLearned(st, t); push(kind === 'q' ? L.new : L.bnew, tag); toast('تم الحفظ. أول مراجعة غدًا.'); }
       else if (d.g === 'prog') { if (st.s === 'none') st.s = 'prog'; toast('بقي قيد الحفظ'); }
@@ -879,9 +980,12 @@ document.addEventListener('change', e => {
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-arep') { s.arep = +v; save(); toast('تم الحفظ'); return; }
+  if (id === 'lk-mode') { S.lock.mode = v; save(); return fillCode(); }
+  if (id === 'fa-img') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
+  if (id === 'fa-imp') { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const o = JSON.parse(r.result), arr = Array.isArray(o) ? o : o.faidas; let n = 0; (o.cats || []).forEach(c => { if (!S.fcats.includes(c)) S.fcats.push(c); }); arr.forEach(x => { if (!x.text) return; if (S.faidas.some(y => y.text === x.text && y.book === x.book && y.page === x.page)) return; if (x.cat && !S.fcats.includes(x.cat)) S.fcats.push(x.cat); S.faidas.push({ id: 'f' + Date.now().toString(36) + (n++), cat: x.cat || 'فوائد منوعة', ...x }); }); save(); route(); toast('استُوردت ' + n + ' فائدة'); } catch (x) { toast('ملف غير صالح'); } }; r.readAsText(f); return; }
   if (e.target.dataset && e.target.dataset.hldone) { S.health.done[e.target.dataset.hldone] = e.target.checked; save(); return route(); }
   if (id && id.startsWith('hl-') && id !== 'hl-newW') { S.health[id.slice(3)] = v; save(); const y = scrollY; $('#view').innerHTML = views.health(); scrollTo(0, y); return; }
-  const map = { 'st-maxnew': () => { s.maxNew = Math.max(0, +v || 0); route(); }, 'st-start': () => s.start = v, 'st-end': () => s.end = v, 'st-cap': () => s.reviewCap = Math.max(1, +v || 8), 'st-rep': () => s.rep = Math.max(1, +v || 20), 'st-bcap': () => s.bookCap = Math.max(0, +v || 0), 'st-font': () => s.font = Math.min(56, Math.max(20, +v || 30)), 'st-t0': () => s.times[0] = v, 'st-t1': () => s.times[1] = v };
+  const map = { 'st-qsec': () => s.quizSec = Math.min(120, Math.max(5, +v || 20)), 'st-maxnew': () => { s.maxNew = Math.max(0, +v || 0); route(); }, 'st-start': () => s.start = v, 'st-end': () => s.end = v, 'st-cap': () => s.reviewCap = Math.max(1, +v || 8), 'st-rep': () => s.rep = Math.max(1, +v || 20), 'st-bcap': () => s.bookCap = Math.max(0, +v || 0), 'st-font': () => s.font = Math.min(56, Math.max(20, +v || 30)), 'st-t0': () => s.times[0] = v, 'st-t1': () => s.times[1] = v };
   if (map[id]) { map[id](); save(); toast('تم الحفظ'); }
 });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.tj !== undefined) { S.settings.tjCol[e.target.dataset.tj] = e.target.value; applyTj(); return; } if (e.target.id === 'note') { const [, , kind, id] = location.hash.split('/'); if (kind === 'b') { const it = getItem(kind, id); it.st.note = e.target.value; save(); } } });
