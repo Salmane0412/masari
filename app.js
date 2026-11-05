@@ -57,7 +57,7 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
-  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.h) S.health.h = '176'; if (!S.health.w) S.health.w = '120'; if (!S.health.gw) S.health.gw = '100'; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = [{ d: '2026-09-05', w: 135 }, { d: '2026-11-05', w: 120 }]; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
@@ -690,6 +690,11 @@ function weightChart(ws) {
   const pts = a.map((x, i) => `${(i / (a.length - 1) * (W - 20) + 10).toFixed(1)},${(H - 10 - (x.w - mn) / (mx - mn) * (H - 20)).toFixed(1)}`).join(' ');
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="منحنى الوزن"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/></svg><div class="sub" style="display:flex;justify-content:space-between"><span>${a[0].w} كغ</span><span>${a[a.length - 1].w} كغ</span></div>`;
 }
+function bmiBlock(h) {
+  const w = +h.w, ht = +h.h / 100; if (!(w > 0 && ht > 0)) return '';
+  const bmi = w / (ht * ht), ws = (h.weights || []).slice().sort((a, b) => a.d < b.d ? -1 : 1), lost = ws.length > 1 ? ws[0].w - w : 0, ideal = Math.round(25 * ht * ht);
+  return `<div class="kpis"><div class="kpi"><b>${bmi.toFixed(1)}</b><span>مؤشر كتلة الجسم</span></div><div class="kpi"><b>${lost > 0 ? '−' + lost.toFixed(1) : '0'} كغ</b><span>منذ أول تسجيل</span></div><div class="kpi"><b>${ideal} كغ</b><span>وزن مؤشر ٢٥</span></div></div>`;
+}
 views.health = () => {
   const h = S.health, n = nutrition(h), t = todayStr(), dow = (parseD(t).getDay() + 1) % 7;
   const wk = Array.from({ length: 7 }, (_, k) => addDays(t, k - dow));
@@ -698,6 +703,7 @@ views.health = () => {
   <div class="two"><label class="field"><span>الطول (سم)</span><input type="number" id="hl-h" value="${h.h}" min="120" max="230"></label><label class="field"><span>الوزن الحالي (كغ)</span><input type="number" id="hl-w" value="${h.w}" step="0.1"></label></div>
   <div class="two"><label class="field"><span>الوزن المستهدف (كغ)</span><input type="number" id="hl-gw" value="${h.gw}" step="0.1"></label><label class="field"><span>النزول أسبوعيًا (كغ)</span><select id="hl-pace">${[0.25, 0.5, 0.75, 1].map(p => `<option ${+h.pace === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label></div>
   <label class="field"><span>مستوى النشاط</span><select id="hl-act">${ACT.map(([v, l]) => `<option value="${v}" ${+h.act === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+  ${bmiBlock(h)}
   ${n ? `<h2>هدفك اليومي</h2><div class="kpis"><div class="kpi"><b>${n.kcal}</b><span>سعرة حرارية</span></div><div class="kpi"><b>${n.protein} غ</b><span>بروتين</span></div><div class="kpi"><b>${n.water} ل</b><span>ماء</span></div></div>
   <p class="sub">كربوهيدرات ≈ ${n.carbs} غ · دهون ≈ ${n.fat} غ · حرق الراحة ${n.bmr} · الحرق الكلي ${n.tdee} · العجز ${n.deficit} سعرة يوميًا${n.weeks ? ' · الوصول للهدف بعد ≈ ' + n.weeks + ' أسبوعًا' : ''}. ٨–١٠ آلاف خطوة يوميًا.</p>` : '<div class="note">املأ العمر والطول والوزن لتظهر أهدافك.</div>'}
   <h2>الوزن</h2>
