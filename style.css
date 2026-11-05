@@ -166,3 +166,7 @@ summary{font-weight:600;cursor:pointer}
 .check{display:flex;gap:10px;align-items:center;margin:8px 0;font-weight:600}
 .quran-text{font-family:var(--quran)}
 .opt{text-align:right}
+.note.warnb{background:color-mix(in srgb,var(--rel) 16%,var(--surface));border:1px solid var(--rel)}
+.note a{color:var(--accent);font-weight:600}
+#focus{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+#focus .ftime{font-size:84px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin:10px 0}
