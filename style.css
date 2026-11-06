@@ -196,3 +196,9 @@ body.inquiz #tabs{display:none}
 .pcol .pc-o{background:var(--accent);display:block}.pcol .pc-e{background:var(--gold);display:block}
 .pcol{justify-content:flex-start}.pcol em{position:absolute;top:-16px;font-size:11px;font-style:normal;color:var(--mute);width:100%;text-align:center}
 .pchk:has(input:disabled){opacity:.4}
+
+.gx{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.gset{display:flex;gap:8px;align-items:center;margin:8px 0}.gset.done{opacity:.65}
+.gset input{width:5.2em;min-height:44px;font-size:17px;text-align:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.gn{width:22px;color:var(--mute);text-align:center}
+#gymrest{position:fixed;left:12px;right:12px;bottom:72px;background:var(--accent);color:var(--accent-ink);padding:10px 14px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;z-index:9;font-size:18px}
