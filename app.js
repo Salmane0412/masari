@@ -723,6 +723,7 @@ views.health = () => {
   <h2>الوزن</h2>
   <div class="two"><label class="field"><span>وزن اليوم (كغ)</span><input type="number" id="hl-newW" step="0.1"></label><div style="display:flex;align-items:end;margin:12px 0"><button class="btn pri block" data-act="hl-weight">تسجيل</button></div></div>
   ${weightChart(h.weights)}
+  <a class="row" href="#/gym" style="text-decoration:none;color:inherit"><span class="main"><span class="t">التمارين: جلسة موجَّهة بالأوزان والتدرّج</span><span class="m">روتين أسبوعي، مؤقّت راحة، أرقام قياسية</span></span><span class="go">فتح ‹</span></a>
   <h2>برنامج الأسبوع</h2>
   <div class="rows">${SPORT.map(([d, a, det], k) => { const key = wk[k]; const done = !!h.done[key]; return `<label class="row ${done ? 'done' : ''}" style="cursor:pointer"><input type="checkbox" data-hldone="${key}" ${done ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--accent)"><span class="main"><span class="t lat" style="font-size:16px">${d}: ${a}</span><span class="m">${det}</span></span></label>`; }).join('')}</div>`;
 };
@@ -753,7 +754,7 @@ views.focus = () => {
 
 /* ---------- المزيد ---------- */
 views.more = () => `<div class="hero-title">المزيد</div>
-  <div class="rows">${[['prog', '▥', 'البرنامج الرسمي والإضافي', 'عدّادان مستقلان، وزر وقت الفراغ'], ['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
+  <div class="rows">${[['prog', '▥', 'البرنامج الرسمي والإضافي', 'عدّادان مستقلان، وزر وقت الفراغ'], ['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['gym', '🏋', 'التمارين', 'روتين، جلسة موجَّهة، تدرّج وأرقام قياسية'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
 views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
   <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
   <h2>ما يمكن فعله فعلًا</h2>
@@ -908,7 +909,7 @@ function pgAdd(n) {
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'المكتبة'], ['more', '⋯', 'المزيد']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
