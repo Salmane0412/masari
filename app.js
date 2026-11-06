@@ -15,6 +15,7 @@ const gi = (s, a) => first[s] + a - 1;
 const qStart = Q.quarters.map(([s, a]) => gi(s, a)); qStart.push(tot);
 const pStart = Q.pages.map(([s, a]) => gi(s, a)); pStart.push(tot);
 const NQ = 240;
+const G = window.PROG;
 function bs(arr, g) { let lo = 0, hi = arr.length - 2; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (arr[m] <= g) lo = m; else hi = m - 1; } return lo; }
 const pageF = g => { const p = bs(pStart, g); return p + (g - pStart[p]) / (pStart[p + 1] - pStart[p]); };
 function unitInfo(i) {
@@ -57,7 +58,7 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
-  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = ''; S.health.seeded = 2; } if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.age) S.health.age = ''; if (!S.health.h) S.health.h = ''; if (!S.health.w) S.health.w = ''; if (!S.health.gw) S.health.gw = ''; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = []; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = ''; S.health.seeded = 2; } if (!S.prog) S.prog = window.PROG.blank(S.settings.start || todayStr(), '2027-02-08'); if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.age) S.health.age = ''; if (!S.health.h) S.health.h = ''; if (!S.health.w) S.health.w = ''; if (!S.health.gw) S.health.gw = ''; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = []; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
@@ -284,6 +285,7 @@ views.today = () => {
   <div class="sub">الهدف: الانتهاء في ${fmtD(S.settings.end, { day: 'numeric', month: 'long', year: 'numeric' })} · بقي ${P.daysLeft} يوم</div>
   ${weave()}${legend()}
   ${behindBanner()}
+  ${(() => { const c = G.calc(S.prog, todayStr()); return `<a class="row" href="#/prog" style="text-decoration:none;color:inherit"><span class="main"><span class="t">البرنامج: ${c.official} رسمي + ${c.extra} إضافي = ${c.total}/240</span><span class="m">${c.needExtra ? 'المطلوب إضافيًا: ' + c.perWeek + ' في الأسبوع' : 'البرنامج الرسمي يكفي'}</span></span><span class="go">فتح ‹</span></a>`; })()}
   <div class="kpis">
     <div class="kpi"><b>${c.mem}</b><span>أرباع محفوظة (≈ ${Math.round(pagesOf('mem'))} ص)</span></div>
     <div class="kpi"><b>${P.remaining}</b><span>أرباع للحفظ (≈ ${Math.round(pagesOf('none') + pagesOf('rel') + pagesOf('prog'))} ص)</span></div>
@@ -739,7 +741,7 @@ views.focus = () => {
 
 /* ---------- المزيد ---------- */
 views.more = () => `<div class="hero-title">المزيد</div>
-  <div class="rows">${[['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
+  <div class="rows">${[['prog', '▥', 'البرنامج الرسمي والإضافي', 'عدّادان مستقلان، وزر وقت الفراغ'], ['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
 views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
   <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
   <h2>ما يمكن فعله فعلًا</h2>
@@ -827,9 +829,69 @@ views.print = () => {
   ${Object.entries(g).filter(([, a]) => a.length).map(([c, a]) => `<h2 class="pcat">${esc(c)}</h2>${a.map(f => `<div class="faida"><span class="fnum">${++n}</span><div class="ftxt">${esc(f.text).replace(/\n/g, '<br>')}</div><div class="fsrc">${esc(f.book || '')}${f.vol ? '، ج' + esc(f.vol) : ''}${f.page ? '، ص' + esc(f.page) : ''}</div></div>`).join('')}`).join('') || '<p>لا فوائد.</p>'}</div>`;
 };
 
+
+/* ---------- البرنامج الرسمي والإضافي ---------- */
+let pgWeek = 0;
+const DAYN = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+function pgBar(c) {
+  const o = c.official / 240 * 100, e = c.extra / 240 * 100;
+  return `<div class="pbar" role="img" aria-label="التقدم ${c.total} من 240"><i class="po" style="width:${o}%"></i><i class="pe" style="width:${e}%"></i></div><div class="legend"><span class="mem">الرسمي ${c.official}</span><span class="rel">الإضافي ${c.extra}</span><span>المتبقي ${c.remaining}</span></div>`;
+}
+function pgSummaryHtml(c) {
+  const end = G.freeTimeText(c);
+  return `<div class="note ${c.feasible || c.needExtra === 0 ? '' : 'warnb'}">${end}</div>`;
+}
+views.prog = () => {
+  const P = S.prog, t = todayStr(), c = G.calc(P, t);
+  const ws = G.add(G.weekStart(t), pgWeek * 7), sm = G.weekSummary(P, ws, t);
+  const days = Array.from({ length: 7 }, (_, i) => G.add(ws, i));
+  const chk = (d, slot, label, on) => `<label class="pchk"><input type="checkbox" data-pgchk="${d}|${slot}" ${on ? 'checked' : ''} ${d < P.start ? 'disabled' : ''}><span>${label}</span></label>`;
+  const rowOf = d => {
+    const r = P.days[d] || {}, k = G.kind(d), past = d < t, miss = k === 'mem' && past && d >= P.start && G.dayDone(P, d) < P.perDay;
+    const body = k === 'mem' ? chk(d, 'a', 'الربع ١', r.a) + chk(d, 'b', 'الربع ٢', r.b) : k === 'rev' ? chk(d, 'r', 'المراجعة والاستدراك', r.r) : chk(d, 't', 'التثبيت والتقييم', r.t);
+    return `<div class="row prow${d === t ? ' today' : ''}${miss ? ' miss' : ''}"><span class="main"><span class="t">${DAYN[G.dow(d)]} <span class="m">${fmtD(d)}</span></span><span class="pchks">${body}</span></span>${miss ? '<span class="go">فائت — يمكن استدراكه</span>' : ''}</div>`;
+  };
+  const wk = G.weeks(P, t, 10), mx = Math.max(10, ...wk.map(w => w.off + w.extra));
+  const chart = wk.length ? `<div class="pchart">${wk.slice().reverse().map(w => `<div class="pcol" title="${fmtD(w.ws)}"><span class="pc-e" style="height:${w.extra / mx * 100}%"></span><span class="pc-o" style="height:${w.off / mx * 100}%"></span><em>${w.off + w.extra}</em></div>`).join('')}</div><div class="sub">كل عمود أسبوع: الأخضر رسمي والذهبي إضافي.</div>` : '';
+  const miss = G.missedDays(P, t);
+  const extras = P.extra.slice().sort((a, b) => a.d < b.d ? 1 : -1);
+  return `<div class="hero-title">البرنامج الرسمي والإضافي</div>
+  <div class="sub">عدّادان مستقلان: الرسمي (ربعان من الأحد إلى الخميس، والجمعة للمراجعة والاستدراك، والسبت للتثبيت والتقييم) والإضافي خارج البرنامج. محفوظاتك قبل البرنامج لا تُحسب هنا.</div>
+  ${pgBar(c)}
+  <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${Math.ceil(c.weeksLeft)}</b><span>أسبوعًا حتى ${fmtD(P.end, { day: 'numeric', month: 'long' })}</span></div><div class="kpi"><b>${c.projected ? fmtD(c.projected, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</b><span>${c.projected && c.late ? 'التقدير بوتيرتك (بعد الموعد!)' : 'تاريخ الانتهاء المتوقع'}</span></div></div>
+  <button class="btn pri block big" data-act="pg-free">لديّ وقت فراغ</button>
+  ${pgSummaryHtml(c)}
+  <h2>الأسبوع <span class="count">· ${sm.off}/${sm.planned} رسمي · ${sm.extra} إضافي</span></h2>
+  <div class="btns"><button class="btn sm" data-act="pg-wk" data-d="-1">‹ السابق</button><button class="btn sm" data-act="pg-wk" data-d="0">هذا الأسبوع</button><button class="btn sm" data-act="pg-wk" data-d="1">التالي ›</button></div>
+  <div class="rows">${days.map(rowOf).join('')}</div>
+  ${miss.length ? `<h2>أيام فائتة <span class="count">· ${miss.length}</span></h2><div class="sub">${miss.slice(-10).map(m => `${DAYN[G.dow(m.d)]} ${fmtD(m.d)} (ناقص ${m.missing})`).join(' · ')}. ارجع إليها من التنقل بين الأسابيع لتؤشّرها حين تستدركها.</div>` : ''}
+  <h2>الأسابيع</h2>${chart}
+  <div class="rows">${wk.map(w => `<div class="row"><span class="main"><span class="t">أسبوع ${fmtD(w.ws)}</span><span class="m">رسمي ${w.off}/${w.planned} · إضافي ${w.extra} · فائت ${w.missed} · مراجعة ${w.rev ? '✓' : '—'} · تثبيت ${w.tath ? '✓' : '—'}</span></span></div>`).join('')}</div>
+  <h2>سجل الإضافي <span class="count">· ${c.extra}</span></h2>
+  <div class="rows">${extras.length ? extras.map(e => `<div class="row"><span class="main"><span class="t">+${e.n} · ${fmtD(e.d)}</span><span class="m">${esc(e.note || '')}</span></span><button class="btn sm" data-act="pg-edit" data-id="${e.id}">تعديل</button><button class="btn sm" data-act="pg-del" data-id="${e.id}">حذف</button></div>`).join('') : '<div class="empty">لا إضافي بعد.</div>'}</div>
+  <h2>الإعدادات</h2>
+  <div class="two"><label class="field"><span>بداية البرنامج</span><input type="date" id="pg-start" value="${P.start}"></label><label class="field"><span>الموعد (قبل بداية رمضان)</span><input type="date" id="pg-end" value="${P.end}"></label></div>
+  <label class="field"><span>أقصى إضافي معقول أسبوعيًا</span><input type="number" id="pg-cap" value="${P.cap}" min="1" max="60"></label>
+  <p class="sub">تُحسب البداية والموعد كما كتبتهما؛ موعد رمضان 1448 تقريبي فعدّله حين يتأكد. لا شيء هنا يغيّر خطتك الأصلية في صفحة «اليوم».</p>`;
+};
+function pgFreeSheet() {
+  const c = G.calc(S.prog, todayStr());
+  openSheet(`<h3>لديّ وقت فراغ</h3>${pgSummaryHtml(c)}<div class="sub">هذا الأسبوع: ${c.extraThisWeek} إضافي${c.perWeek ? ' من ' + c.perWeek + ' مطلوبة' : ''}${c.leftThisWeek ? ' · بقي ' + c.leftThisWeek : ''}.</div>
+  <div class="sub" style="margin:12px 0 6px">سجّل ما حفظتَه الآن (خارج البرنامج)</div>
+  <div class="btns">${[1, 2, 3].map(n => `<button class="btn pri" data-act="pg-add" data-n="${n}">+${n}</button>`).join('')}</div>
+  <div class="two" style="margin-top:10px"><label class="field"><span>عدد آخر</span><input type="number" id="pg-n" min="1" max="240" inputmode="numeric"></label><div style="display:flex;align-items:end;margin:12px 0"><button class="btn block" data-act="pg-add" data-n="0">تسجيل</button></div></div>
+  <button class="btn block" data-act="close">إغلاق</button>`);
+}
+function pgAdd(n) {
+  const r = G.addExtra(S.prog, todayStr(), n); save();
+  if (!r.ok) { toast(r.full ? 'اكتمل الحفظ: 240 ربعًا' : 'اكتب عددًا صحيحًا'); return; }
+  toast(r.clipped ? `سُجّل ${r.n} فقط (الإجمالي لا يتجاوز 240)` : `سُجّل +${r.n}`);
+  route(); if (location.hash === '#/prog') pgFreeSheet();
+}
+
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'المكتبة'], ['more', '⋯', 'المزيد']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -916,6 +978,11 @@ document.addEventListener('click', e => {
     case 'focus-start': focusStart(+d.m); break;
     case 'focus-stop': focusDone(false); break;
     case 'pack-add': packAdd(d.id, d.file); break;
+    case 'pg-free': pgFreeSheet(); break;
+    case 'pg-wk': pgWeek = d.d === '0' ? 0 : pgWeek + (+d.d); route(); break;
+    case 'pg-add': { const n = +d.n || +($('#pg-n') && $('#pg-n').value); pgAdd(n); break; }
+    case 'pg-del': if (confirm('حذف هذا السجل؟')) { G.removeExtra(S.prog, d.id); save(); route(); } break;
+    case 'pg-edit': { const e = S.prog.extra.find(x => x.id === d.id); const v = prompt('العدد الصحيح:', e ? e.n : ''); if (v !== null && G.setExtraN(S.prog, d.id, v)) { save(); route(); } break; }
     case 'hl-weight': { const w = +$('#hl-newW').value; if (!(w > 20)) return toast('اكتب وزنًا صحيحًا'); const a = S.health.weights; const i = a.findIndex(x => x.d === t); if (i >= 0) a[i].w = w; else a.push({ d: t, w }); S.health.w = String(w); save(); route(); toast('سُجّل الوزن'); break; }
     case 'listen': listenStart(); break;
     case 'tj-legend': openSheet(`<h3>مفتاح ألوان التجويد</h3><div class="tjlist">${TJ.rules.map((r, i) => tjOn(i) ? `<div class="tjrow"><span class="tjn"><i class="tj-${i}">${TJ_SAMPLE[i]}</i> ${TJ_AR[i]}</span></div>` : '').join('')}</div><button class="btn block" data-act="close">إغلاق</button>`); break;
@@ -986,6 +1053,10 @@ document.addEventListener('change', e => {
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-arep') { s.arep = +v; save(); toast('تم الحفظ'); return; }
+  if (e.target.dataset && e.target.dataset.pgchk) { const [dd, sl] = e.target.dataset.pgchk.split('|'); if (!G.setSlot(S.prog, dd, sl, e.target.checked)) toast('لا يمكن تأشير هذه الخانة'); save(); return route(); }
+  if (id === 'pg-start' && v) { S.prog.start = v; save(); return route(); }
+  if (id === 'pg-end' && v) { S.prog.end = v; save(); return route(); }
+  if (id === 'pg-cap' && +v > 0) { S.prog.cap = +v; save(); return route(); }
   if (id === 'lk-mode') { S.lock.mode = v; save(); return fillCode(); }
   if (id === 'fa-img') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
   if (id === 'fa-imp') { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const o = JSON.parse(r.result), arr = Array.isArray(o) ? o : o.faidas; let n = 0; (o.cats || []).forEach(c => { if (!S.fcats.includes(c)) S.fcats.push(c); }); arr.forEach(x => { if (!x.text) return; if (S.faidas.some(y => y.text === x.text && y.book === x.book && y.page === x.page)) return; if (x.cat && !S.fcats.includes(x.cat)) S.fcats.push(x.cat); S.faidas.push({ id: 'f' + Date.now().toString(36) + (n++), cat: x.cat || 'فوائد منوعة', ...x }); }); save(); route(); toast('استُوردت ' + n + ' فائدة'); } catch (x) { toast('ملف غير صالح'); } }; r.readAsText(f); return; }
