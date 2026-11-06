@@ -32,6 +32,10 @@ function unitsInRange(g1, g2) { // rub' dont au moins la moitié des versets est
 }
 
 /* ---------- dates ---------- */
+function ringHtml(frac, label, sub, size) {
+  const r = 54, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(1, frac)));
+  return `<div class="ringbox"><svg viewBox="0 0 128 128" width="${size || 150}" height="${size || 150}" role="img" aria-label="${label}"><circle cx="64" cy="64" r="${r}" fill="none" stroke="var(--line)" stroke-width="10"/><circle cx="64" cy="64" r="${r}" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 64 64)"/></svg><div class="ringtxt"><b>${label}</b><span>${sub}</span></div></div>`;
+}
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const todayStr = () => ymd(new Date());
@@ -272,36 +276,49 @@ function getItem(kind, id) {
 /* ---------- vues ---------- */
 const views = {};
 views.today = () => {
-  const P = plan(), c = counts(), L = P.L;
-  const dayN = Math.max(1, diffDays(S.settings.start, P.t) + 1), total = diffDays(S.settings.start, S.settings.end) + 1;
+  const P = plan(), L = P.L, t = P.t, pr = S.prog, c = P.cp;
+  const dayN = Math.max(1, diffDays(S.settings.start, t) + 1), total = diffDays(S.settings.start, S.settings.end) + 1;
   const row = (id, kind, mode, title, meta, done, lat) => `<button class="row${done ? ' done' : ''}" data-act="open" data-kind="${kind}" data-id="${id}" data-mode="${mode}"><span class="main"><span class="t${lat ? ' lat' : ' ar'}">${title}</span><span class="m">${meta}</span></span><span class="go">${done ? 'تمّ ✓' : 'ابدأ'}</span></button>`;
   const loc = u => `الحزب ${UI[u].hizb} · الربع ${UI[u].rub}`;
   const newRows = L.new.map(i => row(i, 'q', 'new', UI[i].label, loc(i), true)).join('') +
     P.newList.map(i => row(i, 'q', 'new', UI[i].label, `${P.pgCatch.includes(i) ? 'استدراك · ' : 'البرنامج · '}${loc(i)} · ≈ ${fmt1(UI[i].pages)} ص`, false)).join('');
+  const srsRows = P.revList.map(i => { const late = diffDays(S.units[i].due, t); return row(i, 'q', 'rev', UI[i].label, `${S.units[i].weak ? 'ضعيف · ' : ''}${late > 0 ? 'متأخر ' + late + ' يوم' : 'موعده اليوم'} · ${loc(i)}`, false); });
   const revRows = pgRevHtml(P, row, loc) + L.rev.map(i => row(i, 'q', 'rev', UI[i].label, 'تمّت المراجعة', true)).join('') +
-    P.revList.map(i => { const late = diffDays(S.units[i].due, P.t); return row(i, 'q', 'rev', UI[i].label, `${S.units[i].weak ? 'ضعيف · ' : ''}${late > 0 ? 'متأخر ' + late + ' يوم' : 'موعده اليوم'} · ${loc(i)}`, false); }).join('');
+    (srsRows.length > 3 ? `<details class="more"><summary>مراجعات أخرى مستحقة · ${P.dueAll.length}${P.dueAll.length > P.revList.length ? ' (المؤجَّل ' + (P.dueAll.length - P.revList.length) + ')' : ''}</summary><div class="rows">${srsRows.join('')}</div></details>` : srsRows.join(''));
   const bRows = P.bnew.map(([b, j]) => { const bk = S.books.find(x => x.id === b); return row(b + ':' + j, 'b', 'new', esc(bk.title) + ' — الجزء ' + (j + 1), bk.kind === 'matn' ? 'للحفظ' : 'للقراءة', false, true); }).join('') +
     P.brev.map(([b, j]) => { const bk = S.books.find(x => x.id === b); return row(b + ':' + j, 'b', 'rev', esc(bk.title) + ' — الجزء ' + (j + 1), 'للمراجعة', false, true); }).join('') +
     L.bnew.concat(L.brev).map(x => { const [b, j] = x.split(':'); const bk = S.books.find(y => y.id === b); return bk ? row(x, 'b', 'rev', esc(bk.title) + ' — الجزء ' + (+j + 1), 'تمّ', true, true) : ''; }).join('');
-  const overdue = P.dueAll.length - P.revList.length;
+  // الجسم والعادات
+  const gm = S.gym || { routines: [], week: {}, logs: [] }, rid = gm.week[parseD(t).getDay()], rt = rid && gm.routines.find(r => r.id === rid), gDone = gm.logs.some(l => l.d === t);
+  S.health.walk = S.health.walk || {}; const wDone = !!S.health.walk[t], rec = S.rec && S.rec.start ? S.rec : null, recDone = rec && window.RECO.checkedToday(rec, t);
+  const body = [
+    rt ? `<a class="row${gDone ? ' done' : ''}" href="#/gym" style="text-decoration:none;color:inherit"><span class="main"><span class="t">التمرين: ${esc(rt.name)}</span><span class="m">${rt.ex.length} تمارين</span></span><span class="go">${gDone ? 'تمّ ✓' : 'ابدأ'}</span></a>` : '',
+    `<button class="row${wDone ? ' done' : ''}" data-act="walk"><span class="main"><span class="t">مشي ٣٠ دقيقة</span><span class="m">٨–١٠ آلاف خطوة</span></span><span class="go">${wDone ? 'تمّ ✓' : 'تأشير'}</span></button>`,
+    rec ? `<button class="row${recDone ? ' done' : ''}" data-rc="check"><span class="main"><span class="t">التعافي: ${window.RECO.days(rec, t)} يومًا</span><span class="m">${recDone ? 'سُجّل يومك' : 'سجّل يومك بلمسة'}</span></span><span class="go">${recDone ? 'تمّ ✓' : 'سجّل'}</span></button>` : `<a class="row" href="#/reco" style="text-decoration:none;color:inherit"><span class="main"><span class="t">التعافي</span><span class="m">ابدأ مساحتك الخاصة</span></span><span class="go">‹</span></a>`,
+  ].join('');
+  // الحصيلة اليومية
+  const tHif = P.quota, dHif = tHif - P.newList.length, tRev = P.pgRev.length + L.rev.length + P.revList.length + (P.rv.test ? 1 : 0), dRev = L.rev.length + (P.rv.test && S.prog.rv[t] ? 1 : 0);
+  const tAll = tHif + tRev + (rt ? 1 : 0) + 1 + (rec ? 1 : 0), dAll = dHif + dRev + (rt && gDone ? 1 : 0) + (wDone ? 1 : 0) + (recDone ? 1 : 0);
+  const kd = G.kind(t), kline = t < pr.start ? `يبدأ البرنامج الرسمي الأحد ${fmtD(pr.start, { day: 'numeric', month: 'long' })}` : kd === 'mem' ? 'يوم حفظ' : kd === 'rev' ? 'يوم استدراك وتثبيت' : 'يوم تثبيت أو اختبار';
+  const weak = weakAyas();
   return `
   <div class="hero-title">اليوم ${Math.min(dayN, total)} من ${total}</div>
-  <div class="sub">الهدف: الانتهاء في ${fmtD(S.settings.end, { day: 'numeric', month: 'long', year: 'numeric' })} · بقي ${P.daysLeft} يوم</div>
-  ${weave()}${legend()}
-  ${behindBanner()}
-  ${(() => { const c = G.calc(S.prog, todayStr()); return `<a class="row" href="#/prog" style="text-decoration:none;color:inherit"><span class="main"><span class="t">البرنامج: ${c.official} رسمي + ${c.extra} إضافي = ${c.total}/240</span><span class="m">${c.needExtra ? 'المطلوب إضافيًا: ' + c.perWeek + ' في الأسبوع' : 'البرنامج الرسمي يكفي'}</span></span><span class="go">فتح ‹</span></a>`; })()}
-  <div class="kpis">
-    <div class="kpi"><b>${c.mem}</b><span>أرباع محفوظة (≈ ${Math.round(pagesOf('mem'))} ص)</span></div>
-    <div class="kpi"><b>${P.remaining}</b><span>أرباع للحفظ (≈ ${Math.round(pagesOf('none') + pagesOf('rel') + pagesOf('prog'))} ص)</span></div>
-    <div class="kpi"><b>${P.dueAll.length}</b><span>مراجعات مستحقة</span></div>
+  <div class="sub">${kline} · بقي ${P.daysLeft} يومًا حتى ${fmtD(S.settings.end, { day: 'numeric', month: 'long' })}</div>
+  <div class="card sum">
+    ${ringHtml(tAll ? dAll / tAll : 1, `${dAll}/${tAll}`, 'مهام اليوم', 120)}
+    <div class="sumr"><a href="#/plan" class="sumlink"><b>${c.total}</b>/240 <span class="m">محفوظ في البرنامج</span></a>
+      <div class="pbar sm"><i class="po" style="width:${c.official / 2.4}%"></i><i class="pe" style="width:${c.extra / 2.4}%"></i></div>
+      <span class="m">${c.remaining === 0 ? 'اكتمل الحفظ' : c.needExtra ? `الإضافي المطلوب ${c.perWeek} أسبوعيًا` : 'البرنامج الرسمي يكفي'}</span></div>
   </div>
-  <h2>الحفظ — البرنامج الرسمي <span class="count">· ${P.quota} ${P.quota > 10 ? 'ربعًا' : 'أرباع'} (≈ ${fmt1(P.quota * 604 / 240)} ص)</span></h2>
+  ${behindBanner()}
+  <h2>الحفظ <span class="count">· ${P.quota} ${P.quota > 10 ? 'ربعًا' : 'أرباع'} (≈ ${fmt1(P.quota * 604 / 240)} ص)</span></h2>
   <div class="rows">${newRows || `<div class="empty">${dayKindMsg(P)}</div>`}</div>
-  ${extraHtml(P, row, loc)}
-  <h2>المراجعة <span class="count">· ${P.dueAll.length} مستحقة${overdue > 0 ? '، مؤجَّلة منها ' + overdue + ' (الحد الأقصى ' + S.settings.reviewCap + ' يوميًا)' : ''}</span></h2>
+  <h2>المراجعة</h2>
   <div class="rows">${revRows || '<div class="empty">لا مراجعة مستحقة.</div>'}</div>
-  ${(() => { const w = weakAyas(); if (!w.length) return ''; return `<h2>مواضع التثبيت <span class="count">· ${w.length} آية</span></h2><div class="rows">${w.slice(0, 5).map(g => `<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m">أخطاء: ${S.errors[g].n}${S.errors[g].last ? ' · آخرها ' + fmtD(S.errors[g].last) : ''}</span></span></div>`).join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>`; })()}
-  ${bRows ? `<h2>الكتب والمتون</h2><div class="rows">${bRows}</div>` : ''}`;
+  ${c.remaining ? `<details class="more"><summary>الإضافي · ${P.extraList.length ? P.extraList.length + ' مقترح' : 'لا مقترح اليوم'}</summary>${extraHtml(P, row, loc)}</details>` : ''}
+  <h2>الجسم والعادات</h2><div class="rows">${body}</div>
+  ${bRows ? `<h2>الكتب والمتون</h2><div class="rows">${bRows}</div>` : ''}
+  ${weak.length ? `<details class="more"><summary>مواضع التثبيت · ${weak.length} آية</summary><div class="rows">${weak.slice(0, 5).map(g => `<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m">أخطاء: ${S.errors[g].n}${S.errors[g].last ? ' · آخرها ' + fmtD(S.errors[g].last) : ''}</span></span></div>`).join('')}</div></details>` : ''}`;
 };
 
 views.map = () => {
@@ -650,7 +667,7 @@ function pgRevHtml(P, row, loc) {
 function extraHtml(P, row, loc) {
   const c = P.cp; if (c.remaining === 0) return '';
   const rows = P.extraList.map(i => row(i, 'q', 'new', UI[i].label, `${S.units[i].pri ? 'أولوية · ' : ''}إضافي · ${loc(i)} · ≈ ${fmt1(UI[i].pages)} ص`, false)).join('');
-  return `<h2>الإضافي <span class="count">· المطلوب ${c.perWeek} أسبوعيًا (هذا الأسبوع ${c.extraThisWeek})</span></h2>
+  return `<div class="sub" style="margin:8px 0">المطلوب ${c.perWeek} أسبوعيًا · هذا الأسبوع ${c.extraThisWeek}</div>
   <div class="rows">${rows || '<div class="empty">لا إضافي مقترح اليوم بحسب حاجتك.</div>'}</div>
   <button class="btn block" data-act="pg-free">لديّ وقت فراغ</button>`;
 }
@@ -663,20 +680,6 @@ function behindBanner() {
   if (P.dueAll.length - P.revList.length > 3) out.push(`<div class="note warnb">تراكمت مراجعات مؤجَّلة (${P.dueAll.length - P.revList.length}). <a href="#/plan">ارفع الحد اليومي أو خصّص يوم استدراك</a></div>`);
   return out.join('');
 }
-views.plan = () => {
-  const P = plan(), pr = S.prog, t = P.t, c = P.cp, days = Array.from({ length: 14 }, (_, k) => addDays(t, k));
-  const nm = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-  const unitTxt = u => u.length ? u.map(i => UI[i].label).join(' + ') : '';
-  return `<div class="hero-title">الخطة المفصّلة</div><div class="sub">جدول البرنامج الرسمي يوميًا مع مراجعته المقررة. ما فاتك ينتقل إلى حفظ اليوم تلقائيًا، والإضافي يُحسب من حاجتك قبل رمضان.</div>
-  <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${c.missed}</b><span>فائت للاستدراك</span></div><div class="kpi"><b>${c.perWeek}</b><span>إضافي مطلوب أسبوعيًا</span></div></div>
-  ${behindBanner()}
-  <h2>خيارات</h2>
-  <div class="two"><label class="field"><span>أقصى مراجعات يوميًا (غير مراجعة البرنامج)</span><input type="number" id="st-cap" min="1" max="60" value="${S.settings.reviewCap}"></label><div></div></div>
-  <div class="btns"><button class="btn sm" data-act="rcap-up">رفع حد المراجعة +4</button><a class="btn sm" href="#/prog" style="text-decoration:none">البرنامج الرسمي والإضافي</a></div>
-  <h2>الأيام القادمة</h2>
-  <div class="rows">${days.map((d, k) => { const u = G.unitsOfDay(pr, d).filter(i => !pr.done[i]), r = G.reviewOf(pr, d), kd = G.kind(d); return `<div class="row"><span class="main"><span class="t lat" style="font-size:15px">${k === 0 ? 'اليوم' : nm[G.dow(d)] + ' ' + fmtD(d)}</span><span class="m ar" dir="rtl" style="font-size:15px">${u.length ? 'حفظ: ' + unitTxt(u) : kd === 'mem' ? (d < pr.start ? 'قبل بداية البرنامج' : 'تمّ حفظ يومه') : ''}${r.t && r.t !== '—' ? ` · ${esc(r.t)}` : ''}</span></span></div>`; }).join('')}</div>
-  <p class="sub">المراجعة بعد الأسبوع 4 تقديرية إلى أن تصلني بقية جدولك.</p>`;
-};
 
 /* ---------- الصحة والرياضة ---------- */
 const ACT = [[1.2, 'خامل (عمل مكتبي بلا رياضة)'], [1.375, 'خفيف (١–٣ حصص أسبوعيًا)'], [1.55, 'متوسط (٣–٥ حصص)'], [1.725, 'نشيط جدًا']];
@@ -753,8 +756,14 @@ views.focus = () => {
 };
 
 /* ---------- المزيد ---------- */
-views.more = () => `<div class="hero-title">المزيد</div>
-  <div class="rows">${[['prog', '▥', 'البرنامج الرسمي والإضافي', 'عدّادان مستقلان، وزر وقت الفراغ'], ['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['gym', '🏋', 'التمارين', 'روتين، جلسة موجَّهة، تدرّج وأرقام قياسية'], ['health', '♥', 'الصحة والرياضة', 'السعرات والبروتين وبرنامج الأسبوع'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['settings', '⚙', 'الإعدادات', 'التواريخ، الألوان، المزامنة']].map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`;
+views.more = () => {
+  const G2 = [
+    ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
+    ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
+    ['النظام', [['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
+  ];
+  return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="rows">${items.map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`).join('');
+};
 views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
   <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
   <h2>ما يمكن فعله فعلًا</h2>
@@ -872,7 +881,7 @@ views.prog = () => {
   const chart = wk.length ? `<div class="pchart">${wk.slice().reverse().map(w => `<div class="pcol" title="${fmtD(w.ws)}"><span class="pc-e" style="height:${w.extra / mx * 100}%"></span><span class="pc-o" style="height:${w.off / mx * 100}%"></span><em>${w.off + w.extra}</em></div>`).join('')}</div><div class="sub">كل عمود أسبوع: الأخضر رسمي والذهبي إضافي.</div>` : '';
   const miss = G.missedUnits(P, t);
   const extras = P.extra.slice().sort((a, b) => a.d < b.d ? 1 : -1);
-  return `<div class="hero-title">البرنامج الرسمي والإضافي</div>
+  return `${behindBanner()}<div class="hero-title">الخطة</div>
   <div class="sub">عدّادان مستقلان: الرسمي (الربعان المقرران من الأحد إلى الخميس بحسب جدولك، والجمعة للاستدراك، والسبت للتثبيت أو الاختبار) والإضافي خارج البرنامج. محفوظاتك قبل البرنامج لا تُحسب هنا. حين تنهي جلسة حفظ تُسجَّل هنا تلقائيًا.</div>
   ${pgBar(c)}
   <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${Math.ceil(c.weeksLeft)}</b><span>أسبوعًا حتى ${fmtD(P.end, { day: 'numeric', month: 'long' })}</span></div><div class="kpi"><b>${c.projected ? fmtD(c.projected, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</b><span>${!c.projected ? 'لا انتهاء بهذه الوتيرة' : c.late ? 'التقدير بوتيرتك (بعد الموعد!)' : 'تاريخ الانتهاء المتوقع'}</span></div></div>
@@ -887,6 +896,7 @@ views.prog = () => {
   <h2>سجل الإضافي <span class="count">· ${c.extra}</span></h2>
   <div class="rows">${extras.length ? extras.map(e => `<div class="row"><span class="main"><span class="t">+${e.n} · ${fmtD(e.d)}</span><span class="m">${esc(e.note || '')}</span></span><button class="btn sm" data-act="pg-edit" data-id="${e.id}">تعديل</button><button class="btn sm" data-act="pg-del" data-id="${e.id}">حذف</button></div>`).join('') : '<div class="empty">لا إضافي بعد.</div>'}</div>
   <h2>الإعدادات</h2>
+  <label class="field"><span>أقصى مراجعات يومية خارج مراجعة البرنامج</span><input type="number" id="st-cap" min="1" max="60" value="${S.settings.reviewCap}"></label>
   <div class="two"><label class="field"><span>بداية البرنامج</span><input type="date" id="pg-start" value="${P.start}"></label><label class="field"><span>الموعد (قبل بداية رمضان)</span><input type="date" id="pg-end" value="${P.end}"></label></div>
   <label class="field"><span>أقصى إضافي معقول أسبوعيًا</span><input type="number" id="pg-cap" value="${P.cap}" min="1" max="60"></label>
   <p class="sub">تُحسب البداية والموعد كما كتبتهما؛ موعد رمضان 1448 تقريبي فعدّله حين يتأكد. لا شيء هنا يغيّر خطتك الأصلية في صفحة «اليوم».</p>`;
@@ -907,9 +917,26 @@ function pgAdd(n) {
   route(); if (location.hash === '#/prog') pgFreeSheet();
 }
 
+views.guide = () => `<div class="hero-title">دليل مساري</div>
+  <div class="sub">مساري منصّة شخصية لطلب العلم: كل شيء مرتبط بصفحة «اليوم» التي تجمع مهامك في مكان واحد.</div>
+  <h2>كيف تعمل</h2><div class="note"><b>اليوم</b> ← حفظ البرنامج ← مراجعته ← جسمك وعاداتك ← تعافيك. حين تنهي جلسة حفظ واجتزتَ اختبارها تُسجَّل تلقائيًا في «الخطة» وتخرج من حفظ الغد، دون أي إدخال يدوي.</div>
+  <h2>الأقسام</h2><div class="rows">
+    <div class="row"><span class="main"><span class="t">اليوم</span><span class="m">ملخص بحلقة واحدة، وكل مهام اليوم بلمسة</span></span></div>
+    <div class="row"><span class="main"><span class="t">الخطة</span><span class="m">البرنامج الرسمي وأسبوعه، الفائت، الإضافي، وزر «لديّ وقت فراغ»</span></span></div>
+    <div class="row"><span class="main"><span class="t">الحفظ</span><span class="m">خريطة الأرباع الـ240 وحالة كل ربع</span></span></div>
+    <div class="row"><span class="main"><span class="t">العلم</span><span class="m">المتون والكتب، والشرح التفاعلي لاحقًا</span></span></div>
+    <div class="row"><span class="main"><span class="t">أنا</span><span class="m">التعافي، التمارين، الصحة، التركيز، الاختبارات، القفل، الإعدادات</span></span></div></div>
+  <h2>تثبيته على الحاسوب</h2><div class="note">افتح الموقع في Chrome أو Edge ثم أيقونة التثبيت في شريط العنوان («تثبيت مساري»). يعمل في نافذة مستقلة ودون اتصال، ويتزامن مع هاتفك عبر المستودع الخاص.</div>
+  <h2>قادم</h2><div class="rows">
+    <div class="row"><span class="main"><span class="t">بقية جدول البرنامج</span><span class="m">أرسلها لتصير المراجعة دقيقة بعد الأسبوع الرابع</span></span></div>
+    <div class="row"><span class="main"><span class="t">لوحة الصالون</span><span class="m">شاشة جدارية بمهام اليوم والأذكار وحالة المنزل</span></span></div>
+    <div class="row"><span class="main"><span class="t">المنزل الذكي</span><span class="m">ربط الإضاءة والمنبّه بالبرنامج عبر Home Assistant</span></span></div></div>`;
+
+views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار بين «الخطة» و«البرنامج»
+
 /* ---------- routeur ---------- */
-const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'المكتبة'], ['more', '⋯', 'المزيد']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -996,6 +1023,7 @@ document.addEventListener('click', e => {
     case 'focus-start': focusStart(+d.m); break;
     case 'focus-stop': focusDone(false); break;
     case 'pack-add': packAdd(d.id, d.file); break;
+    case 'walk': S.health.walk = S.health.walk || {}; S.health.walk[t] = !S.health.walk[t]; save(); route(); break;
     case 'pg-free': pgFreeSheet(); break;
     case 'pg-test': { const P = plan(); const qs = buildQuiz('units', P.rv.u, 10); if (!qs) return toast('آيات غير كافية للاختبار.'); quiz = { qs, i: 0, score: 0, scope: 'pgtest', ans: undefined }; go('#/quiz'); break; }
     case 'pg-wk': pgWeek = d.d === '0' ? 0 : pgWeek + (+d.d); route(); break;
