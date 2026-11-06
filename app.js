@@ -58,7 +58,7 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
-  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = '90'; S.health.seeded = 2; } if (!S.prog) S.prog = window.PROG.blank(S.settings.start || todayStr(), '2027-02-08'); if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.age) S.health.age = '26'; if (!S.health.h) S.health.h = '176'; if (!S.health.w) S.health.w = '120'; if (!S.health.gw) S.health.gw = '90'; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = [{ d: '2026-09-05', w: 135 }, { d: '2026-11-05', w: 120 }]; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = '90'; S.health.seeded = 2; } if (!S.prog || S.prog.v !== 2) { S.prog = window.PROG.blank('2026-11-08', '2027-02-08'); S.settings.start = '2026-11-08'; S.settings.end = '2027-02-07'; } if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.age) S.health.age = '26'; if (!S.health.h) S.health.h = '176'; if (!S.health.w) S.health.w = '120'; if (!S.health.gw) S.health.gw = '90'; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = [{ d: '2026-09-05', w: 135 }, { d: '2026-11-05', w: 120 }]; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
@@ -168,11 +168,14 @@ function plan() {
   const isPri = i => S.units[i].pri && S.units[i].s !== 'mem';
   keys.sort((a, b) => a - b);
   const queue = keys.filter(isPri).sort((a, b) => (newRank(a) - newRank(b)) || a - b).concat(keys.filter(i => !isPri(i) && (S.units[i].s === 'rel' || S.units[i].s === 'prog')), keys.filter(i => !isPri(i) && S.units[i].s === 'none'));
-  const doneNew = L.new.length;
-  let quota = (queue.length + doneNew) === 0 ? 0 : Math.ceil((queue.length + doneNew) / daysLeft);
-  const normalQuota = quota; if (S.settings.maxNew > 0) quota = Math.min(quota, S.settings.maxNew);
-  const newList = queue.slice(0, Math.max(0, quota - doneNew));
-  const dueAll = keys.filter(i => S.units[i].s === 'mem' && S.units[i].due && S.units[i].due <= t)
+  const pr = S.prog, pend = G.pending(pr, t), cp = G.calc(pr, t), rv = G.reviewOf(pr, t);
+  const pgQ = pend.catchup.concat(pend.today);                 // الرسمي: ما فات ثم اليوم
+  const extraToday = G.extraInRange(pr, t, t);
+  const extraQ = queue.filter(i => !pr.done[i] && !pgQ.includes(i) && G.dateOfUnit(pr, i) >= pr.end);
+  const extraLeft = Math.max(0, cp.perDayExtra - extraToday), extraList = extraQ.slice(0, extraLeft);
+  const offDone = L.new.filter(i => !(pr.done[i] && pr.done[i].k === 'x')).length;
+  const quota = pgQ.length + offDone, normalQuota = quota, newList = pgQ;
+  const dueAll = keys.filter(i => S.units[i].s === 'mem' && S.units[i].due && S.units[i].due <= t && !rv.u.includes(i))
     .sort((a, b) => (revRank(a) - revRank(b)) || (S.units[a].due < S.units[b].due ? -1 : S.units[a].due > S.units[b].due ? 1 : (S.units[b].weak - S.units[a].weak) || a - b));
   const revList = dueAll.slice(0, Math.max(0, S.settings.reviewCap - L.rev.length));
   // livres
@@ -186,7 +189,8 @@ function plan() {
     b.portions.forEach((p, j) => { if (p.s === 'mem' && p.due && p.due <= t) brev.push([b.id, j, p.due]); });
   });
   brev.sort((a, b) => (a[2] < b[2] ? -1 : 1));
-  return { t, L, daysLeft, queue, quota, normalQuota, newList, dueAll, revList, bnew, brev: brev.slice(0, Math.max(0, S.settings.bookCap - L.brev.length)), remaining: queue.length };
+  const pgRev = rv.test ? [] : rv.u.filter(i => !L.rev.includes(i));
+  return { t, L, daysLeft, queue, quota, normalQuota, newList, pend, cp, rv, pgRev, pgCatch: pend.catchup, extraQ, extraList, extraLeft, dueAll, revList, bnew, brev: brev.slice(0, Math.max(0, S.settings.bookCap - L.brev.length)), remaining: queue.length };
 }
 
 /* ---------- rendu utilitaires ---------- */
@@ -273,8 +277,8 @@ views.today = () => {
   const row = (id, kind, mode, title, meta, done, lat) => `<button class="row${done ? ' done' : ''}" data-act="open" data-kind="${kind}" data-id="${id}" data-mode="${mode}"><span class="main"><span class="t${lat ? ' lat' : ' ar'}">${title}</span><span class="m">${meta}</span></span><span class="go">${done ? 'تمّ ✓' : 'ابدأ'}</span></button>`;
   const loc = u => `الحزب ${UI[u].hizb} · الربع ${UI[u].rub}`;
   const newRows = L.new.map(i => row(i, 'q', 'new', UI[i].label, loc(i), true)).join('') +
-    P.newList.map(i => row(i, 'q', 'new', UI[i].label, `${S.units[i].pri ? 'أولوية · ' : ''}${S.units[i].s === 'rel' ? 'يُعاد حفظه' : S.units[i].s === 'prog' ? 'قيد الحفظ' : 'جديد'} · ${loc(i)} · ≈ ${fmt1(UI[i].pages)} ص`, false)).join('');
-  const revRows = L.rev.map(i => row(i, 'q', 'rev', UI[i].label, 'تمّت المراجعة', true)).join('') +
+    P.newList.map(i => row(i, 'q', 'new', UI[i].label, `${P.pgCatch.includes(i) ? 'استدراك · ' : 'البرنامج · '}${loc(i)} · ≈ ${fmt1(UI[i].pages)} ص`, false)).join('');
+  const revRows = pgRevHtml(P, row, loc) + L.rev.map(i => row(i, 'q', 'rev', UI[i].label, 'تمّت المراجعة', true)).join('') +
     P.revList.map(i => { const late = diffDays(S.units[i].due, P.t); return row(i, 'q', 'rev', UI[i].label, `${S.units[i].weak ? 'ضعيف · ' : ''}${late > 0 ? 'متأخر ' + late + ' يوم' : 'موعده اليوم'} · ${loc(i)}`, false); }).join('');
   const bRows = P.bnew.map(([b, j]) => { const bk = S.books.find(x => x.id === b); return row(b + ':' + j, 'b', 'new', esc(bk.title) + ' — الجزء ' + (j + 1), bk.kind === 'matn' ? 'للحفظ' : 'للقراءة', false, true); }).join('') +
     P.brev.map(([b, j]) => { const bk = S.books.find(x => x.id === b); return row(b + ':' + j, 'b', 'rev', esc(bk.title) + ' — الجزء ' + (j + 1), 'للمراجعة', false, true); }).join('') +
@@ -291,8 +295,9 @@ views.today = () => {
     <div class="kpi"><b>${P.remaining}</b><span>أرباع للحفظ (≈ ${Math.round(pagesOf('none') + pagesOf('rel') + pagesOf('prog'))} ص)</span></div>
     <div class="kpi"><b>${P.dueAll.length}</b><span>مراجعات مستحقة</span></div>
   </div>
-  <h2>الحفظ <span class="count">· هدف اليوم: ${P.quota} أرباع (≈ ${fmt1(P.quota * 604 / 240)} ص)</span></h2>
-  <div class="rows">${newRows || '<div class="empty">لا حفظ جديد اليوم. بارك الله فيك، أو عدّل التواريخ من الإعدادات.</div>'}</div>
+  <h2>الحفظ — البرنامج الرسمي <span class="count">· ${P.quota} ${P.quota > 10 ? 'ربعًا' : 'أرباع'} (≈ ${fmt1(P.quota * 604 / 240)} ص)</span></h2>
+  <div class="rows">${newRows || `<div class="empty">${dayKindMsg(P)}</div>`}</div>
+  ${extraHtml(P, row, loc)}
   <h2>المراجعة <span class="count">· ${P.dueAll.length} مستحقة${overdue > 0 ? '، مؤجَّلة منها ' + overdue + ' (الحد الأقصى ' + S.settings.reviewCap + ' يوميًا)' : ''}</span></h2>
   <div class="rows">${revRows || '<div class="empty">لا مراجعة مستحقة.</div>'}</div>
   ${(() => { const w = weakAyas(); if (!w.length) return ''; return `<h2>مواضع التثبيت <span class="count">· ${w.length} آية</span></h2><div class="rows">${w.slice(0, 5).map(g => `<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m">أخطاء: ${S.errors[g].n}${S.errors[g].last ? ' · آخرها ' + fmtD(S.errors[g].last) : ''}</span></span></div>`).join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>`; })()}
@@ -525,6 +530,7 @@ function poolFor(scope, h) {
   if (scope === 'weak') weakAyas().forEach(g => out.add(g));
   else if (scope === 'due') { const P = plan(); [...P.dueAll, ...P.L.rev, ...P.L.new].forEach(addUnit); }
   else if (scope === 'unit') addUnit(h);
+  else if (scope === 'units') h.forEach(addUnit);
   else if (scope === 'hizb') { for (let r = 0; r < 4; r++) addUnit((h - 1) * 4 + r); }
   else S.units.forEach((u, i) => { if (u.s === 'mem') addUnit(i); });
   return [...out];
@@ -566,7 +572,7 @@ function buildQuiz(scope, h, n) {
   return qs.length ? qs : null;
 }
 let quiz = null;
-const SCOPE_L = { gate: 'بوابة الحفظ', weak: 'مواضع ضعفي', due: 'مراجعات اليوم', all: 'كل ما حفظته', hizb: 'حزب محدد' };
+const SCOPE_L = { gate: 'بوابة الحفظ', weak: 'مواضع ضعفي', due: 'مراجعات اليوم', all: 'كل ما حفظته', hizb: 'حزب محدد', pgtest: 'اختبار البرنامج' };
 function finishQuiz() {
   const n = quiz.qs.length, ok = quiz.score;
   S.tests.push({ d: todayStr(), scope: quiz.scope, n, ok }); S.tests = S.tests.slice(-60);
@@ -574,9 +580,10 @@ function finishQuiz() {
   const by = {}; quiz.qs.forEach(q => { const i = bs(qStart, q.g); (by[i] = by[i] || [0, 0]); by[i][1]++; if (q.right) by[i][0]++; });
   Object.entries(by).forEach(([i, [a, b]]) => { if (b >= 2 && a / b >= 0.8) S.units[i].vdate = todayStr(); });
   quiz.done = true;
+  if (quiz.scope === 'pgtest' && ok / n >= 0.7) S.prog.rv[todayStr()] = true;
   if (quiz.gate) {
     const g = quiz.gate, st = S.units[g.id], pass = ok / n >= 0.8; quiz.pass = pass;
-    if (pass) { markLearned(st, todayStr()); const L = logOf(todayStr()); if (!L.new.includes(g.id)) L.new.push(g.id); commitErrors(g.id); }
+    if (pass) { markLearned(st, todayStr()); G.credit(S.prog, g.id, todayStr()); const L = logOf(todayStr()); if (!L.new.includes(g.id)) L.new.push(g.id); commitErrors(g.id); }
     else { if (st.s === 'none') st.s = 'prog'; }
   }
   save();
@@ -625,45 +632,50 @@ views.quiz = () => {
   ${ans !== undefined ? `<div class="note">${ans >= 0 && q.opts[ans].ok ? 'أحسنت، إجابة صحيحة.' : (ans < 0 ? 'انتهى الوقت أو غادرتَ الصفحة، وهذا يُحسب خطأ. الجواب: ' : 'الجواب: ') + esc(q.opts.find(o => o.ok).t)} · ${q.ref}<div class="ar" dir="rtl" style="margin-top:6px;font-size:${Math.max(20, S.settings.font - 6)}px;line-height:2">${esc(q.full)}</div></div><button class="btn pri block" data-act="quiz-next">${quiz.i + 1 >= quiz.qs.length ? 'عرض النتيجة' : 'السؤال التالي'}</button>` : ''}`;
 };
 
-/* ---------- الخطة المفصّلة والاستدراك ---------- */
-function backlog() {
-  const t = todayStr(), s = S.settings, total = Math.max(1, diffDays(s.start, s.end) + 1), el = Math.max(0, diffDays(s.start, t));
-  const P = plan(), remStart = P.remaining + P.L.new.length;
-  const expected = Math.max(0, Math.round((s.base || remStart) * (1 - Math.min(el, total) / total)));
-  const baseQ = Math.ceil((s.base || remStart) / total);
-  return { behind: Math.max(0, remStart - expected), expected, remStart, P, baseQ, overdue: P.dueAll.length - P.revList.length - 0 };
+
+/* ---------- ربط البرنامج بصفحة اليوم ---------- */
+function dayKindMsg(P) {
+  const pr = S.prog, t = P.t;
+  if (t < pr.start) return `يبدأ البرنامج الرسمي يوم الأحد ${fmtD(pr.start, { day: 'numeric', month: 'long' })}. اليوم للتحضير أو للإضافي.`;
+  const k = G.kind(t); return k === 'mem' ? 'أتممتَ ربعي اليوم. بارك الله فيك.' : k === 'rev' ? 'الجمعة: استدراك وتثبيت، لا حفظ جديد مقرَّر.' : 'السبت: تثبيت أو اختبار، لا حفظ جديد مقرَّر.';
 }
+function pgRevHtml(P, row, loc) {
+  const rv = P.rv, t = P.t; if (!rv.t || rv.t === '—') return '';
+  const head = `<div class="note">${esc(rv.t)}${rv.est ? ' <span class="sub">(تقدير حتى يصلني بقية الجدول)</span>' : ''}${S.prog.rv[t] ? ' ✓' : ''}</div>`;
+  if (rv.test) return head + `<button class="btn pri block" data-act="pg-test">${S.prog.rv[t] ? 'أعد الاختبار' : 'ابدأ اختبار اليوم'} (${rv.u.length} ربعًا)</button>`;
+  const rows = P.pgRev.slice(0, 8).map(i => row(i, 'q', 'rev', UI[i].label, 'مراجعة البرنامج · ' + loc(i), false)).join('');
+  const more = P.pgRev.length > 8 ? `<div class="sub">و${P.pgRev.length - 8} أخرى تظهر بعد إتمام هذه.</div>` : '';
+  return head + rows + more;
+}
+function extraHtml(P, row, loc) {
+  const c = P.cp; if (c.remaining === 0) return '';
+  const rows = P.extraList.map(i => row(i, 'q', 'new', UI[i].label, `${S.units[i].pri ? 'أولوية · ' : ''}إضافي · ${loc(i)} · ≈ ${fmt1(UI[i].pages)} ص`, false)).join('');
+  return `<h2>الإضافي <span class="count">· المطلوب ${c.perWeek} أسبوعيًا (هذا الأسبوع ${c.extraThisWeek})</span></h2>
+  <div class="rows">${rows || '<div class="empty">لا إضافي مقترح اليوم بحسب حاجتك.</div>'}</div>
+  <button class="btn block" data-act="pg-free">لديّ وقت فراغ</button>`;
+}
+
+/* ---------- الخطة المفصّلة والاستدراك ---------- */
 function behindBanner() {
-  const b = backlog(), out = [];
-  if (b.behind > 0) out.push(`<div class="note warnb">⚠ تأخّرتَ عن الخطة بمقدار <b>${b.behind}</b> ${b.behind > 10 ? 'ربعًا' : 'أرباع'}. أُضيف التأخر تلقائيًا إلى الأيام القادمة: هدف اليوم <b>${b.P.quota}</b> (الخطة الأصلية: ${b.baseQ} يوميًا)${b.P.quota < b.P.normalQuota ? ' لكن حدّك اليومي يمنع التعويض الكامل' : ''}. <a href="#/plan">عرض الخطة وخيارات الاستدراك</a></div>`);
-  if (b.P.dueAll.length - b.P.revList.length > 3) out.push(`<div class="note warnb">تراكمت مراجعات مؤجَّلة (${b.P.dueAll.length - b.P.revList.length}). <a href="#/plan">ارفع الحد اليومي أو خصّص يوم استدراك</a></div>`);
+  const P = plan(), c = P.cp, out = [];
+  if (c.missed > 0) out.push(`<div class="note warnb">⚠ فاتك <b>${c.missed}</b> ${c.missed > 10 ? 'ربعًا' : 'أرباع'} من البرنامج الرسمي. أُضيفت إلى حفظ اليوم للاستدراك، وهي تُحسب رسمية حين تحفظها.</div>`);
+  if (!c.feasible && c.needExtra > 0 && c.daysLeft > 0) out.push(`<div class="note warnb">بهذا الإيقاع لا تنتهي قبل رمضان: يلزمك <b>${c.perWeek}</b> إضافيًا في الأسبوع وحدّك ${c.cap}. <a href="#/prog">التفاصيل</a></div>`);
+  if (P.dueAll.length - P.revList.length > 3) out.push(`<div class="note warnb">تراكمت مراجعات مؤجَّلة (${P.dueAll.length - P.revList.length}). <a href="#/plan">ارفع الحد اليومي أو خصّص يوم استدراك</a></div>`);
   return out.join('');
 }
-function forecast(n) {
-  const P = plan(), t = todayStr(), out = []; let q = P.queue.slice(); const cap = S.settings.maxNew | 0;
-  const dueOn = (date, first) => S.units.filter(u => u.s === 'mem' && u.due && (first ? u.due <= date : u.due === date)).length;
-  for (let d = 0; d < n; d++) {
-    const date = addDays(t, d), left = Math.max(1, diffDays(date, S.settings.end) + 1); let items;
-    if (d === 0) { items = P.L.new.concat(P.newList); q = q.filter(i => !P.newList.includes(i)); }
-    else { let quota = q.length ? Math.ceil(q.length / left) : 0; if (cap > 0) quota = Math.min(quota, cap); items = q.splice(0, quota); }
-    out.push({ date, items, revs: dueOn(date, d === 0) });
-  }
-  return { days: out, rest: q.length };
-}
 views.plan = () => {
-  const b = backlog(), P = b.P, F = forecast(14), cap = S.settings.maxNew | 0, t = todayStr();
-  const fin = P.remaining ? addDays(t, Math.ceil(P.remaining / Math.max(1, cap > 0 ? cap : P.quota || 1)) - (cap > 0 ? 0 : 0)) : t;
-  const late = cap > 0 && fin > S.settings.end;
-  return `<div class="hero-title">الخطة المفصّلة</div><div class="sub">كل يوم ما سأحفظه وما سأراجعه. إن تأخّرتَ، ينقل مساري ما فاتك إلى الأيام التالية ويُظهر لك الثمن.</div>
-  <div class="kpis"><div class="kpi"><b>${b.remStart}</b><span>أرباع متبقية</span></div><div class="kpi"><b>${b.expected}</b><span>المفروض أن تبقى اليوم</span></div><div class="kpi"><b style="color:${b.behind ? 'var(--rel)' : 'var(--mem)'}">${b.behind ? '+' + b.behind : '✓'}</b><span>${b.behind ? 'تأخر' : 'في الموعد'}</span></div></div>
+  const P = plan(), pr = S.prog, t = P.t, c = P.cp, days = Array.from({ length: 14 }, (_, k) => addDays(t, k));
+  const nm = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const unitTxt = u => u.length ? u.map(i => UI[i].label).join(' + ') : '';
+  return `<div class="hero-title">الخطة المفصّلة</div><div class="sub">جدول البرنامج الرسمي يوميًا مع مراجعته المقررة. ما فاتك ينتقل إلى حفظ اليوم تلقائيًا، والإضافي يُحسب من حاجتك قبل رمضان.</div>
+  <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${c.missed}</b><span>فائت للاستدراك</span></div><div class="kpi"><b>${c.perWeek}</b><span>إضافي مطلوب أسبوعيًا</span></div></div>
   ${behindBanner()}
-  <h2>خيارات الاستدراك</h2>
-  <div class="two"><label class="field"><span>أقصى حفظ جديد يوميًا (0 = بلا حد)</span><input type="number" id="st-maxnew" min="0" max="20" value="${cap}"></label><label class="field"><span>أقصى مراجعات يوميًا</span><input type="number" id="st-cap" min="1" max="60" value="${S.settings.reviewCap}"></label></div>
-  ${late ? `<div class="note warnb">بهذا الحد لن تنتهي في ${fmtD(S.settings.end)} بل حوالي ${fmtD(fin, { day: 'numeric', month: 'long', year: 'numeric' })}.</div>` : ''}
-  <div class="btns"><button class="btn sm" data-act="end-ext" data-d="7">تمديد النهاية أسبوعًا</button><button class="btn sm" data-act="rcap-up">رفع حد المراجعة +4</button></div>
+  <h2>خيارات</h2>
+  <div class="two"><label class="field"><span>أقصى مراجعات يوميًا (غير مراجعة البرنامج)</span><input type="number" id="st-cap" min="1" max="60" value="${S.settings.reviewCap}"></label><div></div></div>
+  <div class="btns"><button class="btn sm" data-act="rcap-up">رفع حد المراجعة +4</button><a class="btn sm" href="#/prog" style="text-decoration:none">البرنامج الرسمي والإضافي</a></div>
   <h2>الأيام القادمة</h2>
-  <div class="rows">${F.days.map((d, k) => `<div class="row"><span class="main"><span class="t lat" style="font-size:15px">${k === 0 ? 'اليوم' : fmtD(d.date, { weekday: 'long', day: 'numeric', month: 'short' })}</span><span class="m ar" dir="rtl" style="font-size:15px">${d.items.length ? d.items.map(i => UI[i].label).join(' · ') : 'لا حفظ جديد'}</span><span class="m">مراجعات مستحقة: ${d.revs}</span></span></div>`).join('')}</div>
-  ${F.rest ? `<p class="sub">وبعد هذه الأيام يبقى ${F.rest} ${F.rest > 10 ? 'ربعًا' : 'أرباع'} في الطابور.</p>` : ''}`;
+  <div class="rows">${days.map((d, k) => { const u = G.unitsOfDay(pr, d).filter(i => !pr.done[i]), r = G.reviewOf(pr, d), kd = G.kind(d); return `<div class="row"><span class="main"><span class="t lat" style="font-size:15px">${k === 0 ? 'اليوم' : nm[G.dow(d)] + ' ' + fmtD(d)}</span><span class="m ar" dir="rtl" style="font-size:15px">${u.length ? 'حفظ: ' + unitTxt(u) : kd === 'mem' ? (d < pr.start ? 'قبل بداية البرنامج' : 'تمّ حفظ يومه') : ''}${r.t && r.t !== '—' ? ` · ${esc(r.t)}` : ''}</span></span></div>`; }).join('')}</div>
+  <p class="sub">المراجعة بعد الأسبوع 4 تقديرية إلى أن تصلني بقية جدولك.</p>`;
 };
 
 /* ---------- الصحة والرياضة ---------- */
@@ -774,7 +786,7 @@ function randB32(n = 20) { const a = crypto.getRandomValues(new Uint8Array(n)); 
 function b32dec(s) { let bits = ''; for (const c of s.replace(/[=\s]/g, '').toUpperCase()) { const v = B32.indexOf(c); if (v >= 0) bits += v.toString(2).padStart(5, '0'); } const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2)); return new Uint8Array(out); }
 async function hmac(alg, key, msg) { const k = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: alg }, false, ['sign']); return new Uint8Array(await crypto.subtle.sign('HMAC', k, msg)); }
 async function dailyCode() { const sig = await hmac('SHA-256', b32dec(S.lock.secret), new TextEncoder().encode('masari:' + todayStr())); return String(((sig[0] & 0x7f) << 24 | sig[1] << 16 | sig[2] << 8 | sig[3]) % 1000000).padStart(6, '0'); }
-function dayState() { const P = plan(), L = P.L; return { P, left: P.newList.length + P.revList.length + P.bnew.length + P.brev.length, quizzes: L.quiz || 0, done: L.new.length + L.rev.length + L.bnew.length + L.brev.length }; }
+function dayState() { const P = plan(), L = P.L; return { P, left: P.newList.length + P.pgRev.length + P.revList.length + P.bnew.length + P.brev.length + ((P.rv.test && !S.prog.rv[P.t]) ? 1 : 0), quizzes: L.quiz || 0, done: L.new.length + L.rev.length + L.bnew.length + L.brev.length }; }
 function reportText() {
   const st = dayState(), P = st.P, t = todayStr(), last = S.tests.filter(x => x.d === t).slice(-1)[0];
   return `تقرير مساري ${t}\nحفظ جديد منجز: ${P.L.new.length} من ${P.quota}\nمراجعات منجزة: ${P.L.rev.length}\nمتبقٍ من مهام اليوم: ${st.left}\nاختبارات اليوم: ${st.quizzes}${last ? ' (آخرها ' + last.ok + '/' + last.n + ')' : ''}\nتركيز: ${S.focus[t] || 0} دقيقة\n${st.left === 0 && st.quizzes >= 1 ? '✅ أنهيتُ مهام اليوم' : '⏳ لم أنهِ مهام اليوم بعد'}`;
@@ -845,28 +857,32 @@ views.prog = () => {
   const P = S.prog, t = todayStr(), c = G.calc(P, t);
   const ws = G.add(G.weekStart(t), pgWeek * 7), sm = G.weekSummary(P, ws, t);
   const days = Array.from({ length: 7 }, (_, i) => G.add(ws, i));
-  const chk = (d, slot, label, on) => `<label class="pchk"><input type="checkbox" data-pgchk="${d}|${slot}" ${on ? 'checked' : ''} ${d < P.start ? 'disabled' : ''}><span>${label}</span></label>`;
+  const uchk = (i, on) => `<label class="pchk"><input type="checkbox" data-pgu="${i}" ${on ? 'checked' : ''}><span>${UI[i].label.length > 26 ? 'الربع ' + (i + 1) : UI[i].label}</span></label>`;
   const rowOf = d => {
-    const r = P.days[d] || {}, k = G.kind(d), past = d < t, miss = k === 'mem' && past && d >= P.start && G.dayDone(P, d) < P.perDay;
-    const body = k === 'mem' ? chk(d, 'a', 'الربع ١', r.a) + chk(d, 'b', 'الربع ٢', r.b) : k === 'rev' ? chk(d, 'r', 'المراجعة والاستدراك', r.r) : chk(d, 't', 'التثبيت والتقييم', r.t);
+    const k = G.kind(d), past = d < t, r = G.reviewOf(P, d), us = G.unitsOfDay(P, d);
+    const miss = k === 'mem' && past && d >= P.start && us.some(i => !P.done[i]);
+    let body;
+    if (d < P.start) body = '<span class="m">قبل بداية البرنامج</span>';
+    else if (k === 'mem') body = us.map(i => uchk(i, !!P.done[i])).join('') + (r.t && r.t !== '—' ? `<span class="m" style="flex-basis:100%">المراجعة: ${esc(r.t)}</span>` : '');
+    else body = `<label class="pchk"><input type="checkbox" data-pgrv="${d}" ${P.rv[d] ? 'checked' : ''}><span>${esc(r.t)}</span></label>`;
     return `<div class="row prow${d === t ? ' today' : ''}${miss ? ' miss' : ''}"><span class="main"><span class="t">${DAYN[G.dow(d)]} <span class="m">${fmtD(d)}</span></span><span class="pchks">${body}</span></span>${miss ? '<span class="go">فائت — يمكن استدراكه</span>' : ''}</div>`;
   };
   const wk = G.weeks(P, t, 10), mx = Math.max(10, ...wk.map(w => w.off + w.extra));
   const chart = wk.length ? `<div class="pchart">${wk.slice().reverse().map(w => `<div class="pcol" title="${fmtD(w.ws)}"><span class="pc-e" style="height:${w.extra / mx * 100}%"></span><span class="pc-o" style="height:${w.off / mx * 100}%"></span><em>${w.off + w.extra}</em></div>`).join('')}</div><div class="sub">كل عمود أسبوع: الأخضر رسمي والذهبي إضافي.</div>` : '';
-  const miss = G.missedDays(P, t);
+  const miss = G.missedUnits(P, t);
   const extras = P.extra.slice().sort((a, b) => a.d < b.d ? 1 : -1);
   return `<div class="hero-title">البرنامج الرسمي والإضافي</div>
-  <div class="sub">عدّادان مستقلان: الرسمي (ربعان من الأحد إلى الخميس، والجمعة للمراجعة والاستدراك، والسبت للتثبيت والتقييم) والإضافي خارج البرنامج. محفوظاتك قبل البرنامج لا تُحسب هنا.</div>
+  <div class="sub">عدّادان مستقلان: الرسمي (الربعان المقرران من الأحد إلى الخميس بحسب جدولك، والجمعة للاستدراك، والسبت للتثبيت أو الاختبار) والإضافي خارج البرنامج. محفوظاتك قبل البرنامج لا تُحسب هنا. حين تنهي جلسة حفظ تُسجَّل هنا تلقائيًا.</div>
   ${pgBar(c)}
-  <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${Math.ceil(c.weeksLeft)}</b><span>أسبوعًا حتى ${fmtD(P.end, { day: 'numeric', month: 'long' })}</span></div><div class="kpi"><b>${c.projected ? fmtD(c.projected, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</b><span>${c.projected && c.late ? 'التقدير بوتيرتك (بعد الموعد!)' : 'تاريخ الانتهاء المتوقع'}</span></div></div>
+  <div class="kpis"><div class="kpi"><b>${c.total}/240</b><span>الإجمالي</span></div><div class="kpi"><b>${Math.ceil(c.weeksLeft)}</b><span>أسبوعًا حتى ${fmtD(P.end, { day: 'numeric', month: 'long' })}</span></div><div class="kpi"><b>${c.projected ? fmtD(c.projected, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</b><span>${!c.projected ? 'لا انتهاء بهذه الوتيرة' : c.late ? 'التقدير بوتيرتك (بعد الموعد!)' : 'تاريخ الانتهاء المتوقع'}</span></div></div>
   <button class="btn pri block big" data-act="pg-free">لديّ وقت فراغ</button>
   ${pgSummaryHtml(c)}
-  <h2>الأسبوع <span class="count">· ${sm.off}/${sm.planned} رسمي · ${sm.extra} إضافي</span></h2>
+  <h2>الأسبوع <span class="count">· ${sm.schedDone}/${sm.planned} من المقرر · ${sm.extra} إضافي</span></h2>
   <div class="btns"><button class="btn sm" data-act="pg-wk" data-d="-1">‹ السابق</button><button class="btn sm" data-act="pg-wk" data-d="0">هذا الأسبوع</button><button class="btn sm" data-act="pg-wk" data-d="1">التالي ›</button></div>
   <div class="rows">${days.map(rowOf).join('')}</div>
-  ${miss.length ? `<h2>أيام فائتة <span class="count">· ${miss.length}</span></h2><div class="sub">${miss.slice(-10).map(m => `${DAYN[G.dow(m.d)]} ${fmtD(m.d)} (ناقص ${m.missing})`).join(' · ')}. ارجع إليها من التنقل بين الأسابيع لتؤشّرها حين تستدركها.</div>` : ''}
+  ${miss.length ? `<h2>فائت للاستدراك <span class="count">· ${miss.length}</span></h2><div class="sub">${miss.slice(0, 12).map(i => UI[i].label).join(' · ')}${miss.length > 12 ? ' …' : ''}. تظهر في حفظ اليوم، وتُحسب رسمية حين تحفظها.</div>` : ''}
   <h2>الأسابيع</h2>${chart}
-  <div class="rows">${wk.map(w => `<div class="row"><span class="main"><span class="t">أسبوع ${fmtD(w.ws)}</span><span class="m">رسمي ${w.off}/${w.planned} · إضافي ${w.extra} · فائت ${w.missed} · مراجعة ${w.rev ? '✓' : '—'} · تثبيت ${w.tath ? '✓' : '—'}</span></span></div>`).join('')}</div>
+  <div class="rows">${wk.map(w => `<div class="row"><span class="main"><span class="t">أسبوع ${fmtD(w.ws)}</span><span class="m">مقرر ${w.planned} · محفوظ منه ${w.schedDone} · رسمي ${w.off} · إضافي ${w.extra} · فائت ${w.missed} · استدراك ${w.rev ? '✓' : '—'} · تثبيت/اختبار ${w.tath ? '✓' : '—'}</span></span></div>`).join('')}</div>
   <h2>سجل الإضافي <span class="count">· ${c.extra}</span></h2>
   <div class="rows">${extras.length ? extras.map(e => `<div class="row"><span class="main"><span class="t">+${e.n} · ${fmtD(e.d)}</span><span class="m">${esc(e.note || '')}</span></span><button class="btn sm" data-act="pg-edit" data-id="${e.id}">تعديل</button><button class="btn sm" data-act="pg-del" data-id="${e.id}">حذف</button></div>`).join('') : '<div class="empty">لا إضافي بعد.</div>'}</div>
   <h2>الإعدادات</h2>
@@ -877,7 +893,8 @@ views.prog = () => {
 function pgFreeSheet() {
   const c = G.calc(S.prog, todayStr());
   openSheet(`<h3>لديّ وقت فراغ</h3>${pgSummaryHtml(c)}<div class="sub">هذا الأسبوع: ${c.extraThisWeek} إضافي${c.perWeek ? ' من ' + c.perWeek + ' مطلوبة' : ''}${c.leftThisWeek ? ' · بقي ' + c.leftThisWeek : ''}.</div>
-  <div class="sub" style="margin:12px 0 6px">سجّل ما حفظتَه الآن (خارج البرنامج)</div>
+  ${(() => { const P = plan(); return P.extraQ.length ? `<div class="sub" style="margin:12px 0 6px">اقتراح (بحسب أولوياتك)</div><div class="rows">${P.extraQ.slice(0, 3).map(i => `<button class="row" data-act="open" data-kind="q" data-id="${i}" data-mode="new"><span class="main"><span class="t ar">${UI[i].label}</span><span class="m">الحزب ${UI[i].hizb} · الربع ${UI[i].rub}${S.units[i].pri ? ' · أولوية' : ''}</span></span><span class="go">ابدأ ‹</span></button>`).join('')}</div>` : ''; })()}
+  <div class="sub" style="margin:12px 0 6px">أو سجّل ما حفظتَه الآن (بالعدد)</div>
   <div class="btns">${[1, 2, 3].map(n => `<button class="btn pri" data-act="pg-add" data-n="${n}">+${n}</button>`).join('')}</div>
   <div class="two" style="margin-top:10px"><label class="field"><span>عدد آخر</span><input type="number" id="pg-n" min="1" max="240" inputmode="numeric"></label><div style="display:flex;align-items:end;margin:12px 0"><button class="btn block" data-act="pg-add" data-n="0">تسجيل</button></div></div>
   <button class="btn block" data-act="close">إغلاق</button>`);
@@ -979,6 +996,7 @@ document.addEventListener('click', e => {
     case 'focus-stop': focusDone(false); break;
     case 'pack-add': packAdd(d.id, d.file); break;
     case 'pg-free': pgFreeSheet(); break;
+    case 'pg-test': { const P = plan(); const qs = buildQuiz('units', P.rv.u, 10); if (!qs) return toast('آيات غير كافية للاختبار.'); quiz = { qs, i: 0, score: 0, scope: 'pgtest', ans: undefined }; go('#/quiz'); break; }
     case 'pg-wk': pgWeek = d.d === '0' ? 0 : pgWeek + (+d.d); route(); break;
     case 'pg-add': { const n = +d.n || +($('#pg-n') && $('#pg-n').value); pgAdd(n); break; }
     case 'pg-del': if (confirm('حذف هذا السجل؟')) { G.removeExtra(S.prog, d.id); save(); route(); } break;
@@ -1003,7 +1021,7 @@ document.addEventListener('click', e => {
         if (qs) { quiz = { qs, i: 0, score: 0, scope: 'gate', ans: undefined, gate: { id: +id } }; save(); sessState.lastKey = ''; go('#/quiz'); break; }
       }
       if (mode === 'rev') { gradeItem(st, d.g, t); push(kind === 'q' ? L.rev : L.brev, tag); toast(d.g === 'hard' ? 'تُراجَع غدًا' : 'المراجعة القادمة ' + fmtD(st.due)); }
-      else if (d.g === 'learned') { markLearned(st, t); push(kind === 'q' ? L.new : L.bnew, tag); toast('تم الحفظ. أول مراجعة غدًا.'); }
+      else if (d.g === 'learned') { markLearned(st, t); if (kind === 'q') G.credit(S.prog, +id, t); push(kind === 'q' ? L.new : L.bnew, tag); toast('تم الحفظ. أول مراجعة غدًا.'); }
       else if (d.g === 'prog') { if (st.s === 'none') st.s = 'prog'; toast('بقي قيد الحفظ'); }
       else { toast('لا بأس، يبقى مجدولًا.'); }
       if (kind === 'q') commitErrors(+id);
@@ -1053,7 +1071,8 @@ document.addEventListener('change', e => {
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-arep') { s.arep = +v; save(); toast('تم الحفظ'); return; }
-  if (e.target.dataset && e.target.dataset.pgchk) { const [dd, sl] = e.target.dataset.pgchk.split('|'); if (!G.setSlot(S.prog, dd, sl, e.target.checked)) toast('لا يمكن تأشير هذه الخانة'); save(); return route(); }
+  if (e.target.dataset && e.target.dataset.pgu !== undefined) { const i = +e.target.dataset.pgu; if (e.target.checked) { const k = G.credit(S.prog, i, todayStr()); if (!k) { toast('لا يمكن تسجيله'); } else if (S.units[i].s !== 'mem') markLearned(S.units[i], todayStr()); } else G.uncredit(S.prog, i); save(); return route(); }
+  if (e.target.dataset && e.target.dataset.pgrv) { if (e.target.checked) S.prog.rv[e.target.dataset.pgrv] = true; else delete S.prog.rv[e.target.dataset.pgrv]; save(); return route(); }
   if (id === 'pg-start' && v) { S.prog.start = v; save(); return route(); }
   if (id === 'pg-end' && v) { S.prog.end = v; save(); return route(); }
   if (id === 'pg-cap' && +v > 0) { S.prog.cap = +v; save(); return route(); }
