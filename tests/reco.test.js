@@ -1,0 +1,7 @@
+const assert = require('node:assert/strict'); const R = require('../reco.js'); let n = 0; const T = (m, f) => { f(); n++; console.log('✓', m); };
+T('عدّاد الأيام', () => { const r = R.blank(); R.begin(r, '2026-11-01', 'لأجل الله'); assert.equal(R.days(r, '2026-11-01'), 0); assert.equal(R.days(r, '2026-11-11'), 10); });
+T('أقرب علامة فارقة', () => { const r = R.blank(); R.begin(r, '2026-11-01'); const m = R.nextMilestone(r, '2026-11-11'); assert.equal(m.next, 14); assert.equal(m.prev, 7); assert.equal(m.left, 4); });
+T('الانتكاس يحفظ أفضل سلسلة ويعيد العدّاد', () => { const r = R.blank(); R.begin(r, '2026-11-01'); const len = R.relapse(r, '2026-11-21', ['سهر']); assert.equal(len, 20); assert.equal(R.days(r, '2026-11-21'), 0); assert.equal(R.best(r, '2026-11-25'), 20); assert.equal(R.total(r, '2026-11-25'), 24); });
+T('تسجيل يومي والرغبات والمحفزات', () => { const r = R.blank(); R.begin(r, '2026-11-01'); R.checkin(r, '2026-11-02', { mood: 4, trig: ['وحدة', 'سهر'] }); R.checkin(r, '2026-11-03', { mood: 2, trig: ['وحدة'] }); assert.equal(R.topTriggers(r)[0][0], 'وحدة'); R.urge(r, '2026-11-03', 23, true); R.urge(r, '2026-11-04', 23, true); assert.equal(R.riskHours(r)[0].h, 23); assert.equal(R.checkedToday(r, '2026-11-02'), true); });
+T('شريط آخر الأيام', () => { const r = R.blank(); R.begin(r, '2026-11-01'); R.checkin(r, '2026-11-03', {}); const s = R.strip(r, '2026-11-04', 4); assert.equal(s.length, 4); assert.equal(s[2].ok, true); assert.equal(s[3].ok, null); });
+console.log(`\n${n} tests OK`);
