@@ -834,18 +834,47 @@ function faSheet(f) {
   const books = [...new Set(S.faidas.map(x => x.book).filter(Boolean))];
   openSheet(`<h3>${f.id ? 'تعديل الفائدة' : 'فائدة جديدة'}</h3>
   <label class="field"><span>نص الفائدة</span><textarea id="fa-text" dir="rtl" class="ar" style="font-size:20px;line-height:2">${esc(f.text)}</textarea></label>
-  <div class="btns" style="margin-bottom:8px"><label class="btn sm" style="display:inline-flex;align-items:center">📷 من صورة (تجريبي)<input type="file" id="fa-img" accept="image/*" capture="environment" hidden></label></div><div class="sub" id="fa-ocr-st"></div>
+  <div class="btns" style="margin-bottom:8px"><label class="btn sm" style="display:inline-flex;align-items:center">📷 تصوير صفحة<input type="file" id="fa-img" accept="image/*" capture="environment" hidden></label><label class="btn sm" style="display:inline-flex;align-items:center">🖼 من المعرض<input type="file" id="fa-img2" accept="image/*" hidden></label><button class="btn sm" data-act="fa-read">🔊 قراءة النص</button></div><img id="fa-prev" alt="" style="display:none;max-width:100%;max-height:200px;border-radius:8px;margin:6px 0"><div class="sub" id="fa-ocr-st"></div>
   <label class="field"><span>الكتاب</span><input type="text" id="fa-book" list="fa-books" value="${esc(f.book)}"><datalist id="fa-books">${books.map(b => `<option value="${esc(b)}">`).join('')}</datalist></label>
   <div class="two"><label class="field"><span>الجزء</span><input type="text" id="fa-vol" value="${esc(f.vol || '')}"></label><label class="field"><span>الصفحة</span><input type="text" id="fa-page" value="${esc(f.page || '')}"></label></div>
   <label class="field"><span>التصنيف</span><select id="fa-cat">${S.fcats.map(c => `<option ${c === f.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
   <div class="btns"><button class="btn pri" data-act="fa-save" data-id="${f.id || ''}">حفظ</button><button class="btn" data-act="fa-cat">+ تصنيف جديد</button>${f.id ? `<button class="btn warn" data-act="fa-del" data-id="${f.id}">حذف</button>` : ''}<button class="btn" data-act="close">إلغاء</button></div>`);
 }
 function loadScript(u) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = u; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function prepImage(file) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+  const prev = $('#fa-prev'); if (prev) { prev.src = url; prev.style.display = 'block'; }
+  const k = Math.min(2.5, Math.max(0.5, 2000 / Math.max(img.width, img.height)));
+  const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height), a = d.data, hist = new Array(256).fill(0);
+  for (let i = 0; i < a.length; i += 4) { const g = (a[i] * 0.3 + a[i + 1] * 0.59 + a[i + 2] * 0.11) | 0; a[i] = a[i + 1] = a[i + 2] = g; hist[g]++; }
+  const tot = c.width * c.height; let lo = 0, hi = 255, acc = 0;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc > tot * 0.02) { lo = v; break; } }
+  acc = 0; for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc > tot * 0.2) { hi = v; break; } }
+  const sc = 255 / Math.max(1, hi - lo);
+  for (let i = 0; i < a.length; i += 4) { const g = Math.max(0, Math.min(255, ((a[i] - lo) * sc) | 0)); a[i] = a[i + 1] = a[i + 2] = g; }
+  x.putImageData(d, 0, 0); return c;
+}
 async function ocrFile(file) {
   const st = $('#fa-ocr-st'); try {
     st.textContent = 'جارٍ تحميل محرّك القراءة (أول مرة فقط)…'; if (!window.Tesseract) await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
-    st.textContent = 'جارٍ قراءة الصورة…'; const r = await Tesseract.recognize(file, 'ara'); $('#fa-text').value = r.data.text.replace(/\n{2,}/g, '\n').trim(); st.textContent = 'راجِع النص وصحّحه قبل الحفظ: القراءة الآلية غير دقيقة مع التشكيل.';
+    st.textContent = 'جارٍ تحسين الصورة…'; const cv = await prepImage(file);
+    st.textContent = 'جارٍ قراءة الصورة…';
+    const r = await Tesseract.recognize(cv, 'ara', { logger: m => { if (m.status === 'recognizing text') st.textContent = 'جارٍ القراءة… ' + Math.round(m.progress * 100) + '%'; } });
+    const txt = r.data.text.replace(/[ \t]+\n/g, '\n').replace(/\n{2,}/g, '\n').trim();
+    $('#fa-text').value = txt; st.textContent = txt ? 'تمّت القراءة. قارن النص بالصورة وصحّحه قبل الحفظ: التشكيل والخطوط الصغيرة أضعف ما يقرؤه المحرّك.' : 'لم أستخرج نصًّا. صوّر الصفحة قريبة وبإضاءة جيدة، دون ظل.';
   } catch (e) { st.textContent = 'تعذّرت القراءة الآلية (تحتاج إنترنت). أرسل الصورة إليّ في المحادثة لأكتبها لك بدقة.'; }
+}
+function readAloud() {
+  const t = ($('#fa-text') || {}).value || '';
+  if (!('speechSynthesis' in window)) { toast('القراءة الصوتية غير مدعومة في هذا المتصفح'); return; }
+  if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+  if (!t.trim()) { toast('لا نص للقراءة'); return; }
+  const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = 0.85;
+  const v = speechSynthesis.getVoices().find(x => /^ar/i.test(x.lang)); if (v) u.voice = v; else toast('لا يوجد صوت عربي مثبّت على هذا الجهاز');
+  speechSynthesis.speak(u);
 }
 views.print = () => {
   const g = faGroups(); let n = 0;
@@ -1085,6 +1114,7 @@ document.addEventListener('click', e => {
     case 'gh-conn': gh.repo = $('#gh-repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, ''); gh.token = $('#gh-token').value.trim(); ghSave();
       if (!ghReady()) return toast('اكتب المستودع والرمز.');
       ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); break;
+    case 'fa-read': readAloud(); break;
     case 'gh-copycode': if (!ghReady()) { toast('اضبط المستودع والرمز أولًا'); break; }
       { const code = 'masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('نُسخ رمز الربط'), () => { const el = $('#gh-code'); if (el) { el.value = code; el.select(); } toast('انسخ الرمز من الحقل'); }); } break;
     case 'gh-usecode': try { const v = $('#gh-code').value.trim().replace(/^masari-link:/, ''); const o = JSON.parse(b64d(v)); if (!o.r || !o.t) throw 0; gh.repo = o.r; gh.token = o.t; ghSave(); ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); route(); } catch (e) { toast('رمز غير صالح'); } break;
@@ -1112,6 +1142,7 @@ document.addEventListener('change', e => {
   if (id === 'pg-end' && v) { S.prog.end = v; save(); return route(); }
   if (id === 'pg-cap' && +v > 0) { S.prog.cap = +v; save(); return route(); }
   if (id === 'lk-mode') { S.lock.mode = v; save(); return fillCode(); }
+  if (id === 'fa-img2') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
   if (id === 'fa-img') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
   if (id === 'fa-imp') { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const o = JSON.parse(r.result), arr = Array.isArray(o) ? o : o.faidas; let n = 0; (o.cats || []).forEach(c => { if (!S.fcats.includes(c)) S.fcats.push(c); }); arr.forEach(x => { if (!x.text) return; if (S.faidas.some(y => y.text === x.text && y.book === x.book && y.page === x.page)) return; if (x.cat && !S.fcats.includes(x.cat)) S.fcats.push(x.cat); S.faidas.push({ id: 'f' + Date.now().toString(36) + (n++), cat: x.cat || 'فوائد منوعة', ...x }); }); save(); route(); toast('استُوردت ' + n + ' فائدة'); } catch (x) { toast('ملف غير صالح'); } }; r.readAsText(f); return; }
   if (e.target.dataset && e.target.dataset.hldone) { S.health.done[e.target.dataset.hldone] = e.target.checked; save(); return route(); }
