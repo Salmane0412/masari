@@ -771,7 +771,7 @@ views.focus = () => {
 views.more = () => {
   const G2 = [
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
-    ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
+    ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
     ['النظام', [['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
   ];
   return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="rows">${items.map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`).join('');
@@ -977,7 +977,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
