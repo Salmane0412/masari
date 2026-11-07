@@ -451,8 +451,8 @@ function expectedOf(i) {
   for (let g = u.a; g <= u.b; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
   return { exp, owner };
 }
-function followEval(exp, heard) {
-  const st = new Array(exp.length); let p = 0, miss = 0;
+function followEval(exp, heard, from) {
+  const st = new Array(exp.length); let p = from || 0, miss = 0;
   for (const h of heard) {
     if (p >= exp.length) break;
     let f = -1;
@@ -463,14 +463,14 @@ function followEval(exp, heard) {
   return { st, p };
 }
 /* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
-function followEvalTwoPass(exp, committed, interim) {
-  const a = followEval(exp, committed);
+function followEvalTwoPass(exp, committed, interim, from) {
+  const a = followEval(exp, committed, from);
   if (!interim.length) return a;
-  const b = followEval(exp, committed.concat(interim)), st = a.st.slice();
+  const b = followEval(exp, committed.concat(interim), from), st = a.st.slice();
   for (let k = a.p; k < exp.length; k++) if (b.st[k] === 'ok') st[k] = 'ok';
   return { st, p: Math.max(a.p, b.p) };
 }
-const fol = { on: false, rec: null, base: '', cur: '', fin: 0, exp: [], owner: [], st: [], p: 0, unit: -1 };
+const fol = { on: false, rec: null, base: '', cur: '', fin: 0, from: 0, keep: [], paused: false, stopOnErr: true, exp: [], owner: [], st: [], p: 0, unit: -1 };
 const cleanHeard = t => { let h = normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean); return h; };
 const heardWords = () => {
   let h = cleanHeard(fol.base); let i = cleanHeard(fol.cur);
@@ -478,7 +478,10 @@ const heardWords = () => {
   return { committed: h, interim: i };
 };
 function followPaint() {
-  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim); fol.st = r.st; fol.p = r.p;
+  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from);
+  for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
+  fol.st = r.st; fol.p = r.p;
+  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
     const k = +el.dataset.wi, s = r.st[k];
@@ -488,6 +491,22 @@ function followPaint() {
   const c = document.querySelector('.w.f-cur'); if (c) { const b = c.getBoundingClientRect(); if (b.top < 120 || b.bottom > innerHeight - 140) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   folStatus(fol.on ? `🎙 يستمع إليك… صحيح ${ok} · أخطاء ${bad} · من ${fol.exp.length} كلمة` : '');
 }
+function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fol.owner[i - 1] === g) i--; return i; }
+function followHalt(kb) {
+  fol.paused = true; try { fol.rec && fol.rec.abort(); } catch (x) { }
+  const g = fol.owner[kb], from = ayahStartIdx(kb); noteError(g, 1); save();
+  try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (x) { }
+  document.querySelectorAll('.w[data-wi]').forEach(el => { const k = +el.dataset.wi; el.classList.toggle('f-bad', k === kb); el.classList.toggle('f-cur', false); });
+  const o = $('#rec-out'); if (o) o.innerHTML = `<div class="note warnb"><b>توقّف.</b> أخطأتَ عند «${esc(fol.exp[kb])}» في ${refOf(g)}.<br>أعد من أول هذه الآية.<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="fol-resume" data-from="${from}">أعد من الآية</button><button class="btn" data-act="fol-skip" data-from="${kb + 1}">تجاوز الكلمة وتابع</button></div></div>`;
+  folStatus('⏸ متوقف عند خطأ');
+}
+function followRestartRec() { try { fol.startRec && fol.startRec(); } catch (x) { } }
+function followResume(from) {
+  const st = fol.st.slice(); for (let k = 0; k < fol.exp.length; k++) if (k < from) fol.keep[k] = st[k]; else fol.keep[k] = undefined;
+  Object.assign(fol, { from, base: '', cur: '', paused: false }); const o = $('#rec-out'); if (o) o.innerHTML = '';
+  document.querySelectorAll('.w[data-wi]').forEach(el => { if (+el.dataset.wi >= from) el.classList.remove('f-ok', 'f-bad'); });
+  followPaint(); if (fol.on) followRestartRec();
+}
 function folStatus(m) { const el = $('#fol-status'); if (el) el.textContent = m; }
 const SR_ERR = { 'not-allowed': 'لم يُسمح بالميكروفون: اسمح له من إعدادات الموقع في المتصفح ثم أعد المحاولة.', 'service-not-allowed': 'خدمة التعرّف الصوتي غير مسموحة في هذا المتصفح.', 'audio-capture': 'لم يُعثر على ميكروفون.', 'network': 'التعرّف الصوتي يحتاج اتصالًا بالإنترنت.', 'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.' };
 function followStart() {
@@ -496,14 +515,14 @@ function followStart() {
   if (fol.on) return followStop();
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
-  Object.assign(fol, { on: true, base: '', cur: '', unit: +id, ...expectedOf(+id), st: [], p: 0 });
+  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
-  const startRec = () => {
+  const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
     rec.onresult = e => { let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += ' ' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
     rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
-    rec.onend = () => { fol.base += ' ' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
+    rec.onend = () => { if (fol.paused) return; fol.base += ' ' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }
   };
   folStatus('🎙 اسمح للمتصفح بالميكروفون ثم ابدأ التلاوة من أول المقطع…'); startRec();
@@ -1046,6 +1065,8 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'follow': followStart(); break;
+    case 'fol-resume': followResume(+d.from); break;
+    case 'fol-skip': followResume(+d.from); break;
     case 'end-ext': S.settings.end = addDays(S.settings.end, +d.d); save(); route(); toast('مُدّد الموعد'); break;
     case 'rcap-up': S.settings.reviewCap += 4; save(); route(); toast('رُفع حد المراجعة اليومي'); break;
     case 'fa-new': faSheet(); break;
