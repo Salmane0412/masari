@@ -58,7 +58,15 @@ class SettingsActivity : Activity() {
         root.addView(text("يحجب الدومينات أدناه ما دام حفظ اليوم لم يُنجز، ويحجب المواقع الإباحية دائمًا. لا يعمل مع NordVPN مفتوحًا: سيُرسل لك إشعارًا لتعطيله. المتصفحات التي تفعّل «DNS الآمن/DoH» قد تتجاوزه: عطّل ذلك في إعدادات المتصفح."))
         val dom = EditText(this); dom.hint = "دومين في كل سطر، مثل: youtube.com"; dom.setText(Store.domains(this).joinToString("\n")); dom.layoutDirection = View.LAYOUT_DIRECTION_LTR; dom.minLines = 3
         root.addView(dom)
-        root.addView(btn("إضافة مواقع التواصل والفيديو") { val base = dom.text.toString().trim(); dom.setText((base + "\nyoutube.com\ninstagram.com\nfacebook.com\nx.com\ntwitter.com\ntiktok.com\nreddit.com\nsnapchat.com\ntwitch.tv\nnetflix.com").trim()) })
+        val dlists = listOf(
+            "التواصل الاجتماعي" to "instagram.com facebook.com fb.com x.com twitter.com tiktok.com snapchat.com reddit.com pinterest.com tumblr.com threads.net",
+            "الفيديو والبث" to "youtube.com youtu.be twitch.tv dailymotion.com vimeo.com netflix.com primevideo.com disneyplus.com",
+            "الألعاب" to "steampowered.com epicgames.com roblox.com poki.com crazygames.com miniclip.com friv.com",
+            "القمار والرهان" to "bet365.com betclic.fr winamax.fr unibet.fr pokerstars.com 1xbet.com parionssport.fdj.fr",
+            "المواعدة" to "tinder.com bumble.com badoo.com meetic.fr happn.com grindr.com"
+        )
+        for ((name, list) in dlists) root.addView(btn("＋ $name") { dom.setText((dom.text.toString().trim() + "\n" + list.replace(" ", "\n")).trim()) })
+        root.addView(text("المواقع الإباحية تُحجب دائمًا عبر الفلتر (ليست في القائمة)، ويُنصح بتفعيل البحث الآمن في المتصفح."))
         root.addView(btn("تفعيل حظر المواقع") {
             Store.setDomains(this, dom.text.toString()); Store.setWebBlock(this, true)
             if (android.os.Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 1)
@@ -81,7 +89,8 @@ class SettingsActivity : Activity() {
         val presets = listOf(
             Triple("تحديد: التواصل الاجتماعي", "", setOf("com.instagram.android", "com.facebook.katana", "com.facebook.lite", "com.twitter.android", "com.snapchat.android", "com.zhiliaoapp.musically", "com.ss.android.ugc.trill", "com.reddit.frontpage", "com.pinterest", "com.tumblr", "com.linkedin.android", "org.telegram.messenger", "com.whatsapp", "com.discord", "com.threads")),
             Triple("تحديد: الفيديو والبث", "", setOf("com.google.android.youtube", "com.netflix.mediaclient", "tv.twitch.android.app", "com.amazon.avod.thirdpartyclient", "com.disney.disneyplus", "com.spotify.music", "com.google.android.apps.youtube.music")),
-            Triple("تحديد: المتصفحات", "", setOf("com.android.chrome", "org.mozilla.firefox", "com.microsoft.emmx", "com.opera.browser", "com.brave.browser", "com.sec.android.app.sbrowser", "com.duckduckgo.mobile.android"))
+            Triple("تحديد: المتصفحات", "", setOf("com.android.chrome", "org.mozilla.firefox", "com.microsoft.emmx", "com.opera.browser", "com.brave.browser", "com.sec.android.app.sbrowser", "com.duckduckgo.mobile.android")),
+            Triple("تحديد: الألعاب والمواعدة", "", setOf("com.tinder", "com.bumble.app", "com.badoo.mobile", "com.supercell.clashofclans", "com.supercell.clashroyale", "com.supercell.brawlstars", "com.king.candycrushsaga", "com.roblox.client", "com.mojang.minecraftpe", "com.activision.callofduty.shooter", "com.tencent.ig", "com.innersloth.spacemafia"))
         )
         for ((name, _, pk) in presets) root.addView(btn(name) {
             var n = 0; for ((c, pkg) in boxes) if (pkg in pk) { c.isChecked = true; n++ }
