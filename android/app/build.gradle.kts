@@ -9,8 +9,14 @@ android {
         applicationId = "app.masari.lock"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("masari.jks"); storePassword = "masari123"
+            keyAlias = "masari"; keyPassword = "masari123"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

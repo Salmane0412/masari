@@ -15,7 +15,9 @@ object Store {
     fun setBlockAll(c: Context, v: Boolean) { p(c).edit().putBoolean("blockAll", v).apply() }
     fun blocked(c: Context): Set<String> = HashSet(p(c).getStringSet("blocked", emptySet()) ?: emptySet())
     fun setBlocked(c: Context, s: Set<String>) { p(c).edit().putStringSet("blocked", HashSet(s)).apply() }
-    fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today()
+    fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today() || emergencyActive(c)
+    fun emergencyActive(c: Context): Boolean = p(c).getLong("emergencyUntil", 0L) > System.currentTimeMillis()
+    fun setEmergency(c: Context) { p(c).edit().putLong("emergencyUntil", System.currentTimeMillis() + 30 * 60_000L).apply() }
     fun setUnlocked(c: Context) { p(c).edit().putString("unlocked", today()).apply() }
 
     // طلب إلغاء الحماية: انتظار 24 ساعة ثم نافذة 30 دقيقة

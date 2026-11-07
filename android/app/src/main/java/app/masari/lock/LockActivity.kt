@@ -47,6 +47,8 @@ class LockActivity : Activity() {
                 root.addView(label("طلبك قيد الانتظار: بقي حوالي $h ساعة. استفد من الوقت في حفظك.", 18f))
                 root.addView(button("إلغاء الطلب") { Store.setDisableReq(this, 0L); goHome() })
             }
+            root.addView(button("✍️ اكتب الرسالة الطويلة لإلغاء الحماية الآن") {
+                startActivity(Intent(this, WhyActivity::class.java).putExtra(WhyActivity.KIND, WhyActivity.PROTECT)); finish() })
             root.addView(button("رجوع") { goHome() })
             setContentView(root); return
         }
@@ -65,6 +67,8 @@ class LockActivity : Activity() {
                 Toast.makeText(this, "فُتحت التطبيقات لهذا اليوم. بارك الله فيك.", Toast.LENGTH_LONG).show(); finish()
             } else { Store.recordFail(this); input.setText(""); Toast.makeText(this, "رمز خاطئ", Toast.LENGTH_SHORT).show() }
         })
+        root.addView(button("✍️ فتح بالكتابة: لماذا بدأت المشروع") {
+            startActivity(Intent(this, WhyActivity::class.java).putExtra(WhyActivity.KIND, WhyActivity.APP)); finish() })
         root.addView(button("افتح مساري لأنهي مهامي") { startActivity(Intent(this, MainActivity::class.java)); finish() })
         root.addView(button("رجوع للشاشة الرئيسية") { goHome() })
         setContentView(root)
