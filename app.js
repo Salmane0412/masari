@@ -102,7 +102,7 @@ async function ghPush(manual) {
   try {
     ghStatus('جارٍ الإرسال…');
     const rem = await ghRemote();
-    if (rem.data && rem.data.updatedAt > (S.updatedAt || 0) + 1000 && !manual) { ghStatus('توجد نسخة أحدث على GitHub: اضغط استرجاع.'); return; }
+    if (rem.data && rem.data.updatedAt > (S.updatedAt || 0) + 1000 && !manual) { return ghPull(true); }
     const body = { message: 'نسخة مساري ' + new Date().toISOString(), content: b64e(JSON.stringify(S)) };
     if (rem.sha) body.sha = rem.sha;
     const r = await fetch(ghUrl(), { method: 'PUT', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -408,6 +408,8 @@ views.settings = () => {
   <p class="sub">نسخ احتياطي تلقائي لبياناتك في مستودع GitHub خاص بك لتجدها على كل أجهزتك. يبقى الرمز على هذا الجهاز ولا يدخل في التصدير.</p>
   <label class="field"><span>المستودع الخاص (المالك/الاسم)</span><input type="text" id="gh-repo" dir="ltr" value="${esc(gh.repo)}" placeholder="Salmane0412/masari-data" autocapitalize="off" autocomplete="off"></label>
   <label class="field"><span>رمز الوصول (fine-grained، صلاحية Contents: قراءة وكتابة)</span><input type="password" id="gh-token" dir="ltr" value="${esc(gh.token)}" autocomplete="off"></label>
+  <label class="field"><span>رمز الربط (انسخه من جهاز مضبوط والصقه هنا: يملأ الحقلين دفعة واحدة)</span><input type="text" id="gh-code" dir="ltr" placeholder="masari-link:…" autocomplete="off"></label>
+  <div class="btns"><button class="btn" data-act="gh-copycode">نسخ رمز الربط</button><button class="btn" data-act="gh-usecode">استعمال الرمز الملصوق</button></div>
   <div class="btns"><button class="btn pri" data-act="gh-conn">حفظ واختبار</button><button class="btn" data-act="gh-push">إرسال الآن</button><button class="btn" data-act="gh-pull">استرجاع</button></div>
   <p class="sub" id="gh-status" role="status">${esc(gh.msg || (ghReady() ? 'جاهز.' : 'غير مضبوط.'))}</p>
   <h2>البيانات</h2>
@@ -616,6 +618,7 @@ function armQuiz() {
   clearTimeout(quizTimer);
   if (quiz && !quiz.done && quiz.ans === undefined) quizTimer = setTimeout(() => quizAnswer(-1), (S.settings.quizSec || 20) * 1000);
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ghPull(true); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && quiz && !quiz.done && quiz.ans === undefined && location.hash === '#/quiz') quizAnswer(-1); });
 views.tests = () => {
   const w = weakAyas().length, mem = S.units.filter(u => u.s === 'mem'), val = mem.filter(u => u.vdate).length;
@@ -1082,6 +1085,9 @@ document.addEventListener('click', e => {
     case 'gh-conn': gh.repo = $('#gh-repo').value.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, ''); gh.token = $('#gh-token').value.trim(); ghSave();
       if (!ghReady()) return toast('اكتب المستودع والرمز.');
       ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); break;
+    case 'gh-copycode': if (!ghReady()) { toast('اضبط المستودع والرمز أولًا'); break; }
+      { const code = 'masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('نُسخ رمز الربط'), () => { const el = $('#gh-code'); if (el) { el.value = code; el.select(); } toast('انسخ الرمز من الحقل'); }); } break;
+    case 'gh-usecode': try { const v = $('#gh-code').value.trim().replace(/^masari-link:/, ''); const o = JSON.parse(b64d(v)); if (!o.r || !o.t) throw 0; gh.repo = o.r; gh.token = o.t; ghSave(); ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); route(); } catch (e) { toast('رمز غير صالح'); } break;
     case 'gh-push': ghPush(true); break;
     case 'gh-pull': ghPull(false); break;
     case 'export': download(`masari-backup-${t}.json`, JSON.stringify(S), 'application/json'); break;
