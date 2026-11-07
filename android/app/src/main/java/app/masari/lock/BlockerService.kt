@@ -28,6 +28,7 @@ class BlockerService : AccessibilityService() {
         if (e == null) return
         val pkg = e.packageName?.toString() ?: return
         if (pkg == packageName) return
+        VpnGuard.check(this)
 
         if (pkg in protectedPkgs) {
             if (Store.disableAllowed(this)) return

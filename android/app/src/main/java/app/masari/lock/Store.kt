@@ -15,6 +15,10 @@ object Store {
     fun setBlockAll(c: Context, v: Boolean) { p(c).edit().putBoolean("blockAll", v).apply() }
     fun blocked(c: Context): Set<String> = HashSet(p(c).getStringSet("blocked", emptySet()) ?: emptySet())
     fun setBlocked(c: Context, s: Set<String>) { p(c).edit().putStringSet("blocked", HashSet(s)).apply() }
+    fun webBlock(c: Context): Boolean = p(c).getBoolean("webBlock", false)
+    fun setWebBlock(c: Context, v: Boolean) { p(c).edit().putBoolean("webBlock", v).apply() }
+    fun domains(c: Context): Set<String> = (p(c).getString("domains", "") ?: "").split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
+    fun setDomains(c: Context, t: String) { p(c).edit().putString("domains", t).apply() }
     fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today() || emergencyActive(c)
     fun emergencyActive(c: Context): Boolean = p(c).getLong("emergencyUntil", 0L) > System.currentTimeMillis()
     fun setEmergency(c: Context) { p(c).edit().putLong("emergencyUntil", System.currentTimeMillis() + 30 * 60_000L).apply() }

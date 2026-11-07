@@ -456,20 +456,29 @@ function followEval(exp, heard) {
   for (const h of heard) {
     if (p >= exp.length) break;
     let f = -1;
-    for (let d = 0; d < 5 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
+    for (let d = 0; d < 3 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
     if (f >= 0) { for (let k = 0; k < f; k++) st[p + k] = 'bad'; st[p + f] = 'ok'; p += f + 1; miss = 0; }
-    else { miss++; if (miss >= 2) { st[p] = 'bad'; p++; miss = 0; } }
+    else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
   }
   return { st, p };
 }
-const fol = { on: false, rec: null, base: '', cur: '', exp: [], owner: [], st: [], p: 0, unit: -1 };
+/* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
+function followEvalTwoPass(exp, committed, interim) {
+  const a = followEval(exp, committed);
+  if (!interim.length) return a;
+  const b = followEval(exp, committed.concat(interim)), st = a.st.slice();
+  for (let k = a.p; k < exp.length; k++) if (b.st[k] === 'ok') st[k] = 'ok';
+  return { st, p: Math.max(a.p, b.p) };
+}
+const fol = { on: false, rec: null, base: '', cur: '', fin: 0, exp: [], owner: [], st: [], p: 0, unit: -1 };
+const cleanHeard = t => { let h = normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean); return h; };
 const heardWords = () => {
-  let h = normAr(fol.base + ' ' + fol.cur).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean);
+  let h = cleanHeard(fol.base); let i = cleanHeard(fol.cur);
   if (h.slice(0, 2).join() === 'بسم,الله' && fol.exp.slice(0, 2).join() !== 'بسم,الله') h = h.slice(4);
-  return h;
+  return { committed: h, interim: i };
 };
 function followPaint() {
-  const r = followEval(fol.exp, heardWords()); fol.st = r.st; fol.p = r.p;
+  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim); fol.st = r.st; fol.p = r.p;
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
     const k = +el.dataset.wi, s = r.st[k];
@@ -492,7 +501,7 @@ function followStart() {
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = e => { let s = ''; for (let i = 0; i < e.results.length; i++) s += ' ' + e.results[i][0].transcript; fol.cur = s; followPaint(); };
+    rec.onresult = e => { let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += ' ' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
     rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
     rec.onend = () => { fol.base += ' ' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }

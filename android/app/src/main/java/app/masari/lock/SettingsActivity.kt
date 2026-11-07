@@ -18,6 +18,11 @@ import android.widget.TextView
 import android.widget.Toast
 
 class SettingsActivity : Activity() {
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(r: Int, res: Int, d: Intent?) {
+        super.onActivityResult(r, res, d)
+        if (r == 42 && res == RESULT_OK) { startService(Intent(this, DnsVpnService::class.java)); Toast.makeText(this, "حظر المواقع يعمل", Toast.LENGTH_SHORT).show() }
+    }
     private val boxes = ArrayList<Pair<CheckBox, String>>()
 
     override fun onCreate(b: Bundle?) {
@@ -49,7 +54,18 @@ class SettingsActivity : Activity() {
         root.addView(text("في الوضع الذاتي: انسخ المفتاح من صفحة «رمز اليوم» في مساري. في وضع الشريك: اضغط توليد، ثم أعطِ المفتاح لشريكك ليضيفه في تطبيق المصادقة عنده (إدخال مفتاح الإعداد)، ولا تحتفظ بنسخة."))
         root.addView(btn("توليد مفتاح جديد (لوضع الشريك)") { secret.setText(Codes.randomSecret()) })
 
-        root.addView(text("٣) التطبيقات"))
+        root.addView(text("٣) حظر المواقع (خاص بمساري، لا يقرأ تصفحك)"))
+        root.addView(text("يحجب الدومينات أدناه ما دام حفظ اليوم لم يُنجز، ويحجب المواقع الإباحية دائمًا. لا يعمل مع NordVPN مفتوحًا: سيُرسل لك إشعارًا لتعطيله. المتصفحات التي تفعّل «DNS الآمن/DoH» قد تتجاوزه: عطّل ذلك في إعدادات المتصفح."))
+        val dom = EditText(this); dom.hint = "دومين في كل سطر، مثل: youtube.com"; dom.setText(Store.domains(this).joinToString("\n")); dom.layoutDirection = View.LAYOUT_DIRECTION_LTR; dom.minLines = 3
+        root.addView(dom)
+        root.addView(btn("إضافة مواقع التواصل والفيديو") { val base = dom.text.toString().trim(); dom.setText((base + "\nyoutube.com\ninstagram.com\nfacebook.com\nx.com\ntwitter.com\ntiktok.com\nreddit.com\nsnapchat.com\ntwitch.tv\nnetflix.com").trim()) })
+        root.addView(btn("تفعيل حظر المواقع") {
+            Store.setDomains(this, dom.text.toString()); Store.setWebBlock(this, true)
+            if (android.os.Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 1)
+            val i = android.net.VpnService.prepare(this)
+            if (i != null) startActivityForResult(i, 42) else { startService(Intent(this, DnsVpnService::class.java)); Toast.makeText(this, "حظر المواقع يعمل", Toast.LENGTH_SHORT).show() }
+        })
+        root.addView(text("٤) التطبيقات"))
         val all = CheckBox(this); all.text = "احظر كل التطبيقات (عدا الاتصال والكيبورد ومساري)"; all.isChecked = Store.blockAll(this)
         root.addView(all)
         root.addView(text("أو اختر ما تريد حظره:"))
