@@ -62,6 +62,15 @@ class SettingsActivity : Activity() {
             val c = CheckBox(this); c.text = label; c.isChecked = pkg in blocked
             boxes.add(Pair(c, pkg)); root.addView(c)
         }
+        val presets = listOf(
+            Triple("تحديد: التواصل الاجتماعي", "", setOf("com.instagram.android", "com.facebook.katana", "com.facebook.lite", "com.twitter.android", "com.snapchat.android", "com.zhiliaoapp.musically", "com.ss.android.ugc.trill", "com.reddit.frontpage", "com.pinterest", "com.tumblr", "com.linkedin.android", "org.telegram.messenger", "com.whatsapp", "com.discord", "com.threads")),
+            Triple("تحديد: الفيديو والبث", "", setOf("com.google.android.youtube", "com.netflix.mediaclient", "tv.twitch.android.app", "com.amazon.avod.thirdpartyclient", "com.disney.disneyplus", "com.spotify.music", "com.google.android.apps.youtube.music")),
+            Triple("تحديد: المتصفحات", "", setOf("com.android.chrome", "org.mozilla.firefox", "com.microsoft.emmx", "com.opera.browser", "com.brave.browser", "com.sec.android.app.sbrowser", "com.duckduckgo.mobile.android"))
+        )
+        for ((name, _, pk) in presets) root.addView(btn(name) {
+            var n = 0; for ((c, pkg) in boxes) if (pkg in pk) { c.isChecked = true; n++ }
+            Toast.makeText(this, "حُدّد $n تطبيقًا", Toast.LENGTH_SHORT).show()
+        })
         root.addView(btn("حفظ") {
             Store.setMode(this, if (rg.checkedRadioButtonId == 2) "partner" else "self")
             Store.setSecret(this, secret.text.toString())
