@@ -1,0 +1,19 @@
+{
+  "days": 8,
+  "max_per_cat": 12,
+  "feeds": [
+    {"cat": "alertes", "name": "CERT-FR alertes", "url": "https://www.cert.ssi.gouv.fr/alerte/feed/"},
+    {"cat": "alertes", "name": "CERT-FR avis", "url": "https://www.cert.ssi.gouv.fr/avis/feed/"},
+    {"cat": "alertes", "name": "CISA", "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml"},
+    {"cat": "actus", "name": "The Hacker News", "url": "https://feeds.feedburner.com/TheHackersNews"},
+    {"cat": "actus", "name": "BleepingComputer", "url": "https://www.bleepingcomputer.com/feed/"},
+    {"cat": "actus", "name": "Krebs on Security", "url": "https://krebsonsecurity.com/feed/"},
+    {"cat": "soc", "name": "SANS ISC", "url": "https://isc.sans.edu/rssfeed.xml"},
+    {"cat": "soc", "name": "Microsoft Security", "url": "https://www.microsoft.com/en-us/security/blog/feed/"},
+    {"cat": "ia", "name": "Hugging Face", "url": "https://huggingface.co/blog/feed.xml"},
+    {"cat": "ia", "name": "OpenAI", "url": "https://openai.com/news/rss.xml"},
+    {"cat": "ia", "name": "Google DeepMind", "url": "https://deepmind.google/blog/rss.xml"},
+    {"cat": "ia", "name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/"}
+  ],
+  "ai_keywords": ["ai ", " ai", "llm", "gpt", "claude", "gemini", "copilot", "agent", "machine learning", "deepfake", "prompt injection", "artificial intelligence", "intelligence artificielle"]
+}
