@@ -29,7 +29,12 @@ object Store {
     fun setDisableReq(c: Context, t: Long) { p(c).edit().putLong("disableReq", t).apply() }
     private const val WAIT = 24L * 3600_000L
     private const val WINDOW = 30L * 60_000L
+    // نافذة إعداد: ٣٠ دقيقة بعد أول فتح لمساري بعد التثبيت، حتى تُنهي الإعداد دون عوائق
+    fun firstRun(c: Context): Long = p(c).getLong("firstRun", 0L)
+    fun markFirstRun(c: Context) { if (firstRun(c) == 0L) p(c).edit().putLong("firstRun", System.currentTimeMillis()).apply() }
+    fun setupWindow(c: Context): Boolean { val f = firstRun(c); return f != 0L && System.currentTimeMillis() - f < 30 * 60_000L }
     fun disableAllowed(c: Context): Boolean {
+        if (setupWindow(c)) return true
         val r = disableReq(c); if (r == 0L) return false
         val e = System.currentTimeMillis() - r
         if (e > WAIT + WINDOW) { setDisableReq(c, 0L); return false }

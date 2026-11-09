@@ -15,6 +15,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        Store.markFirstRun(this)
         web = WebView(this)
         val s: WebSettings = web.settings
         s.javaScriptEnabled = true

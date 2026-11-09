@@ -33,6 +33,8 @@ class BlockerService : AccessibilityService() {
         if (pkg in protectedPkgs) {
             if (Store.disableAllowed(this)) return
             val root = rootInActiveWindow ?: return
+            // لا نحتسب إلا نافذة النظام نفسها، وليس نافذة مساري إذا كانت هي النشطة
+            if (root.packageName?.toString() != pkg) return
             if (mentionsApp(root, 0)) block(true)
             return
         }
