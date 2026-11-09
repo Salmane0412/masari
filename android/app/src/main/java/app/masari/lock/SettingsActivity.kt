@@ -50,9 +50,11 @@ class SettingsActivity : Activity() {
         root.addView(rg)
         val secret = EditText(this)
         secret.hint = "المفتاح السري (Base32)"; secret.setText(Store.secret(this)); secret.layoutDirection = View.LAYOUT_DIRECTION_LTR
+        // وضع الشريك: المفتاح مخفي بعد الحفظ حتى لا تراه (يظهر فقط لحظة التوليد ليكتبه الشريك)
+        if (Store.mode(this) == "partner" && Store.secret(this).isNotEmpty()) secret.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         root.addView(secret)
         root.addView(text("في الوضع الذاتي: انسخ المفتاح من صفحة «رمز اليوم» في مساري. في وضع الشريك: اضغط توليد، ثم أعطِ المفتاح لشريكك ليضيفه في تطبيق المصادقة عنده (إدخال مفتاح الإعداد)، ولا تحتفظ بنسخة."))
-        root.addView(btn("توليد مفتاح جديد (لوضع الشريك)") { secret.setText(Codes.randomSecret()) })
+        root.addView(btn("توليد مفتاح جديد (لوضع الشريك)") { secret.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS; secret.setText(Codes.randomSecret()) })
 
         root.addView(text("٣) حظر المواقع (خاص بمساري، لا يقرأ تصفحك)"))
         root.addView(text("يحجب الدومينات أدناه ما دام حفظ اليوم لم يُنجز، ويحجب المواقع الإباحية دائمًا. لا يعمل مع NordVPN مفتوحًا: سيُرسل لك إشعارًا لتعطيله. المتصفحات التي تفعّل «DNS الآمن/DoH» قد تتجاوزه: عطّل ذلك في إعدادات المتصفح."))
