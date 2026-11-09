@@ -98,6 +98,16 @@ class SettingsActivity : Activity() {
             var n = 0; for ((c, pkg) in boxes) if (pkg in pk) { c.isChecked = true; n++ }
             Toast.makeText(this, "حُدّد $n تطبيقًا", Toast.LENGTH_SHORT).show()
         })
+        root.addView(text("٥) تطبيقات مسموحة دائمًا (لا تُحجب أبدًا، مثل النادي والبنك وتيليغرام للمقرأة)"))
+        root.addView(btn("اختيار التطبيقات المسموحة") {
+            val chosen = Store.allowed(this).toMutableSet()
+            val labels = apps.map { it.first }.toTypedArray()
+            val checked = BooleanArray(apps.size) { apps[it].second in chosen }
+            android.app.AlertDialog.Builder(this).setTitle("مسموحة دائمًا")
+                .setMultiChoiceItems(labels, checked) { _, k, on -> if (on) chosen.add(apps[k].second) else chosen.remove(apps[k].second) }
+                .setPositiveButton("حفظ") { _, _ -> Store.setAllowed(this, chosen); Toast.makeText(this, "حُفظت ${chosen.size} تطبيقات", Toast.LENGTH_SHORT).show() }
+                .setNegativeButton("إلغاء", null).show()
+        })
         root.addView(btn("حفظ") {
             Store.setMode(this, if (rg.checkedRadioButtonId == 2) "partner" else "self")
             Store.setSecret(this, secret.text.toString())

@@ -9,7 +9,7 @@ class BlockerService : AccessibilityService() {
     private var lastBlock = 0L
     private val protectedPkgs = setOf(
         "com.android.settings", "com.google.android.packageinstaller", "com.android.packageinstaller",
-        "com.google.android.permissioncontroller", "com.android.vending", "com.samsung.android.packageinstaller"
+        "com.android.vending", "com.samsung.android.packageinstaller"
     )
     private val alwaysAllowed = setOf(
         "com.android.systemui", "android", "com.google.android.inputmethod.latin", "com.samsung.android.honeyboard",
@@ -40,7 +40,7 @@ class BlockerService : AccessibilityService() {
         }
         if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         if (Store.unlocked(this)) return
-        if (pkg in alwaysAllowed || pkg in launchers) return
+        if (pkg in alwaysAllowed || pkg in launchers || pkg in Store.allowed(this)) return
         val shouldBlock = if (Store.blockAll(this)) true else pkg in Store.blocked(this)
         if (shouldBlock) block(false)
     }

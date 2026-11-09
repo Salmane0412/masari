@@ -15,6 +15,8 @@ object Store {
     fun setBlockAll(c: Context, v: Boolean) { p(c).edit().putBoolean("blockAll", v).apply() }
     fun blocked(c: Context): Set<String> = HashSet(p(c).getStringSet("blocked", emptySet()) ?: emptySet())
     fun setBlocked(c: Context, s: Set<String>) { p(c).edit().putStringSet("blocked", HashSet(s)).apply() }
+    fun allowed(c: Context): Set<String> = HashSet(p(c).getStringSet("allowed", emptySet()) ?: emptySet())
+    fun setAllowed(c: Context, s: Set<String>) { p(c).edit().putStringSet("allowed", HashSet(s)).apply() }
     fun webBlock(c: Context): Boolean = p(c).getBoolean("webBlock", false)
     fun setWebBlock(c: Context, v: Boolean) { p(c).edit().putBoolean("webBlock", v).apply() }
     fun domains(c: Context): Set<String> = (p(c).getString("domains", "") ?: "").split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
