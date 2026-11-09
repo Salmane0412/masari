@@ -18,14 +18,26 @@
 
   views.study = () => {
     const t = todayStr(), cs = st().courses;
+    loadLib();
     return `<div class="hero-title">الدروس</div>
     <div class="sub">أرسل لي في المحادثة نص الدرس أو صورة الصفحة أو تفريغ الصوت، فأعيد لك «حزمة درس»: ملخص ونقاط وأسئلة. استوردها هنا فتُراجَع بالتباعد تلقائيًا.</div>
     <div class="rows">${cs.map(c => { const d = dueOf(c, t).length; return `<a class="row" href="#/course/${c.id}" style="text-decoration:none;color:inherit"><span class="main"><span class="t ar" dir="rtl">${esc(c.title)}</span><span class="m">${c.mcq.length} سؤالًا · ${d ? d + ' مستحق اليوم' : 'لا مستحق اليوم'}</span></span></a>`; }).join('') || '<div class="empty">لا دروس بعد. استورد أول حزمة.</div>'}</div>
+    <h2>حزم جاهزة</h2><div id="st-lib" class="rows"><div class="sub">جارٍ التحميل…</div></div>
     <h2>استيراد حزمة</h2>
     <div class="btns"><label class="btn pri" style="display:inline-flex;align-items:center">اختيار ملف (.json)<input type="file" id="st-file" accept="application/json,.json" hidden></label></div>
     <label class="field"><span>أو الصق محتوى الحزمة</span><textarea id="st-paste" dir="ltr" rows="4" placeholder='{"title": "...", "mcq": [...]}'></textarea></label>
     <button class="btn" data-st="paste">استيراد النص الملصوق</button>`;
   };
+
+  async function loadLib() {
+    setTimeout(async () => {
+      const el = document.getElementById('st-lib'); if (!el) return;
+      try {
+        const r = await fetch('library/courses.json?' + Date.now()); const L = await r.json(); const have = st().courses.map(c => c.title);
+        el.innerHTML = L.map(x => `<button class="row" data-st="lib" data-f="${esc(x.file)}"><span class="main"><span class="t ar" dir="rtl">${esc(x.title)}</span><span class="m">${x.n} سؤالًا ${have.includes(x.title) ? '· مُضافة' : '· اضغط للإضافة'}</span></span></button>`).join('') || '<div class="sub">لا حزم.</div>';
+      } catch (e) { el.innerHTML = '<div class="sub">تعذّر تحميل القائمة (يلزم اتصال).</div>'; }
+    }, 0);
+  }
 
   views.course = () => {
     const c = byId(cid()); if (!c) return '<div class="empty">الدرس غير موجود.</div><a class="btn" href="#/study">رجوع</a>';
@@ -69,6 +81,7 @@
   });
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-st]'); if (!b) return; const a = b.dataset.st, c = byId(cid());
+    if (a === 'lib') { fetch('library/' + b.dataset.f).then(r => r.text()).then(doImport).catch(() => toast('تعذّر التحميل')); return; }
     if (a === 'paste') return doImport(($('#st-paste') || {}).value || '');
     if (a === 'del') { if (confirm('حذف هذا الدرس؟')) { st().courses = st().courses.filter(x => x.id !== b.dataset.id); save(); go('#/study'); } return; }
     if (!c) return;
