@@ -400,6 +400,7 @@ views.settings = () => {
   <div class="btns" style="margin-top:8px"><button class="btn sm" data-act="tj-reset">استرجاع الألوان الافتراضية</button></div>
   <h2>الاستماع</h2>
   <div class="two"><label class="field"><span>القارئ</span><select id="st-reciter">${RECITERS.map(([k, n]) => `<option value="${k}" ${s.reciter === k ? 'selected' : ''}>${n}</option>`).join('')}</select></label><label class="field"><span>تكرار كل آية</span><select id="st-arep">${[1, 2, 3, 5, 10].map(n => `<option ${s.arep === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label></div>
+  <label class="field"><span>إيقاف الاستماع تلقائيًا بعد</span><select id="st-acap">${[5, 10, 15, 30, 60].map(n => `<option value="${n}" ${(s.acap || 15) === n ? 'selected' : ''}>${n} دقيقة</option>`).join('')}</select></label>
   <h2>التذكيرات</h2>
   <div class="two"><label class="field"><span>الحفظ</span><input type="time" id="st-t0" value="${s.times[0]}"></label><label class="field"><span>المراجعة</span><input type="time" id="st-t1" value="${s.times[1]}"></label></div>
   <div class="btns"><button class="btn" data-act="notif">تفعيل الإشعارات</button><button class="btn" data-act="ics">تذكيرات يومية (.ics)</button></div>
@@ -429,7 +430,7 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button></div>
+  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button></div>
   <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
@@ -445,7 +446,14 @@ views.session = (kind, id, mode) => {
 /* ---------- متابعة التلاوة مباشرة (على طريقة ترتيل) ---------- */
 const normW = t => normAr(t).replace(/[^ء-ي]/g, '');
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
-function wcost(e, h) { if (e === h) return 0; const d = lev(e, h); return d <= (e.length >= 5 ? 2 : 1) && Math.max(e.length, h.length) >= 3 ? 0.4 : 1; }
+const foldW = w => w.replace(/[ؤئء]/g, 'ا').replace(/ذ/g, 'ز').replace(/ث/g, 'س').replace(/ظ/g, 'ض').replace(/ط/g, 'ت').replace(/ص/g, 'س').replace(/ق/g, 'ك').replace(/ح/g, 'ه').replace(/ع/g, 'ا');
+function wcost(e, h) {
+  if (e === h) return 0; const d = lev(e, h);
+  if (d <= (e.length >= 5 ? 2 : 1) && Math.max(e.length, h.length) >= 3) return 0.4;
+  const fe = foldW(e), fh = foldW(h); if (fe === fh) return 0.4;
+  if (Math.max(e.length, h.length) >= 4 && lev(fe, fh) <= (fe.length >= 6 ? 2 : 1)) return 0.4;
+  return 1;
+}
 function expectedOf(i) {
   const u = UI[i], exp = [], owner = [];
   for (let g = u.a; g <= u.b; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
@@ -453,12 +461,18 @@ function expectedOf(i) {
 }
 function followEval(exp, heard, from) {
   const st = new Array(exp.length); let p = from || 0, miss = 0;
-  for (const h of heard) {
+  for (let hi = 0; hi < heard.length; hi++) {
     if (p >= exp.length) break;
-    let f = -1;
-    for (let d = 0; d < 3 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
-    if (f >= 0) { for (let k = 0; k < f; k++) st[p + k] = 'bad'; st[p + f] = 'ok'; p += f + 1; miss = 0; }
-    else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
+    const h = heard[hi]; let f = -1, two = 0, join = 0;
+    for (let d = 0; d < 3 && p + d < exp.length; d++) {
+      if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
+      if (p + d + 1 < exp.length && wcost(exp[p + d] + exp[p + d + 1], h) <= 0.4) { f = d; join = 1; break; } // كلمتان مدمجتان في كلمة مسموعة
+      if (hi + 1 < heard.length && wcost(exp[p + d], h + heard[hi + 1]) <= 0.4) { f = d; two = 1; break; } // كلمة مقسومة إلى كلمتين
+    }
+    if (f >= 0) {
+      for (let k = 0; k < f; k++) st[p + k] = exp[p + k].length <= 3 ? 'ok' : 'bad'; // الكلمات القصيرة كثيرًا ما يُسقطها التعرّف
+      st[p + f] = 'ok'; p += f + 1; if (join) { st[p] = 'ok'; p++; } if (two) hi++; miss = 0;
+    } else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
   }
   return { st, p };
 }
@@ -491,9 +505,22 @@ function followPaint() {
   const c = document.querySelector('.w.f-cur'); if (c) { const b = c.getBoundingClientRect(); if (b.top < 120 || b.bottom > innerHeight - 140) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   folStatus(fol.on ? `🎙 يستمع إليك… صحيح ${ok} · أخطاء ${bad} · من ${fol.exp.length} كلمة` : '');
 }
+function beep(f, ms) { try { const c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = f || 440; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); setTimeout(() => o.stop(), ms || 250); } catch (e) { } }
+function say(t, done) {
+  if (!('speechSynthesis' in window)) { if (done) done(); return; }
+  speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = 0.9; const v = speechSynthesis.getVoices().find(x => /^ar/i.test(x.lang)); if (v) u.voice = v;
+  let fired = false; const fin = () => { if (!fired) { fired = true; if (done) done(); } }; u.onend = fin; u.onerror = fin; setTimeout(fin, 6000); speechSynthesis.speak(u);
+}
+function voiceTest() {
+  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
+  if (fol.on) followStop(); stopAudio(); const u = UI[+id], g = u.a + rnd(u.b - u.a + 1);
+  document.querySelectorAll('.w').forEach(e => e.classList.add('hid'));
+  say(`اقرأ من الآية ${toAr(Q.ayas[g][1])} من سورة ${CH[Q.ayas[g][0]].ar}`, () => { followStart(); fol.from = fol.owner.indexOf(g); fol.keep = []; folStatus(`🎙 اقرأ من ${refOf(g)}: النص مخفي`); });
+}
 function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fol.owner[i - 1] === g) i--; return i; }
 function followHalt(kb) {
   fol.paused = true; try { fol.rec && fol.rec.abort(); } catch (x) { }
+  beep(330, 350); say('قِف');
   const g = fol.owner[kb], from = ayahStartIdx(kb); noteError(g, 1); save();
   try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (x) { }
   document.querySelectorAll('.w[data-wi]').forEach(el => { const k = +el.dataset.wi; el.classList.toggle('f-bad', k === kb); el.classList.toggle('f-cur', false); });
@@ -535,7 +562,7 @@ function followStop() {
 function followFinish() {
   followPaint(); folStatus('');
   const { st, p } = fol, bad = {}, seen = {};
-  fol.exp.forEach((w, k) => { if (k >= p && st[k] === undefined) return; const g = fol.owner[k]; seen[g] = (seen[g] || 0) + 1; if (st[k] === 'bad') (bad[g] = bad[g] || []).push(k); });
+  fol.exp.forEach((w, k) => { if (k < fol.from) return; if (k >= p && st[k] === undefined) return; const g = fol.owner[k]; seen[g] = (seen[g] || 0) + 1; if (st[k] === 'bad') (bad[g] = bad[g] || []).push(k); });
   const gs = Object.keys(seen).map(Number); if (!gs.length) { $('#rec-out').innerHTML = '<div class="note">لم أسمع تلاوة. جرّب مرة أخرى في مكان هادئ.</div>'; return; }
   const lastG = fol.owner[Math.min(p, fol.exp.length - 1)], lines = []; let nb = 0, nok = 0;
   gs.forEach(g => { if (bad[g]) { nb++; noteError(g, 1); lines.push(`<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m ar" dir="rtl">${bad[g].map(k => esc(fol.exp[k])).join(' · ')}</span></span></div>`); } else if (g !== lastG || p >= fol.exp.length) { nok++; noteOk(g); } });
@@ -546,7 +573,7 @@ function followFinish() {
 const RECITERS = [['Alafasy_128kbps', 'مشاري العفاسي'], ['Husary_128kbps', 'محمود خليل الحصري'], ['Husary_Muallim_128kbps', 'الحصري (المعلّم: مع التكرار)'], ['Minshawy_Murattal_128kbps', 'المنشاوي (مرتّل)'], ['Abdul_Basit_Murattal_192kbps', 'عبد الباسط (مرتّل)'], ['Abdurrahmaan_As-Sudais_192kbps', 'عبد الرحمن السديس'], ['Saood_ash-Shuraym_128kbps', 'سعود الشريم'], ['Hudhaify_128kbps', 'علي الحذيفي'], ['Maher_AlMuaiqly_64kbps', 'ماهر المعيقلي']];
 const aud = { a: null, on: false, list: [], k: 0, r: 0 };
 const audioUrl = g => `https://everyayah.com/data/${S.settings.reciter}/${String(Q.ayas[g][0]).padStart(3, '0')}${String(Q.ayas[g][1]).padStart(3, '0')}.mp3`;
-function stopAudio() { aud.on = false; if (aud.a) { aud.a.pause(); aud.a = null; } document.querySelectorAll('.verse.playing').forEach(e => e.classList.remove('playing')); const b = $('#aud-btn'); if (b) b.textContent = '▶ استماع'; }
+function stopAudio() { clearTimeout(aud.cap); aud.on = false; if (aud.a) { aud.a.pause(); aud.a = null; } document.querySelectorAll('.verse.playing').forEach(e => e.classList.remove('playing')); const b = $('#aud-btn'); if (b) b.textContent = '▶ استماع'; }
 function playNextAyah() {
   document.querySelectorAll('.verse.playing').forEach(e => e.classList.remove('playing'));
   if (!aud.on || aud.k >= aud.list.length) return stopAudio();
@@ -561,7 +588,7 @@ function listenStart() {
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   if (fol.on) followStop();
   const u = UI[+id]; aud.list = []; for (let g = u.a; g <= u.b; g++) aud.list.push(g);
-  Object.assign(aud, { on: true, k: 0, r: 0 }); const b = $('#aud-btn'); if (b) b.textContent = '⏹ إيقاف'; playNextAyah();
+  Object.assign(aud, { on: true, k: 0, r: 0 }); clearTimeout(aud.cap); aud.cap = setTimeout(() => { if (aud.on) { stopAudio(); toast('توقّف الاستماع تلقائيًا'); say('توقّف الاستماع'); } }, (S.settings.acap || 15) * 60000); const b = $('#aud-btn'); if (b) b.textContent = '⏹ إيقاف'; playNextAyah();
 }
 
 /* ---------- tests et QCM ---------- */
@@ -732,11 +759,19 @@ const SPORT = [
   ['الخميس', 'مشي سريع أو دراجة ٤٠ دقيقة', 'نفس الأحد'],
   ['الجمعة', 'قوة (ب) خفيفة أو راحة', 'اسمع جسمك؛ ونم ٧–٨ ساعات']
 ];
-function weightChart(ws) {
+function weightChart(ws0) {
+  const ws = (ws0 || []).slice().sort((a, b) => a.d < b.d ? -1 : 1);
   if (ws.length < 2) return '<div class="empty">سجّل وزنك مرتين على الأقل لتظهر المنحنى.</div>';
-  const a = ws.slice(-60), W = 320, H = 110, mn = Math.min(...a.map(x => x.w)) - 1, mx = Math.max(...a.map(x => x.w)) + 1;
-  const pts = a.map((x, i) => `${(i / (a.length - 1) * (W - 20) + 10).toFixed(1)},${(H - 10 - (x.w - mn) / (mx - mn) * (H - 20)).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="منحنى الوزن"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/></svg><div class="sub" style="display:flex;justify-content:space-between"><span>${a[0].w} كغ</span><span>${a[a.length - 1].w} كغ</span></div>`;
+  const a = ws.slice(-60), W = 340, H = 150, L = 34, R = 10, T = 14, B = 22, gw = +(S.health && S.health.gw) || 0;
+  const vals = a.map(x => x.w).concat(gw ? [gw] : []), mn = Math.floor(Math.min(...vals) - 1), mx = Math.ceil(Math.max(...vals) + 1);
+  const t0 = parseD(a[0].d).getTime(), t1 = parseD(a[a.length - 1].d).getTime(), span = Math.max(1, t1 - t0);
+  const X = d => L + (parseD(d).getTime() - t0) / span * (W - L - R), Y = w => T + (1 - (w - mn) / (mx - mn)) * (H - T - B);
+  const pts = a.map(x => `${X(x.d).toFixed(1)},${Y(x.w).toFixed(1)}`).join(' ');
+  const ticks = [mx, (mx + mn) / 2, mn].map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line,#334)" stroke-width=".6"/><text x="${L - 4}" y="${(Y(v) + 3).toFixed(1)}" font-size="9" text-anchor="end" fill="var(--mut,#99a)">${Math.round(v)}</text>`).join('');
+  const goal = gw ? `<line x1="${L}" x2="${W - R}" y1="${Y(gw).toFixed(1)}" y2="${Y(gw).toFixed(1)}" stroke="var(--mem,#4c8)" stroke-dasharray="4 3"/><text x="${W - R}" y="${(Y(gw) - 3).toFixed(1)}" font-size="9" text-anchor="end" fill="var(--mem,#4c8)">الهدف ${gw}</text>` : '';
+  const dots = a.map(x => `<circle cx="${X(x.d).toFixed(1)}" cy="${Y(x.w).toFixed(1)}" r="2.6" fill="var(--accent)"/>`).join('');
+  const f = d => d.slice(5).replace('-', '/');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="منحنى الوزن عبر الزمن">${ticks}${goal}<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>${dots}<text x="${L}" y="${H - 6}" font-size="9" fill="var(--mut,#99a)">${f(a[0].d)}</text><text x="${W - R}" y="${H - 6}" font-size="9" text-anchor="end" fill="var(--mut,#99a)">${f(a[a.length - 1].d)}</text></svg><div class="sub" style="display:flex;justify-content:space-between"><span>${a[0].w} كغ</span><span>${a[a.length - 1].w} كغ</span></div>`;
 }
 function bmiBlock(h) {
   const w = +h.w, ht = +h.h / 100; if (!(w > 0 && ht > 0)) return '';
@@ -1065,6 +1100,7 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'follow': followStart(); break;
+    case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;
     case 'fol-skip': followResume(+d.from); break;
     case 'end-ext': S.settings.end = addDays(S.settings.end, +d.d); save(); route(); toast('مُدّد الموعد'); break;
@@ -1165,6 +1201,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.tjon !== undefined) { if (e.target.checked) delete s.tjOff[e.target.dataset.tjon]; else s.tjOff[e.target.dataset.tjon] = 1; save(); applyTj(); return; }
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
+  if (id === 'st-acap') { s.acap = +v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-arep') { s.arep = +v; save(); toast('تم الحفظ'); return; }
   if (e.target.dataset && e.target.dataset.pgu !== undefined) { const i = +e.target.dataset.pgu; if (e.target.checked) { const k = G.credit(S.prog, i, todayStr()); if (!k) { toast('لا يمكن تسجيله'); } else if (S.units[i].s !== 'mem') markLearned(S.units[i], todayStr()); } else G.uncredit(S.prog, i); save(); return route(); }
   if (e.target.dataset && e.target.dataset.pgrv) { if (e.target.checked) S.prog.rv[e.target.dataset.pgrv] = true; else delete S.prog.rv[e.target.dataset.pgrv]; save(); return route(); }
