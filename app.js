@@ -293,7 +293,7 @@ views.today = () => {
   S.health.walk = S.health.walk || {}; const wDone = !!S.health.walk[t], rec = S.rec && S.rec.start ? S.rec : null, recDone = rec && window.RECO.checkedToday(rec, t);
   const body = [
     rt ? `<a class="row${gDone ? ' done' : ''}" href="#/gym" style="text-decoration:none;color:inherit"><span class="main"><span class="t">التمرين: ${esc(rt.name)}</span><span class="m">${rt.ex.length} تمارين</span></span><span class="go">${gDone ? 'تمّ ✓' : 'ابدأ'}</span></a>` : '',
-    `<button class="row${wDone ? ' done' : ''}" data-act="walk"><span class="main"><span class="t">مشي ٣٠ دقيقة</span><span class="m">٨–١٠ آلاف خطوة</span></span><span class="go">${wDone ? 'تمّ ✓' : 'تأشير'}</span></button>`,
+    `<button class="row${wDone ? ' done' : ''}" data-act="walk"><span class="main"><span class="t">مشي 30 دقيقة</span><span class="m">8–10 آلاف خطوة</span></span><span class="go">${wDone ? 'تمّ ✓' : 'تأشير'}</span></button>`,
     rec ? `<button class="row${recDone ? ' done' : ''}" data-rc="check"><span class="main"><span class="t">التعافي: ${window.RECO.days(rec, t)} يومًا</span><span class="m">${recDone ? 'سُجّل يومك' : 'سجّل يومك بلمسة'}</span></span><span class="go">${recDone ? 'تمّ ✓' : 'سجّل'}</span></button>` : `<a class="row" href="#/reco" style="text-decoration:none;color:inherit"><span class="main"><span class="t">التعافي</span><span class="m">ابدأ مساحتك الخاصة</span></span><span class="go">‹</span></a>`,
   ].join('');
   // الحصيلة اليومية
@@ -316,6 +316,7 @@ views.today = () => {
   <h2>المراجعة</h2>
   <div class="rows">${revRows || '<div class="empty">لا مراجعة مستحقة.</div>'}</div>
   ${c.remaining ? `<details class="more"><summary>الإضافي · ${P.extraList.length ? P.extraList.length + ' مقترح' : 'لا مقترح اليوم'}</summary>${extraHtml(P, row, loc)}</details>` : ''}
+  ${(window.TODAY_HOOKS || []).map(f => { try { return f(); } catch (e) { return ''; } }).join('')}
   <h2>الجسم والعادات</h2><div class="rows">${body}</div>
   ${bRows ? `<h2>الكتب والمتون</h2><div class="rows">${bRows}</div>` : ''}
   ${weak.length ? `<details class="more"><summary>مواضع التثبيت · ${weak.length} آية</summary><div class="rows">${weak.slice(0, 5).map(g => `<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m">أخطاء: ${S.errors[g].n}${S.errors[g].last ? ' · آخرها ' + fmtD(S.errors[g].last) : ''}</span></span></div>`).join('')}</div></details>` : ''}`;
@@ -348,7 +349,7 @@ views.books = () => {
     const done = b.portions.filter(p => p.s === 'mem').length, n = b.portions.length;
     return `<a class="row" href="#/book/${b.id}" style="text-decoration:none;color:inherit"><span class="main"><span class="t lat">${esc(b.title)}</span><span class="m">${b.kind === 'matn' ? 'متن للحفظ' : 'كتاب للقراءة'} · ${done}/${n} جزء · ينتهي في ${fmtD(b.end)}</span><span class="bar"><i style="width:${n ? 100 * done / n : 0}%"></i></span></span><span class="go">فتح</span></a>`;
   }).join('');
-  return `<div class="hero-title">الكتب والمتون</div><div class="sub">الصق نصًّا وسيقسّمه مساري إلى أجزاء للقراءة أو الحفظ بوتيرة تنتهي في التاريخ الذي تريده.</div>
+  return `<h2>الكتب والمتون</h2><div class="sub">الصق نصًّا وسيقسّمه مساري إلى أجزاء للقراءة أو الحفظ بوتيرة تنتهي في التاريخ الذي تريده.</div>
   <div class="rows" style="margin-top:14px">${cards || '<div class="empty">لا كتب بعد.</div>'}</div>
   <div style="height:14px"></div><button class="btn pri block" data-act="book-new">إضافة كتاب أو متن</button>`;
 };
@@ -430,8 +431,8 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button></div>
-  <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div>` : '';
+  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button></div>
+  <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div><div id="hz-panel"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
   ${qtools}
@@ -754,7 +755,7 @@ const SPORT = [
   ['السبت', 'قوة (أ): جسم كامل', 'سكوات ٣×٨–١٢ · ضغط/بنش ٣×٨–١٢ · تجديف ٣×١٠ · بلانك ٣×٣٠–٤٥ث'],
   ['الأحد', 'مشي سريع أو دراجة ٤٠ دقيقة', 'نبض مريح تستطيع معه الكلام (المنطقة ٢)'],
   ['الإثنين', 'قوة (ب): جسم كامل', 'رفعة رومانية ٣×٨–١٠ · ضغط كتف ٣×٨–١٠ · سحب/تجديف ٣×١٠ · اندفاع ٣×١٠ لكل رجل'],
-  ['الثلاثاء', 'راحة نشطة', 'مشي ٨–١٠ آلاف خطوة + تمدد ١٠ دقائق'],
+  ['الثلاثاء', 'راحة نشطة', 'مشي 8–10 آلاف خطوة + تمدد ١٠ دقائق'],
   ['الأربعاء', 'قوة (أ): جسم كامل', 'زِد الوزن أو التكرار قليلًا عن السبت'],
   ['الخميس', 'مشي سريع أو دراجة ٤٠ دقيقة', 'نفس الأحد'],
   ['الجمعة', 'قوة (ب) خفيفة أو راحة', 'اسمع جسمك؛ ونم ٧–٨ ساعات']
@@ -788,7 +789,7 @@ views.health = () => {
   <label class="field"><span>مستوى النشاط</span><select id="hl-act">${ACT.map(([v, l]) => `<option value="${v}" ${+h.act === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
   ${bmiBlock(h)}
   ${n ? `<h2>هدفك اليومي</h2><div class="kpis"><div class="kpi"><b>${n.kcal}</b><span>سعرة حرارية</span></div><div class="kpi"><b>${n.protein} غ</b><span>بروتين</span></div><div class="kpi"><b>${n.water} ل</b><span>ماء</span></div></div>
-  <p class="sub">كربوهيدرات ≈ ${n.carbs} غ · دهون ≈ ${n.fat} غ · حرق الراحة ${n.bmr} · الحرق الكلي ${n.tdee} · العجز ${n.deficit} سعرة يوميًا${n.weeks ? ' · الوصول للهدف بعد ≈ ' + n.weeks + ' أسبوعًا' : ''}. ٨–١٠ آلاف خطوة يوميًا.</p>` : '<div class="note">املأ العمر والطول والوزن لتظهر أهدافك.</div>'}
+  <p class="sub">كربوهيدرات ≈ ${n.carbs} غ · دهون ≈ ${n.fat} غ · حرق الراحة ${n.bmr} · الحرق الكلي ${n.tdee} · العجز ${n.deficit} سعرة يوميًا${n.weeks ? ' · الوصول للهدف بعد ≈ ' + n.weeks + ' أسبوعًا' : ''}. 8–10 آلاف خطوة يوميًا.</p>` : '<div class="note">املأ العمر والطول والوزن لتظهر أهدافك.</div>'}
   <h2>الوزن</h2>
   <div class="two"><label class="field"><span>وزن اليوم (كغ)</span><input type="number" id="hl-newW" step="0.1"></label><div style="display:flex;align-items:end;margin:12px 0"><button class="btn pri block" data-act="hl-weight">تسجيل</button></div></div>
   ${weightChart(h.weights)}
@@ -824,11 +825,12 @@ views.focus = () => {
 /* ---------- المزيد ---------- */
 views.more = () => {
   const G2 = [
+    ['التنظيم', [['tasks', '✓', 'المهام', 'اليوم والقادمة والمشاريع، بإدخال سريع'], ['fin', '€', 'المال والزكاة', 'الميزانية والمصاريف والأهداف والديون وحاسبة الزكاة']]],
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
     ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
     ['النظام', [['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
   ];
-  return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="rows">${items.map(([k, g, t, m]) => `<a class="row" href="#/${k}" style="text-decoration:none;color:inherit"><span style="font-size:22px;width:30px;text-align:center">${g}</span><span class="main"><span class="t lat" style="font-size:17px">${t}</span><span class="m">${m}</span></span><span class="go">‹</span></a>`).join('')}</div>`).join('');
+  return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="tiles">${items.map(([k, g, t, m]) => `<a class="tile t-${k}" href="#/${k}"><span class="tic">${window.ic ? ic(k, 22) : g}</span><b>${t}</b><span class="m">${m}</span></a>`).join('')}</div>`).join('');
 };
 views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنهي الحفظ</div>
   <div class="note">الحقيقة التقنية: مساري موقع/تطبيق ويب، والمتصفح لا يسمح له بقفل تطبيقات أخرى ولا بمنع حذفه. هذا مقصود لحمايتك من التطبيقات الخبيثة.</div>
@@ -840,7 +842,9 @@ views.lock = () => `<div class="hero-title">قفل الهاتف حتى تُنه�
   </div><p class="sub">أخبرني نوع هاتفك وسأبني الخيار المناسب.</p>`;
 
 /* ---------- المكتبة (حزم كتب جاهزة) ---------- */
-views.library = () => views.books() + `<h2>مكتبة مساري</h2><div id="packs" class="rows"><div class="empty">جارٍ التحميل…</div></div>`;
+const LESSONS = [['bayquniyya', 'البيقونية تفاعليًّا', 'شرح المنظومة بيتًا بيتًا، مختبر الإسناد، خريطة الأقسام، اختبار'], ['btl1', 'BTL1 · مختبرات متحركة', 'OSI وTCP وNmap والبريد وSPF/DKIM/DMARC وCTI وسجلات ويندوز']];
+views.lesson = () => { const id = location.hash.split('/')[2], L = LESSONS.find(x => x[0] === id); if (!L) return views.library(); return `<div class="sess-h"><a class="btn sm iconbtn" href="#/library" aria-label="رجوع">${ic('back', 20)}</a><div class="tt"><b>${L[1]}</b><span class="sub">${L[2]}</span></div></div><iframe class="lessonframe" src="lessons/${id}.html" title="${L[1]}" loading="lazy"></iframe>`; };
+views.library = () => `<div class="hero-title">العلم</div><div class="sub">دروس تفاعلية، كتبك ومتونك، وحزم المراجعة.</div><h2>دروس تفاعلية</h2><div class="tiles">${LESSONS.map(([k, t, m]) => `<a class="tile" href="#/lesson/${k}"><span class="tic">${window.ic ? ic('lesson') : '▶'}</span><b>${t}</b><span class="m">${m}</span></a>`).join('')}</div>` + views.books() + `<h2>مكتبة مساري</h2><div id="packs" class="rows"><div class="empty">جارٍ التحميل…</div></div>`;
 async function loadPacks() {
   const box = document.getElementById('packs'); if (!box) return;
   try {
@@ -1031,7 +1035,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -1040,7 +1044,7 @@ function route() {
   const inSess = name === 's';
   top.innerHTML = `<span class="brand"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
   if (!inSess) { if (fol.on) followStop(); stopAudio(); }
-  tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${g}</b>${l}</a>`).join('')}</div>`;
+  tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${window.ic ? ic(k) : g}</b>${l}</a>`).join('')}</div>`;
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }
   else if (name === 'book') view.innerHTML = views.book(a);
   else view.innerHTML = (views[name] || views.today)();

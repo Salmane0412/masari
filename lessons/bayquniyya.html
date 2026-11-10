@@ -1,0 +1,659 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>البيقونية تفاعليًّا</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a manuscript-like reading room — the verse is the hero, commentary sits beneath it like a sharh margin; tools live in tabs. */
+:root{
+  --paper:#F4F6F4; --surface:#FFFFFF; --sunk:#E9EEEB; --ink:#172629; --muted:#5B6A6C; --line:#D6DEDA;
+  --teal:#1E5A66; --teal-soft:#E1EEF0; --gold:#A8721A; --gold-soft:#F7EED9;
+  --ok:#2B7A4B; --ok-soft:#E2F2E8; --bad:#A3392B; --bad-soft:#F8E4E0;
+  --verse:'Amiri','Noto Naskh Arabic','Traditional Arabic',serif;
+  --ui:'IBM Plex Sans Arabic','Noto Sans Arabic','Segoe UI',Tahoma,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111718; --surface:#182123; --sunk:#1F2A2C; --ink:#E6ECEA; --muted:#9AA9AA; --line:#2C3A3C;
+  --teal:#78B9C6; --teal-soft:#1C3236; --gold:#E0AE52; --gold-soft:#2E2617;
+  --ok:#64C08A; --ok-soft:#183025; --bad:#EB8577; --bad-soft:#3A1F1B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111718; --surface:#182123; --sunk:#1F2A2C; --ink:#E6ECEA; --muted:#9AA9AA; --line:#2C3A3C;
+  --teal:#78B9C6; --teal-soft:#1C3236; --gold:#E0AE52; --gold-soft:#2E2617;
+  --ok:#64C08A; --ok-soft:#183025; --bad:#EB8577; --bad-soft:#3A1F1B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.75;direction:rtl}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance;margin:0}
+button{font-family:inherit;color:inherit}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:14px}
+.brand h1{font-family:var(--verse);font-size:clamp(30px,5vw,44px);line-height:1.15;color:var(--teal)}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:14.5px}
+.prog{min-width:220px;flex:0 1 300px}
+.prog .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--sunk);border-radius:6px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;width:0;background:var(--gold);border-radius:6px;transition:width .4s}
+nav.tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin-bottom:20px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{padding:9px 16px;text-decoration:none;color:var(--muted);font-weight:600;font-size:15px;border-bottom:3px solid transparent;margin-bottom:-1.5px;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--teal);border-bottom-color:var(--gold)}
+nav.tabs a:hover{color:var(--ink)}
+
+/* matn layout */
+.matn{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+@media (max-width:860px){.matn{grid-template-columns:minmax(0,1fr)}}
+.list{position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+@media (max-width:860px){.list{position:static;max-height:none}}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:20px;padding:2px 10px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:var(--surface)}
+.vlist{list-style:none;margin:0;padding:0}
+.vlist button{display:flex;gap:8px;width:100%;text-align:right;background:none;border:0;border-radius:7px;padding:5px 7px;cursor:pointer;font-size:14px;align-items:baseline}
+.vlist button:hover{background:var(--sunk)}
+.vlist button[aria-current="true"]{background:var(--teal-soft);color:var(--teal);font-weight:600}
+.vlist .no{font-variant-numeric:tabular-nums;color:var(--muted);min-width:22px;font-size:12px}
+.vlist .tt{flex:1}
+.vlist .ck{color:var(--ok);font-size:13px}
+
+.verse-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.verse-head{padding:22px 22px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--gold-soft),var(--surface))}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:10px}
+.meta .tag{color:var(--gold);font-weight:700;letter-spacing:.02em}
+.bayt{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;font-family:var(--verse);font-size:clamp(22px,3.4vw,30px);line-height:1.9;color:var(--ink)}
+.bayt .sep{color:var(--gold);font-size:18px}
+.bayt .s1{text-align:left}.bayt .s2{text-align:right}
+@media (max-width:560px){.bayt{grid-template-columns:1fr;gap:0}.bayt .sep{display:none}.bayt .s1,.bayt .s2{text-align:center}}
+.bayt mark{background:none;color:var(--teal);font-weight:700}
+.vtitle{font-size:20px;color:var(--teal);margin-top:6px;text-align:center;font-weight:700}
+.vbody{padding:18px 22px 22px;display:grid;gap:14px}
+.sec h3{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.03em;margin-bottom:4px}
+.sec p{margin:0}
+.def{background:var(--teal-soft);border-radius:8px;padding:10px 14px;font-size:17px;font-weight:500}
+.def b{color:var(--teal)}
+.gloss{display:flex;flex-wrap:wrap;gap:6px}
+.gloss span{background:var(--sunk);border-radius:6px;padding:2px 9px;font-size:14px}
+.gloss span b{font-family:var(--verse);font-size:17px;color:var(--teal)}
+.faida{border-inline-start:3px solid var(--gold);background:var(--gold-soft);border-radius:6px;padding:8px 12px;font-size:15px}
+.faida b{color:var(--gold)}
+.ex{font-size:15px}
+.ex q{font-family:var(--verse);font-size:18px;quotes:"«" "»"}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:14px 22px;border-top:1px solid var(--line);background:var(--sunk)}
+.btn{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:600;font-size:14.5px}
+.btn:hover{border-color:var(--teal)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:var(--surface)}
+.btn.done{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.btn:disabled{opacity:.4;cursor:default}
+.minilab{border:1px dashed var(--line);border-radius:8px;padding:10px;overflow-x:auto}
+.linkbtn{background:none;border:0;color:var(--teal);font-weight:600;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;font-size:14px}
+
+/* chain */
+.chain{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:max-content;padding:4px 2px}
+.node{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;font-size:14.5px;white-space:nowrap;cursor:pointer;transition:all .15s}
+.node.fixed{cursor:default;background:var(--teal);border-color:var(--teal);color:var(--surface)}
+.node.auth{cursor:default;background:var(--sunk)}
+.node.drop{border-style:dashed;border-color:var(--bad);color:var(--bad);background:var(--bad-soft);text-decoration:line-through}
+.node:not(.fixed):not(.auth):hover{border-color:var(--teal)}
+.arr{color:var(--muted);font-size:16px}
+.ro .node{cursor:default}
+.result{border-radius:var(--r);padding:14px 16px;margin-top:12px;border:1.5px solid}
+.result.good{background:var(--ok-soft);border-color:var(--ok)}
+.result.badr{background:var(--bad-soft);border-color:var(--bad)}
+.result.neutral{background:var(--teal-soft);border-color:var(--teal)}
+.result .name{font-size:22px;font-weight:700;font-family:var(--verse)}
+.result.good .name{color:var(--ok)}.result.badr .name{color:var(--bad)}.result.neutral .name{color:var(--teal)}
+.result p{margin:2px 0 0}
+
+/* lab */
+.labgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.panel h2{font-size:19px;color:var(--teal);margin-bottom:2px}
+.panel .hint{color:var(--muted);font-size:14px;margin:0 0 12px}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer;font-size:14px;font-weight:600}
+.seg button+button{border-inline-start:1.5px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--teal);color:var(--surface)}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0}
+.row .k{font-size:14px;color:var(--muted);min-width:110px}
+.tabaqat{display:grid;gap:8px}
+.tab{display:flex;align-items:center;gap:10px}
+.tab .k{min-width:84px;font-size:14px;color:var(--muted)}
+.step{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:8px}
+.step button{border:0;background:none;width:30px;height:30px;cursor:pointer;font-size:18px;font-weight:700}
+.step span{min-width:22px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--teal);display:block}
+.tab.min .dots i{background:var(--gold)}
+.tab.min .k{color:var(--gold);font-weight:700}
+
+/* map */
+.tree{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;overflow-x:auto}
+.tcol{display:flex;flex-direction:column;align-items:center;min-width:640px}
+.tn{border-radius:8px;padding:6px 14px;font-weight:700;cursor:pointer;border:1.5px solid;background:var(--surface);font-size:15px;transition:transform .12s}
+.tn:hover{transform:translateY(-1px)}
+.tn.root{background:var(--teal);border-color:var(--teal);color:var(--surface);font-size:18px;cursor:default}
+.tn.g{border-color:var(--ok);color:var(--ok)}.tn.gs{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+.tn.r{border-color:var(--bad);color:var(--bad)}.tn.rs{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.tn.b{border-color:var(--teal);color:var(--teal)}
+.vl{width:2px;height:16px;background:var(--line)}
+.brs{display:flex;gap:24px;width:100%;justify-content:center}
+.br{display:flex;flex-direction:column;align-items:center;position:relative;flex:1}
+.br::before{content:"";position:absolute;top:0;height:2px;background:var(--line)}
+.br:first-child::before{right:50%;left:-12px}.br:last-child::before{left:50%;right:-12px}
+.kids{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.grp{border:1.5px dashed var(--line);border-radius:8px;padding:8px;margin-top:6px}
+.grp .gt{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:6px;font-weight:600}
+.mapmore{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px;margin-top:16px}
+.mapmore .panel h2{font-size:16px}
+#mapinfo{margin-top:14px}
+
+/* quiz */
+.quiz{max-width:720px;margin:0 auto}
+.qhead{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.qtext{font-size:20px;font-weight:600;margin:6px 0 14px}
+.opts{display:grid;gap:8px}
+.opt{text-align:right;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 14px;font-size:16px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--teal)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:700}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.opt:disabled{cursor:default}
+.expl{margin-top:12px}
+.score{text-align:center;padding:30px 10px}
+.score .big{font-family:var(--verse);font-size:56px;color:var(--teal);line-height:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>البيقونية تفاعليًّا</h1>
+      <p>شرح المنظومة بيتًا بيتًا، مع مختبر للإسناد وخريطة للأقسام واختبار ذاتي</p>
+    </div>
+    <div class="prog" aria-live="polite">
+      <div class="lbl"><span>ما فهمتُه من الأبيات</span><span id="progTxt">٠ / ٣٤</span></div>
+      <div class="bar"><i id="progBar"></i></div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="أقسام الصفحة">
+    <a href="#matn" data-tab="matn">المتن مشروحًا</a>
+    <a href="#isnad" data-tab="isnad">مختبر الإسناد</a>
+    <a href="#map" data-tab="map">خريطة الأقسام</a>
+    <a href="#test" data-tab="test">اختبر نفسك</a>
+  </nav>
+
+  <!-- MATN -->
+  <section id="v-matn" data-view="matn">
+    <div class="matn">
+      <article class="verse-card" id="verseCard" aria-live="polite"></article>
+      <aside class="list" aria-label="فهرس الأبيات">
+        <div class="filters" id="filters"></div>
+        <ul class="vlist" id="vlist"></ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ISNAD LAB -->
+  <section id="v-isnad" data-view="isnad" hidden>
+    <div class="labgrid">
+      <div class="panel">
+        <h2>أين سقط الراوي؟</h2>
+        <p class="hint">اضغط على أي راوٍ لإسقاطه من السند أو إرجاعه، وانظر إلى اسم النوع.</p>
+        <div style="overflow-x:auto"><div class="chain" id="labChain"></div></div>
+        <div id="labRes"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="labReset">إعادة السند متصلًا</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>معنعن أم مدلَّس؟</h2>
+        <p class="hint">راوٍ يروي عن شيخه. غيّر الصيغة وحال الراوي، وانظر كيف يُحكم على السند.</p>
+        <div class="row"><span class="k">صيغة الرواية</span><div class="seg" id="sgSiga"><button data-v="an" aria-pressed="true">«عن فلان»</button><button data-v="haddathani" aria-pressed="false">«حدّثني فلان»</button></div></div>
+        <div class="row"><span class="k">الراوي</span><div class="seg" id="sgMud"><button data-v="no" aria-pressed="true">غير موصوف بالتدليس</button><button data-v="yes" aria-pressed="false">موصوف بالتدليس</button></div></div>
+        <div class="row"><span class="k">علاقته بشيخه</span><div class="seg" id="sgLiqa"><button data-v="liqa" aria-pressed="true">ثبت أنه لقيه</button><button data-v="muasara" aria-pressed="false">عاصره فقط</button></div></div>
+        <div id="anRes"></div>
+      </div>
+
+      <div class="panel">
+        <h2>إلى مَن يُنسب الكلام؟</h2>
+        <p class="hint">اختر قائل الكلام في نهاية السند.</p>
+        <div class="row"><span class="k">القائل</span><div class="seg" id="sgQail"><button data-v="nabi" aria-pressed="true">النبي ﷺ</button><button data-v="sahabi" aria-pressed="false">صحابي</button><button data-v="tabii" aria-pressed="false">تابعي فمن دونه</button></div></div>
+        <div class="row"><span class="k">السند</span><div class="seg" id="sgIttisal"><button data-v="y" aria-pressed="true">متصل</button><button data-v="n" aria-pressed="false">فيه سقط</button></div></div>
+        <div id="qailRes"></div>
+      </div>
+
+      <div class="panel">
+        <h2>كم راويًا روى الحديث؟</h2>
+        <p class="hint">غيّر عدد الرواة في كل طبقة. الحكم يكون بأقلّ طبقة.</p>
+        <div class="tabaqat" id="tabaqat"></div>
+        <div id="adadRes"></div>
+      </div>
+
+      <div class="panel">
+        <h2>شاذّ أم منكر؟</h2>
+        <p class="hint">من الراوي؟ وماذا فعل؟</p>
+        <div class="row"><span class="k">الراوي</span><div class="seg" id="sgRawi"><button data-v="thiqa" aria-pressed="true">ثقة</button><button data-v="daif" aria-pressed="false">ضعيف</button></div></div>
+        <div class="row"><span class="k">فعله</span><div class="seg" id="sgFil"><button data-v="khalafa" aria-pressed="true">خالف مَن هو أوثق منه</button><button data-v="tafarrada" aria-pressed="false">تفرّد ولم يخالف</button></div></div>
+        <div id="shadhRes"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section id="v-map" data-view="map" hidden>
+    <p class="hint" style="color:var(--muted);margin-top:0">اضغط على أي نوع لترى تعريفه، ثم انتقل إلى بيته في المتن.</p>
+    <div class="tree"><div class="tcol" id="tree"></div></div>
+    <div id="mapinfo"></div>
+    <div class="mapmore" id="mapmore"></div>
+  </section>
+
+  <!-- TEST -->
+  <section id="v-test" data-view="test" hidden>
+    <div class="quiz panel" id="quiz"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+const AR='٠١٢٣٤٥٦٧٨٩'; const an=n=>String(n).replace(/\d/g,d=>AR[d]);
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- DATA: the 34 verses ---------- */
+const T={intro:'المقدمة',acc:'المقبول والمردود',nisba:'نسبة الكلام',ittisal:'الاتصال والانقطاع',adad:'عدد الرواة',sifat:'صفات الإسناد',khata:'أخطاء الرواة',asma:'أسماء الرواة',end:'الخاتمة'};
+const V=[
+{t:'intro',ti:'افتتاح المنظومة',s1:'أَبْدَأُ بِالحَمْدِ مُصَلِّيًا عَلَى',s2:'مُحَمَّدٍ خَيْرِ نَبِيٍّ أُرْسِلَا',
+ sh:'يبدأ الناظم بحمد الله ثم بالصلاة على النبي ﷺ، كما هي عادة أهل العلم في افتتاح كتبهم.',
+ gl:[['مُصَلِّيًا','حال كوني مصلّيًا على النبي ﷺ'],['أُرسِلا','الألف للإطلاق في الشعر']],
+ fa:'حديث «كل أمر ذي بال لا يُبدأ فيه بالحمد…» ضعّفه جمع من العلماء، والبدء بالحمد والبسملة ثابت من فعل النبي ﷺ في كتبه. وكره النووي إفراد الصلاة دون السلام، وقيّده ابن حجر بمن جعل ذلك عادته.'},
+{t:'intro',ti:'موضوع المنظومة',s1:'وَذِي مِنَ اقْسَامِ الحَدِيثِ عِدَّهْ',s2:'وَكُلُّ وَاحِدٍ أَتَى وَحَدُّهْ',
+ sh:'هذه أنواع كثيرة من أنواع الحديث، وكل نوع منها يأتي في المنظومة مع تعريفه.',
+ gl:[['ذي','هذه'],['عِدّه','عدد منها'],['وحدُّه','ومعه تعريفه']],
+ df:'<b>علم المصطلح:</b> قواعد وضوابط يُعرف بها المقبول من المردود مما يُنسب إلى النبي ﷺ.',
+ fa:'تمتاز البيقونية بأنها تذكر اسم النوع مع تعريفه، بلا أمثلة ولا خلاف، فهي مناسبة للمبتدئ. ثم يتدرّج الطالب: نخبة الفكر، ثم اختصار علوم الحديث لابن كثير، ثم ألفية العراقي.'},
+{t:'acc',ti:'الحديث الصحيح (١)',s1:'أَوَّلُهَا الصَّحِيحُ وَهْوَ مَا اتَّصَلْ',s2:'إِسْنَادُهُ وَلَمْ يُشَذَّ أَوْ يُعَلّ',
+ sh:'أول الأقسام وأعلاها الصحيح. وذكر في هذا البيت ثلاثة من شروطه: أن يتصل السند، وألا يكون شاذًّا، وألا تكون فيه علة.',
+ gl:[['يُشَذّ','يكون شاذًّا'],['يُعَلّ','تكون فيه علة خفية']],
+ df:'<b>الصحيح:</b> ما اتصل سنده بنقل العدل الضابط عن مثله إلى منتهاه، من غير شذوذ ولا علة.',
+ ex:'حديث <q>إنما الأعمال بالنيات</q> متفق عليه، وهو من أصحّ الأحاديث.',map:'sahih'},
+{t:'acc',ti:'الحديث الصحيح (٢)',s1:'يَرْوِيهِ عَدْلٌ ضَابِطٌ عَنْ مِثْلِهِ',s2:'مُعْتَمَدٌ فِي ضَبْطِهِ وَنَقْلِهِ',
+ sh:'ويُكمل الشرطين الباقيين: أن يكون كل راوٍ عدلًا في دينه، ضابطًا لما يرويه، عن شيخ مثله في العدالة والضبط.',
+ gl:[['عدل','مستقيم الدين والمروءة'],['ضابط','حافظ لما يروي'],['معتمَد','موثوق به']],
+ df:'<b>العدل:</b> المسلم البالغ العاقل، السالم من أسباب الفسق وخوارم المروءة.<br><b>الضابط:</b> من يحفظ الحديث من حين سماعه إلى أن يؤدّيه كما سمعه. <b>والثقة</b> = العدالة + الضبط.',
+ fa:'الضبط نوعان: ضبط صدر بالحفظ، وضبط كتاب بصيانة كتاب مصحَّح. والعدالة تُشترط عند أداء الحديث لا عند سماعه، فيُقبل ما سمعه الصغير أو الكافر ثم أدّاه بعد بلوغه وإسلامه.'},
+{t:'acc',ti:'الحديث الحسن',s1:'وَالحَسَنُ المَعْرُوفُ طُرْقًا وَغَدَتْ',s2:'رِجَالُهُ لَا كَالصَّحِيحِ اشْتَهَرَتْ',
+ sh:'الحسن حديث عُرف مخرجه، لكن رجاله أقلّ شهرة بالحفظ والإتقان من رجال الصحيح. أي: فيه شروط الصحيح كلها، إلا أن ضبط الراوي أخفّ.',
+ gl:[['طُرْقًا','طرقًا، أي مخارج الحديث'],['غدت','صارت']],
+ df:'<b>الحسن لذاته:</b> ما يرويه العدل الخفيف الضبط بسند متصل، غير شاذّ ولا معلّ.<br><b>الحسن لغيره:</b> الضعيف ضعفًا يسيرًا إذا تعدّدت طرقه.',
+ ex:'حديث <q>لولا أن أشقّ على أمتي…</q> من طريق محمد بن عمرو بن علقمة حسن لذاته، فلما تعدّدت طرقه صار صحيحًا لغيره.',
+ fa:'تعريف الناظم مأخوذ من الخطّابي، وفيه غموض. ومن العلماء من يجعل الحسن أدنى مراتب الصحيح، وجعله ابن تيمية وابن القيم من الضعيف مع احتجاجهما به.',map:'hasan'},
+{t:'acc',ti:'الحديث الضعيف',s1:'وَكُلُّ مَا عَنْ رُتْبَةِ الحُسْنِ قَصُرْ',s2:'فَهْوَ الضَّعِيفُ وَهْوَ أَقْسَامًا كُثُرْ',
+ sh:'كل حديث لم يبلغ درجة الحسن فهو ضعيف. والضعيف أنواع كثيرة، لأن كل شرط يختلّ يُخرج نوعًا.',
+ gl:[['قصُر','نزل عنها ولم يبلغها'],['كثُر','كثيرة']],
+ df:'<b>الضعيف:</b> ما لم تجتمع فيه شروط القبول.',
+ fa:'بعضهم أوصل أنواع الضعيف إلى مئات بتقليب الشروط، ولا فائدة في ذلك. والضعيف اليسير يتقوّى بتعدّد الطرق، أما الشديد كرواية المتّهم بالكذب فلا، قال أحمد: «والمنكر أبدًا منكر».',map:'daif'},
+{t:'nisba',ti:'المرفوع والمقطوع',s1:'وَمَا أُضِيفَ لِلنَّبِي المَرْفُوعُ',s2:'وَمَا لِتَابِعٍ هُوَ المَقْطُوعُ',
+ sh:'ينظر هنا إلى قائل الكلام: فإن كان النبي ﷺ فهو المرفوع، وإن كان التابعي فمن بعده فهو المقطوع. والموقوف (ما يُنسب إلى الصحابي) أخّره الناظم إلى البيت الخامس عشر.',
+ gl:[['للنبي','بسكون الياء لأجل الوزن']],
+ df:'<b>المرفوع:</b> ما أُضيف إلى النبي ﷺ من قول أو فعل أو تقرير أو صفة.<br><b>المقطوع:</b> ما أُضيف إلى التابعي فمن دونه.',
+ fa:'هذه أوصاف لقائل الكلام لا للصحة: فقد يكون المرفوع ضعيفًا والمقطوع صحيحًا. ولا تخلط بين <b>المقطوع</b> (وصف للمتن) و<b>المنقطع</b> (وصف للسند).',lab:'qail',map:'nisba'},
+{t:'ittisal',ti:'المسند',s1:'وَالمُسْنَدُ المُتَّصِلُ الإِسْنَادِ مِنْ',s2:'رَاوِيهِ حَتَّى المُصْطَفَى وَلَمْ يَبِنْ',
+ sh:'المسند يجمع وصفين: أن يكون مرفوعًا إلى النبي ﷺ، وأن يكون سنده متصلًا من أوله إلى آخره.',
+ gl:[['لم يَبِن','لم ينقطع']],
+ df:'<b>المسند:</b> المرفوع إلى النبي ﷺ بسند متصل.',
+ fa:'يُطلق «المسند» أيضًا على الكتاب المرتّب على أسماء الصحابة، كمسند الإمام أحمد. ومن العلماء من يطلقه على المرفوع ولو لم يتصل (ابن عبد البر).',chain:[],lab:'qail'},
+{t:'ittisal',ti:'المتصل',s1:'وَمَا بِسَمْعِ كُلِّ رَاوٍ يَتَّصِلْ',s2:'إِسْنَادُهُ لِلْمُصْطَفَى فَالمُتَّصِلْ',
+ sh:'المتصل: سند سمعه كل راوٍ ممن فوقه، فلا سقط فيه. والفرق بينه وبين المسند: المتصل قد ينتهي إلى صحابي أو تابعي، والمسند لا يكون إلا مرفوعًا.',
+ df:'<b>المتصل:</b> ما سمعه كل راوٍ ممن فوقه إلى منتهاه، مرفوعًا كان أو موقوفًا.',
+ fa:'كل مسند متصل، وليس كل متصل مسندًا.',chain:[],lab:'chain'},
+{t:'sifat',ti:'المسلسل (١)',s1:'مُسَلْسَلٌ قُلْ مَا عَلَى وَصْفٍ أَتَى',s2:'مِثْلُ أَمَا وَاللهِ أَنْبَانِي الفَتَى',
+ sh:'المسلسل: حديث اتفق رواته كلهم على صفة واحدة أو قول واحد أو حال واحدة، كأن يقول كل راوٍ: «أما والله أنبأني فلان».',
+ gl:[['أنباني','أنبأني، خُفّفت الهمزة للوزن']],
+ df:'<b>المسلسل:</b> ما اتفق رواته على صفة أو حال واحدة.'},
+{t:'sifat',ti:'المسلسل (٢)',s1:'كَذَاكَ قَدْ حَدَّثَنِيهِ قَائِمَا',s2:'أَوْ بَعْدَ أَنْ حَدَّثَنِي تَبَسَّمَا',
+ sh:'ومن أمثلته: أن يقول كل راوٍ «حدّثني به قائمًا»، أو «حدّثني ثم تبسّم».',
+ fa:'المسلسل من مُلَح الإسناد، وقلّ أن يسلم تسلسل من ضعف، وقد يصحّ الحديث دون تسلسله. وأشهره «المسلسل بالأولية»: <q>الراحمون يرحمهم الرحمن</q>، وتسلسله ينتهي إلى سفيان بن عيينة. ورآه الطريفي ترفًا حديثيًا لا أثر له في التطبيق.'},
+{t:'adad',ti:'العزيز والمشهور',s1:'عَزِيزُ مَرْوِي اثْنَيْنِ أَوْ ثَلَاثَهْ',s2:'مَشْهُورُ مَرْوِي فَوْقَ مَا ثَلَاثَهْ',
+ sh:'ينظر هنا إلى عدد الرواة في كل طبقة: فالعزيز ما رواه اثنان أو ثلاثة، والمشهور ما رواه أكثر من ثلاثة.',
+ df:'<b>العزيز:</b> ما رواه اثنان أو ثلاثة.<br><b>المشهور:</b> ما رواه أكثر من ثلاثة.',
+ ex:'حديث <q>لا يؤمن أحدكم حتى أكون أحبّ إليه…</q> رواه أنس وأبو هريرة، فهو عزيز.',
+ fa:'هذا حدّ الناظم تبعًا لابن منده. وعند ابن حجر: العزيز ما رواه اثنان، والمشهور ثلاثة فأكثر. ويُحكم بأقلّ عدد في أي طبقة. وفي اسم «العزيز» قولان: من القلّة، أو من القوة.',lab:'adad'},
+{t:'sifat',ti:'المعنعن والمبهم',s1:'مُعَنْعَنٌ كَعَنْ سَعِيدٍ عَنْ كَرَمْ',s2:'وَمُبْهَمٌ مَا فِيهِ رَاوٍ لَمْ يُسَمّ',
+ sh:'المعنعن: سند رُوي بلفظ «عن» مثل «عن سعيد عن كرم»، وهذان اسمان للمثال. والمبهم: حديث في سنده راوٍ لم يُذكر اسمه، كقوله «حدّثني رجل».',
+ gl:[['كرم','اسم للتمثيل'],['لم يُسَمّ','لم يُذكر اسمه']],
+ df:'<b>المعنعن:</b> ما قيل في سنده: فلان عن فلان.<br><b>المبهم:</b> ما في سنده راوٍ لم يُسمَّ.',
+ fa:'العنعنة تُحمل على الاتصال بشرطين: ألا يكون الراوي مدلّسًا، وأن يثبت لقاؤه بشيخه (البخاري وابن المديني)، واكتفى مسلم بالمعاصرة. والمبهم يُعرف اسمه بجمع طرق الحديث.',lab:'an'},
+{t:'sifat',ti:'العالي والنازل',s1:'وَكُلُّ مَا قَلَّتْ رِجَالُهُ عَلَا',s2:'وَضِدُّهُ ذَاكَ الَّذِي قَدْ نَزَلَا',
+ sh:'العالي: سند قلّ عدد رجاله بين الراوي والنبي ﷺ. والنازل: سند كثر عدد رجاله.',
+ df:'<b>العالي:</b> ما قلّ عدد رجاله. <b>النازل:</b> ما كثر عدد رجاله.',
+ ex:'أعلى ما في صحيح البخاري «الثلاثيات» (ثلاثة رواة إلى النبي ﷺ)، وعددها اثنان وعشرون حديثًا.',
+ fa:'العلوّ مطلوب لأن قلّة الرواة أبعد عن الخطأ، لكن النازل برواة ثقات خير من العالي برواة ضعفاء. والعلو مطلق (القرب من النبي ﷺ) أو نسبي (القرب من إمام أو كتاب).'},
+{t:'nisba',ti:'الموقوف',s1:'وَمَا أَضَفْتَهُ إِلَى الأَصْحَابِ مِنْ',s2:'قَوْلٍ وَفِعْلٍ فَهْوَ مَوْقُوفٌ زُكِنْ',
+ sh:'الموقوف: ما يُنسب إلى الصحابي من قوله أو فعله. وبه تتمّ القسمة الثلاثية: مرفوع، موقوف، مقطوع.',
+ gl:[['الأصحاب','الصحابة'],['زُكِن','عُلم']],
+ df:'<b>الموقوف:</b> ما أُضيف إلى الصحابي من قول أو فعل.',
+ fa:'بعض الفقهاء يسمّي الموقوف «الأثر». وقد يكون للموقوف حكم الرفع إذا كان مما لا مجال للرأي فيه.',lab:'qail'},
+{t:'ittisal',ti:'المرسل والغريب',s1:'وَمُرْسَلٌ مِنْهُ الصَّحَابِيُّ سَقَطْ',s2:'وَقُلْ غَرِيبٌ مَا رَوَى رَاوٍ فَقَطْ',
+ sh:'المرسل عند الناظم: ما سقط منه الصحابي، وتعريفه عند المحققين: ما رفعه التابعي إلى النبي ﷺ. والغريب: ما تفرّد بروايته راوٍ واحد.',
+ df:'<b>المرسل:</b> ما رفعه التابعي إلى النبي ﷺ.<br><b>الغريب:</b> ما رواه راوٍ واحد فقط.',
+ fa:'لو عُلم أن الساقط صحابي فقط لصحّ الحديث، فالصحابة كلهم عدول. وإنما ضُعّف المرسل لاحتمال أن يكون التابعي أسقط تابعيًا آخر لا تُعرف حاله. والغرابة لا تعني الضعف: فحديث «إنما الأعمال بالنيات» غريب وهو في الصحيحين.',chain:[4],lab:'chain'},
+{t:'ittisal',ti:'المنقطع',s1:'وَكُلُّ مَا لَمْ يَتَّصِلْ بِحَالِ',s2:'إِسْنَادُهُ مُنْقَطِعُ الأَوْصَالِ',
+ sh:'المنقطع: كل سند لم يتصل، على أي وجه كان الانقطاع. وخصّه المتأخرون بما سقط منه راوٍ واحد في أثنائه.',
+ gl:[['بحال','بأي وجه'],['الأوصال','المفاصل والروابط']],
+ df:'<b>المنقطع:</b> ما لم يتصل إسناده على أي وجه كان.',
+ fa:'للمنقطع معنى عام (كل انقطاع)، ومعنى خاص هو قسيم المعلّق والمرسل والمعضل.',chain:[2],lab:'chain'},
+{t:'ittisal',ti:'المعضل وقسما المدلّس',s1:'وَالمُعْضَلُ السَّاقِطُ مِنْهُ اثْنَانِ',s2:'وَمَا أَتَى مُدَلَّسًا نَوْعَانِ',
+ sh:'المعضل: ما سقط منه راويان فأكثر على التوالي. ثم بدأ بالمدلّس، وذكر أنه نوعان يأتي بيانهما.',
+ df:'<b>المعضل:</b> ما سقط من إسناده اثنان فأكثر على التوالي.',
+ fa:'سُمّي معضلًا لأن الوصول إلى راويين ساقطين أمر مستغلق شديد. وإن كان السقط من أول السند (جهة المصنّف) فهو «المعلّق».',chain:[2,3],lab:'chain'},
+{t:'ittisal',ti:'تدليس الإسناد',s1:'الأَوَّلُ الإِسْقَاطُ لِلشَّيْخِ وَأَنْ',s2:'يَنْقُلَ عَمَّنْ فَوْقَهُ بِعَنْ وَأَنْ',
+ sh:'النوع الأول: أن يُسقط الراوي شيخه الذي سمع منه، ويروي عمّن فوقه بلفظ محتمل مثل «عن» أو «أنّ»، فيوهم أنه سمعه منه.',
+ gl:[['أنْ','أصلها «أنّ»، سُكّنت للوزن']],
+ df:'<b>تدليس الإسناد:</b> أن يروي عمّن لقيه ما لم يسمعه منه، بصيغة محتملة كـ«عن» و«أنّ».',
+ fa:'المدلّس لا يكذب: لا يقول «حدّثني» فيما لم يسمع. ولا تُقبل روايته حتى يصرّح بالسماع. وأشدّه «تدليس التسوية»: يُسقط ضعيفًا بين ثقتين. وإن روى عمّن عاصره ولم يلقه فهو «الإرسال الخفي».',lab:'an'},
+{t:'ittisal',ti:'تدليس الشيوخ',s1:'وَالثَّانِ لَا يُسْقِطُهُ لَكِنْ يَصِفْ',s2:'أَوْصَافَهُ بِمَا بِهِ لَا يَنْعَرِفْ',
+ sh:'النوع الثاني: لا يُسقط شيخه، لكن يسمّيه أو يكنّيه أو ينسبه بما لا يُعرف به، فيصعب على الناس معرفته.',
+ gl:[['والثانِ','والثاني'],['لا ينعرف','لا يُعرف']],
+ df:'<b>تدليس الشيوخ:</b> أن يصف شيخه بما لا يُعرف به من اسم أو كنية أو نسبة.',
+ ex:'كأن يقول عن الإمام أحمد: «حدّثني أبو صالح الشيباني»، فلا يعرفه أكثر الناس بهذه الكنية.'},
+{t:'khata',ti:'الشاذّ، وبداية المقلوب',s1:'وَمَا يُخَالِفْ ثِقَةٌ فِيهِ المَلَا',s2:'فَالشَّاذُّ وَالمَقْلُوبُ قِسْمَانِ تَلَا',
+ sh:'الشاذّ: حديث يرويه ثقة، لكنه يخالف فيه جماعة الثقات أو من هو أوثق منه. ثم بدأ بالمقلوب، وذكر أنه قسمان.',
+ gl:[['الملا','الجماعة'],['تلا','جاء بعده']],
+ df:'<b>الشاذّ:</b> ما خالف فيه الثقةُ من هو أوثق منه أو الجماعة.',
+ fa:'هذا تعريف الشافعي، وعليه استقرّ الاصطلاح. ومن العلماء من يطلق الشاذّ على مجرد التفرّد. والفرق: الشاذّ مخالفة الثقة، والمنكر مخالفة الضعيف.',lab:'shadh',map:'shadh'},
+{t:'khata',ti:'قسما المقلوب',s1:'إِبْدَالُ رَاوٍ مَا بِرَاوٍ قِسْمُ',s2:'وَقَلْبُ إِسْنَادٍ لِمَتْنٍ قِسْمُ',
+ sh:'المقلوب قسمان: أن يُبدَل راوٍ براوٍ آخر، أو أن يُجعل إسناد حديث لمتن حديث آخر.',
+ df:'<b>المقلوب:</b> ما وقع فيه إبدال راوٍ براوٍ، أو إسناد بإسناد، أو لفظ بلفظ.',
+ ex:'جعل «سالم» مكان «نافع»، أو «مرّة بن كعب» مكان «كعب بن مرّة». ومن قلب المتن: <q>حتى لا تعلم يمينُه ما تنفق شمالُه</q>، والصواب: لا تعلم شماله ما تنفق يمينه.',
+ fa:'امتحن أهل بغداد الإمام البخاري بمئة حديث قلبوا أسانيدها، فردّ كل حديث إلى إسناده على الصواب.'},
+{t:'adad',ti:'الفرد',s1:'وَالفَرْدُ مَا قَيَّدْتَهُ بِثِقَةِ',s2:'أَوْ جَمْعٍ اوْ قَصْرٍ عَلَى رِوَايَةِ',
+ sh:'الفرد: ما تفرّد به راوٍ. وذكر الناظم الفرد النسبي، وهو ثلاث صور: أن يتفرّد به ثقة، أو أهل بلد، أو راوٍ عن شيخ معيّن.',
+ gl:[['جمع','جماعة، كأهل بلد'],['قصر على رواية','تفرّد به راوٍ عن شيخ']],
+ df:'<b>الفرد:</b> ما تفرّد به راوٍ، مطلقًا أو مقيّدًا بثقة أو بلد أو رواية معيّنة.',
+ fa:'الفرد المطلق: تفرّد في أصل السند. والنسبي: تفرّد في طبقة دون ذلك. وكثير من العلماء يجعل الفرد والغريب بمعنى واحد.'},
+{t:'khata',ti:'المعلّل',s1:'وَمَا بِعِلَّةٍ غُمُوضٍ أَوْ خَفَا',s2:'مُعَلَّلٌ عِنْدَهُمُ قَدْ عُرِفَا',
+ sh:'المعلّل: حديث ظاهره السلامة، لكن فيه علة خفية غامضة تقدح في صحته، لا يكتشفها إلا الحفّاظ الكبار.',
+ gl:[['غموض','خفاء'],['معلّل','الأفصح لغة: «معلّ»']],
+ df:'<b>العلة:</b> سبب خفيّ غامض يقدح في صحة الحديث، مع أن ظاهره السلامة منه.',
+ ex:'حديث «كفّارة المجلس»: بيّن البخاري علة في إسناده خفيت على غيره.',
+ fa:'تكون العلة في السند أو المتن. ومن العلل ما لا يقدح، كعدم تمييز «سفيان» الثوري من ابن عيينة، فكلاهما ثقة. وتُكتشف بجمع الطرق والمقارنة بينها.'},
+{t:'khata',ti:'المضطرب',s1:'وَذُو اخْتِلَافِ سَنَدٍ أَوْ مَتْنِ',s2:'مُضْطَرِبٌ عِنْدَ أُهَيْلِ الفَنِّ',
+ sh:'المضطرب: حديث رُوي على أوجه مختلفة، في سنده أو متنه، وهذه الأوجه متساوية في القوة، فلا يمكن ترجيح أحدها ولا الجمع بينها.',
+ gl:[['أُهَيل الفن','أهل الحديث، والتصغير للتعظيم']],
+ df:'<b>المضطرب:</b> ما رُوي على أوجه مختلفة متساوية، لا يمكن الجمع بينها ولا الترجيح.',
+ ex:'مثّل له ابن الصلاح بحديث «الخطّ» بين يدي المصلّي، وحسّنه ابن حجر لأنه رجّح أحد الأوجه.',
+ fa:'إذا أمكن الجمع أو الترجيح زال الاضطراب.'},
+{t:'khata',ti:'المدرج',s1:'وَالمُدْرَجَاتُ فِي الحَدِيثِ مَا أَتَتْ',s2:'مِنْ بَعْضِ أَلْفَاظِ الرُّوَاةِ اتَّصَلَتْ',
+ sh:'المدرج: كلام بعض الرواة يقع في الحديث متصلًا به، بلا فصل يبيّن أنه ليس من كلام النبي ﷺ.',
+ df:'<b>المدرج:</b> ما زيد فيه من كلام بعض الرواة متصلًا به.',
+ ex:'<q>أسبغوا الوضوء، ويل للأعقاب من النار</q>: «أسبغوا الوضوء» من كلام أبي هريرة. و«وهو التعبّد» في حديث بدء الوحي من تفسير الزهري.',
+ fa:'يُعرف الإدراج بروايات أخرى تفصل الكلام، أو بأن يكون في الكلام ما يستحيل أن يقوله النبي ﷺ.'},
+{t:'asma',ti:'المدبّج',s1:'وَمَا رَوَى كُلُّ قَرِينٍ عَنْ أَخِهْ',s2:'مُدَبَّجٌ فَاعْرِفْهُ حَقًّا وَانْتَخِهْ',
+ sh:'الأقران: الرواة المتقاربون في السن والشيوخ. فإذا روى كل واحد منهما عن الآخر فهو المدبّج.',
+ gl:[['أخه','أخيه'],['انتخه','افتخر به واقصده']],
+ df:'<b>المدبّج:</b> أن يروي كل واحد من القرينين عن الآخر.',
+ ex:'روت عائشة عن أبي هريرة، وروى أبو هريرة عن عائشة.',
+ fa:'إذا روى أحدهما عن الآخر فقط فهي «رواية الأقران». وفيه دلالة على تواضع الراوي.'},
+{t:'asma',ti:'المتفق والمفترق',s1:'مُتَّفِقٌ لَفْظًا وَخَطًّا مُتَّفِقْ',s2:'وَضِدُّهُ فِيمَا ذَكَرْنَا المُفْتَرِقْ',
+ sh:'المتفق والمفترق: أسماء رواة تتفق في اللفظ والخط، لكنهم أشخاص مختلفون.',
+ df:'<b>المتفق والمفترق:</b> أن تتفق الأسماء لفظًا وخطًّا وتختلف أشخاصها.',
+ ex:'«الخليل بن أحمد» ستة أشخاص، أشهرهم صاحب العروض.',
+ fa:'من لم ينتبه لهذا جعل الاثنين واحدًا، فنسب إلى رجل ما قاله غيره.'},
+{t:'asma',ti:'المؤتلف والمختلف',s1:'مُؤْتَلِفٌ مُتَّفِقُ الخَطِّ فَقَطْ',s2:'وَضِدُّهُ مُخْتَلِفٌ فَاخْشَ الغَلَطْ',
+ sh:'المؤتلف والمختلف: أسماء تتفق في الخط وتختلف في النطق. فاحذر الغلط فيها.',
+ gl:[['فاخشَ الغلط','احذر الخطأ، وفي نسخ: «فاحش الغلط»']],
+ df:'<b>المؤتلف والمختلف:</b> أن تتفق الأسماء خطًّا وتختلف لفظًا.',
+ ex:'«عُبيدة» و«عَبيدة»، و«سَلام» و«سلّام»، و«حِزام» و«حَرام».',
+ fa:'هذا لا يُدرك بالاجتهاد، بل بمراجعة كتب الضبط والأخذ عن الشيوخ.'},
+{t:'khata',ti:'المنكر',s1:'وَالمُنْكَرُ الفَرْدُ بِهِ رَاوٍ غَدَا',s2:'تَعْدِيلُهُ لَا يَحْمِلُ التَّفَرُّدَا',
+ sh:'المنكر عند الناظم: حديث تفرّد به راوٍ ليس عنده من الضبط ما يجعلنا نقبل تفرّده.',
+ gl:[['غدا','صار'],['لا يحمل التفرّد','لا يُحتمل منه أن ينفرد']],
+ df:'<b>المنكر:</b> ما تفرّد به راوٍ لا يُحتمل تفرّده، أو خالف فيه الضعيف الثقات.',
+ ex:'حديث <q>كلوا البلح بالتمر…</q> تفرّد به أبو زكير، وهو لا يُحتمل تفرّده.',
+ fa:'من العلماء من يجعل المنكر والشاذّ بمعنى واحد.',lab:'shadh',map:'shadh'},
+{t:'khata',ti:'المتروك',s1:'مَتْرُوكُهُ مَا وَاحِدٌ بِهِ انْفَرَدْ',s2:'وَأَجْمَعُوا لِضَعْفِهِ فَهُوَ كَرَدّ',
+ sh:'المتروك: حديث انفرد به راوٍ اتفق العلماء على ضعفه، كالمتّهم بالكذب. وهو كالمردود لأن ضعفه شديد لا يتقوّى.',
+ gl:[['كرَدّ','كالمردود']],
+ df:'<b>المتروك:</b> ما انفرد به راوٍ أجمعوا على ضعفه.',
+ fa:'يُتّهم الراوي بالكذب إذا عُرف بالكذب في كلام الناس. واعترض الطريفي على قيد «انفرد»: فقد يروي الحديث اثنان أو ثلاثة من شديدي الضعف ويبقى متروكًا.'},
+{t:'khata',ti:'الموضوع',s1:'وَالكَذِبُ المُخْتَلَقُ المَصْنُوعُ',s2:'عَلَى النَّبِي فَذَلِكَ المَوْضُوعُ',
+ sh:'الموضوع: كلام مكذوب مختلَق يُنسب إلى النبي ﷺ. وهو شرّ أنواع الضعيف، بل ليس حديثًا في الحقيقة.',
+ gl:[['المختلَق','المفترى']],
+ df:'<b>الموضوع:</b> الكذب المختلَق المصنوع على النبي ﷺ.',
+ fa:'قال ﷺ: <q>من كذب عليّ متعمّدًا فليتبوّأ مقعده من النار</q>. ولا تجوز رواية الموضوع إلا مع بيان أنه موضوع. وأضرّ الوضّاعين من ينتسبون إلى الزهد، يضعون أحاديث في الترغيب ظنًّا أنهم يحسنون.'},
+{t:'end',ti:'تسمية المنظومة',s1:'وَقَدْ أَتَتْ كَالجَوْهَرِ المَكْنُونِ',s2:'سَمَّيْتُهَا مَنْظُومَةَ البَيْقُونِي',
+ sh:'يصف الناظم منظومته بأنها كاللؤلؤ المصون، ويسمّيها باسمه: «منظومة البيقوني».',
+ gl:[['الجوهر المكنون','اللؤلؤ المحفوظ']],
+ fa:'لا يُعرف من اسم الناظم على اليقين إلا هذه النسبة، واختُلف في اسمه: عمر أو طه.'},
+{t:'end',ti:'عدد الأبيات والختام',s1:'فَوْقَ الثَّلَاثِينَ بِأَرْبَعٍ أَتَتْ',s2:'أَقْسَامُهَا تَمَّتْ بِخَيْرٍ خُتِمَتْ',
+ sh:'عدد أبيات المنظومة أربعة وثلاثون بيتًا، وقد تمّت بخير.',
+ df:'<b>عدد أبياتها:</b> ٣٤ بيتًا.',
+ fa:'نصيحة الخضير: من كانت حافظته قوية فليحفظ ألفية العراقي، ومن كانت أضعف فنظم النخبة، ومن أراد مبادئ العلم فالبيقونية خير من لا شيء. ويحفظ الطالب نظمًا واحدًا، لأن المنظومات المتقاربة يشوّش بعضها على بعض.'}
+];
+
+/* ---------- state ---------- */
+let done=new Set(store.get('bq-done',[]));
+let cur=store.get('bq-cur',0); if(!(cur>=0&&cur<V.length))cur=0;
+let filt='all';
+
+function updProg(){$('#progTxt').textContent=an(done.size)+' / '+an(V.length);$('#progBar').style.width=(done.size/V.length*100)+'%';}
+
+/* ---------- chain renderer ---------- */
+const NODES=['المصنِّف','شيخه','شيخ شيخه','تابعي','صحابي','النبي ﷺ'];
+function chainHTML(dropped,ro){
+  return NODES.map((n,i)=>{
+    let c='node'; if(i===0)c+=' auth'; else if(i===5)c+=' fixed'; else if(dropped.includes(i))c+=' drop';
+    const tag=(i===0||i===5||ro)?'span':'button';
+    const extra=tag==='button'?` type="button" data-i="${i}" aria-pressed="${dropped.includes(i)}" aria-label="${n}${dropped.includes(i)?' (ساقط)':''}"`:'';
+    return `<${tag} class="${c}"${extra}>${n}</${tag}>`+(i<5?'<span class="arr" aria-hidden="true">←</span>':'');
+  }).join('');
+}
+function classify(D){
+  D=[...D].sort((a,b)=>a-b);
+  if(!D.length) return {k:'good',n:'متصل',p:'كل راوٍ سمعه ممن فوقه، ولا سقط في السند. وإذا كان مرفوعًا إلى النبي ﷺ فهو أيضًا «مسند».',v:9};
+  if(D.includes(1)) return {k:'badr',n:'معلّق',p:'السقط من أول السند، من جهة المصنِّف. ولم يذكره الناظم، لكنه من أنواع السقط الظاهر.',v:18};
+  let runs=[],r=[D[0]];for(let i=1;i<D.length;i++){if(D[i]===D[i-1]+1)r.push(D[i]);else{runs.push(r);r=[D[i]]}}runs.push(r);
+  const maxRun=Math.max(...runs.map(x=>x.length));
+  if(maxRun>=2){const withS=D.includes(4);return {k:'badr',n:'معضل',p:'سقط راويان فأكثر على التوالي.'+(withS?' وإذا رفعه التابعي الصغير وقد أسقط تابعيًا وصحابيًا، صحّ أن يُسمّى مرسلًا ومعضلًا معًا.':''),v:18};}
+  if(D.length===1&&D[0]===4) return {k:'badr',n:'مرسل',p:'سقط الصحابي، فرفعه التابعي إلى النبي ﷺ مباشرة.',v:16};
+  if(D.includes(4)) return {k:'badr',n:'منقطع ومرسل',p:'فيه سقط في موضعين: في أثنائه، وفي آخره عند الصحابي.',v:17};
+  return {k:'badr',n:'منقطع',p:D.length>1?'سقط أكثر من راوٍ، لكن في أكثر من موضع لا على التوالي.':'سقط راوٍ واحد في أثناء السند.',v:17};
+}
+function resHTML(r){return `<div class="result ${r.k}"><div class="name">${r.n}</div><p>${r.p}</p>${r.v!=null?`<p style="margin-top:6px"><button class="linkbtn" data-goto="${r.v}">اقرأ البيت ${an(r.v)}</button></p>`:''}</div>`;}
+
+/* ---------- MATN view ---------- */
+function renderFilters(){
+  const f=$('#filters');const keys=['all',...Object.keys(T)];
+  f.innerHTML=keys.map(k=>`<button class="chip" type="button" data-f="${k}" aria-pressed="${filt===k}">${k==='all'?'الكل':T[k]}</button>`).join('');
+}
+function renderList(){
+  $('#vlist').innerHTML=V.map((v,i)=>(filt==='all'||v.t===filt)?`<li><button type="button" data-v="${i}" aria-current="${i===cur}"><span class="no">${an(i+1)}</span><span class="tt">${v.ti}</span>${done.has(i)?'<span class="ck" aria-label="فهمته">✓</span>':''}</button></li>`:'').join('');
+}
+function renderVerse(){
+  const v=V[cur];
+  let h=`<div class="verse-head"><div class="meta"><span class="tag">${T[v.t]}</span><span>البيت ${an(cur+1)} من ${an(V.length)}</span></div>
+  <div class="bayt"><span class="s2">${v.s1}</span><span class="sep" aria-hidden="true">✦</span><span class="s1">${v.s2}</span></div>
+  <div class="vtitle">${v.ti}</div></div><div class="vbody">`;
+  h+=`<div class="sec"><h3>الشرح الميسّر</h3><p>${v.sh}</p></div>`;
+  if(v.gl)h+=`<div class="sec"><h3>معاني الكلمات</h3><div class="gloss">${v.gl.map(g=>`<span><b>${g[0]}</b>: ${g[1]}</span>`).join('')}</div></div>`;
+  if(v.df)h+=`<div class="sec"><h3>التعريف للحفظ</h3><div class="def">${v.df}</div></div>`;
+  if(v.chain){h+=`<div class="sec"><h3>شكل السند</h3><div class="minilab ro"><div class="chain">${chainHTML(v.chain,true)}</div></div></div>`;}
+  if(v.ex)h+=`<div class="sec ex"><h3>مثال</h3><p>${v.ex}</p></div>`;
+  if(v.fa)h+=`<div class="faida"><b>فائدة:</b> ${v.fa}</div>`;
+  const links=[];
+  if(v.lab)links.push(`<button class="linkbtn" data-lab="${v.lab}">جرّبه في مختبر الإسناد</button>`);
+  if(v.map)links.push(`<button class="linkbtn" data-map="1">موضعه في خريطة الأقسام</button>`);
+  if(links.length)h+=`<div class="row">${links.join('<span style="color:var(--line)">|</span>')}</div>`;
+  h+=`</div><div class="actions"><div class="row" style="margin:0"><button class="btn" id="prevV" ${cur===0?'disabled':''}>→ السابق</button><button class="btn" id="nextV" ${cur===V.length-1?'disabled':''}>التالي ←</button></div>
+  <button class="btn ${done.has(cur)?'done':'primary'}" id="doneV" aria-pressed="${done.has(cur)}">${done.has(cur)?'✓ فهمتُه':'فهمتُ هذا البيت'}</button></div>`;
+  $('#verseCard').innerHTML=h;
+}
+function goVerse(i,scroll){cur=i;store.set('bq-cur',cur);renderVerse();renderList();if(scroll)$('#verseCard').scrollIntoView({behavior:'smooth',block:'start'});}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,a'); if(!t)return;
+  if(t.dataset.f){filt=t.dataset.f;renderFilters();renderList();return;}
+  if(t.closest('#vlist')&&t.dataset.v!=null){goVerse(+t.dataset.v,window.innerWidth<860);return;}
+  if(t.id==='prevV'&&cur>0){goVerse(cur-1);return;}
+  if(t.id==='nextV'&&cur<V.length-1){goVerse(cur+1);return;}
+  if(t.id==='doneV'){done.has(cur)?done.delete(cur):done.add(cur);store.set('bq-done',[...done]);updProg();renderVerse();renderList();return;}
+  if(t.dataset.goto){location.hash='matn';goVerse(+t.dataset.goto-1);return;}
+  if(t.dataset.lab){location.hash='isnad';const map={chain:'#labChain',an:'#sgSiga',qail:'#sgQail',adad:'#tabaqat',shadh:'#sgRawi'};setTimeout(()=>{const el=$(map[t.dataset.lab]);el&&el.closest('.panel').scrollIntoView({behavior:'smooth',block:'start'})},60);return;}
+  if(t.dataset.map){location.hash='map';return;}
+});
+
+/* ---------- ISNAD LAB ---------- */
+let D=store.get('bq-chain',[4]);
+function renderLab(){$('#labChain').innerHTML=chainHTML(D,false);$('#labRes').innerHTML=resHTML(classify(D));}
+$('#labChain').addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const i=+b.dataset.i;D=D.includes(i)?D.filter(x=>x!==i):[...D,i];store.set('bq-chain',D);renderLab();});
+$('#labReset').addEventListener('click',()=>{D=[];store.set('bq-chain',D);renderLab();});
+
+function seg(id,cb){const el=$(id);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));cb();});}
+const val=id=>$(id).querySelector('[aria-pressed="true"]').dataset.v;
+
+function renderAn(){
+  const s=val('#sgSiga'),m=val('#sgMud'),l=val('#sgLiqa');let r;
+  if(s==='haddathani') r=m==='yes'?{k:'good',n:'متصل',p:'صرّح بالسماع، فتُقبل روايته وإن كان مدلّسًا، لأن المدلّس لا يكذب. فإن كان لم يسمع فعلًا فهو كذب لا تدليس.',v:19}:{k:'good',n:'متصل',p:'صرّح بالسماع «حدّثني»، فلا احتمال للسقط.',v:9};
+  else if(m==='yes') r={k:'badr',n:'يُتوقَّف فيه',p:'مدلّس روى بلفظ «عن»، فيُحتمل أنه أسقط شيخه. لا يُقبل حتى يصرّح بالسماع في رواية أخرى.',v:19};
+  else if(l==='liqa') r={k:'good',n:'معنعن محمول على الاتصال',p:'الراوي غير مدلّس، وثبت لقاؤه بشيخه، فتُحمل «عن» على السماع بالاتفاق.',v:13};
+  else r={k:'neutral',n:'محلّ خلاف',p:'الراوي غير مدلّس، لكن لم يثبت إلا أنه عاصر شيخه: اكتفى مسلم بالمعاصرة مع إمكان اللقاء، واشترط البخاري وابن المديني ثبوت اللقاء ولو مرة.',v:13};
+  $('#anRes').innerHTML=resHTML(r);
+}
+['#sgSiga','#sgMud','#sgLiqa'].forEach(id=>seg(id,renderAn));
+
+function renderQail(){
+  const q=val('#sgQail'),c=val('#sgIttisal');const N={nabi:['مرفوع',7],sahabi:['موقوف',15],tabii:['مقطوع',7]}[q];
+  let p={nabi:'نُسب الكلام إلى النبي ﷺ.',sahabi:'نُسب الكلام إلى الصحابي من قوله أو فعله.',tabii:'نُسب الكلام إلى التابعي فمن دونه.'}[q];
+  let n=N[0];
+  if(q==='nabi'&&c==='y'){n='مرفوع ومسند';p+=' وسنده متصل، فاجتمع فيه الوصفان، فهو «المسند».';}
+  else if(c==='y')p+=' وسنده متصل، فهو «متصل» لكنه ليس مسندًا، لأن المسند لا يكون إلا مرفوعًا.';
+  else p+=' والسند فيه سقط، وهذا لا يغيّر النسبة: الوصف هنا لقائل الكلام، والسقط وصف للسند.';
+  $('#qailRes').innerHTML=resHTML({k:'neutral',n,p,v:q==='nabi'&&c==='y'?8:N[1]});
+}
+['#sgQail','#sgIttisal'].forEach(id=>seg(id,renderQail));
+
+let TB=store.get('bq-tb',[2,3,4,5]);
+const TBN=['الصحابة','التابعون','أتباع التابعين','من بعدهم'];
+function renderAdad(){
+  const mn=Math.min(...TB);
+  $('#tabaqat').innerHTML=TB.map((n,i)=>`<div class="tab ${n===mn?'min':''}"><span class="k">${TBN[i]}</span><span class="step"><button type="button" data-d="-1" data-t="${i}" aria-label="أنقص">−</button><span>${an(n)}</span><button type="button" data-d="1" data-t="${i}" aria-label="زد">+</button></span><span class="dots">${'<i></i>'.repeat(n)}</span></div>`).join('');
+  const naz=mn===1?'غريب':mn<=3?'عزيز':'مشهور';const ih=mn===1?'غريب':mn===2?'عزيز':'مشهور';
+  $('#adadRes').innerHTML=resHTML({k:'neutral',n:naz,p:`أقلّ طبقة فيها ${an(mn)} ${mn===1?'راوٍ':'رواة'}، والحكم بالأقلّ. عند الناظم: <b>${naz}</b>. وعند ابن حجر: <b>${ih}</b>.`+(mn===1?' ولا يعني ذلك الضعف: فقد يكون الغريب صحيحًا.':''),v:mn===1?16:12});
+}
+$('#tabaqat').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;const i=+b.dataset.t;TB[i]=Math.max(1,Math.min(8,TB[i]+ +b.dataset.d));store.set('bq-tb',TB);renderAdad();});
+
+function renderShadh(){
+  const r=val('#sgRawi'),f=val('#sgFil');let o;
+  if(r==='thiqa'&&f==='khalafa')o={k:'badr',n:'شاذّ',p:'ثقة خالف من هو أوثق منه أو الجماعة. هذا تعريف الشافعي، وعليه الناظم.',v:21};
+  else if(r==='thiqa')o={k:'good',n:'مقبول في الأصل',p:'ثقة تفرّد ولم يخالف أحدًا، فهذا من «الفرد»، وحديثه مقبول ما لم تدلّ قرينة على خطئه، كأن يتفرّد بأمر ظاهر تتوافر الدواعي على نقله.',v:23};
+  else if(f==='khalafa')o={k:'badr',n:'منكر',p:'ضعيف خالف الثقات. فالفرق بين الشاذّ والمنكر: صاحب الشاذّ ثقة، وصاحب المنكر ضعيف.',v:30};
+  else o={k:'badr',n:'منكر',p:'ضعيف تفرّد بما لا يُحتمل من مثله، وهذا تعريف الناظم: «تعديله لا يحمل التفرّدا».',v:30};
+  $('#shadhRes').innerHTML=resHTML(o);
+}
+['#sgRawi','#sgFil'].forEach(id=>seg(id,renderShadh));
+
+/* ---------- MAP ---------- */
+const MAPDEF={
+ sahih:['الصحيح لذاته','ما اتصل سنده بنقل العدل الضابط عن مثله إلى منتهاه، من غير شذوذ ولا علة.',3],
+ sahih2:['الصحيح لغيره','الحسن لذاته إذا تعدّدت طرقه فارتقى.',5],
+ hasan:['الحسن لذاته','ما يرويه العدل الخفيف الضبط بسند متصل، غير شاذّ ولا معلّ.',5],
+ hasan2:['الحسن لغيره','الضعيف ضعفًا يسيرًا إذا تعدّدت طرقه فتقوّى.',5],
+ daif:['الضعيف','ما لم تجتمع فيه شروط القبول.',6],
+ mursal:['المرسل','ما رفعه التابعي إلى النبي ﷺ.',16],munqati:['المنقطع','ما لم يتصل إسناده على أي وجه كان.',17],
+ mudal:['المعضل','ما سقط من إسناده اثنان فأكثر على التوالي.',18],mudallas:['المدلّس','ما أُخفي فيه عيب الإسناد: إسقاط شيخ بلفظ محتمل، أو وصفه بما لا يُعرف به.',19],
+ shadh:['الشاذّ','ما خالف فيه الثقة من هو أوثق منه.',21],munkar:['المنكر','ما تفرّد به من لا يُحتمل تفرّده، أو خالف فيه الضعيف الثقات.',30],
+ muallal:['المعلّل','ما فيه علة خفية تقدح في صحته وظاهره السلامة.',24],mudtarib:['المضطرب','ما رُوي على أوجه مختلفة متساوية لا يمكن الجمع بينها ولا الترجيح.',25],
+ maqlub:['المقلوب','ما وقع فيه إبدال راوٍ براوٍ أو إسناد لمتن.',22],mudraj:['المدرج','ما زيد فيه من كلام الرواة متصلًا به.',26],
+ matruk:['المتروك','ما انفرد به راوٍ أجمعوا على ضعفه.',31],mawdu:['الموضوع','الكذب المختلق المصنوع على النبي ﷺ.',32],
+ marfu:['المرفوع','ما أُضيف إلى النبي ﷺ.',7],mawquf:['الموقوف','ما أُضيف إلى الصحابي.',15],maqtu:['المقطوع','ما أُضيف إلى التابعي فمن دونه.',7],
+ gharib:['الغريب','ما رواه راوٍ واحد.',16],aziz:['العزيز','ما رواه اثنان أو ثلاثة.',12],mashhur:['المشهور','ما رواه أكثر من ثلاثة.',12],fard:['الفرد','ما تفرّد به راوٍ، مطلقًا أو مقيّدًا.',23],
+ musnad:['المسند','المرفوع بسند متصل.',8],muttasil:['المتصل','ما سمعه كل راوٍ ممن فوقه.',9],muanan:['المعنعن','فلان عن فلان.',13],mubham:['المبهم','ما فيه راوٍ لم يُسمَّ.',13],
+ musalsal:['المسلسل','ما اتفق رواته على صفة واحدة.',10],aali:['العالي والنازل','العالي ما قلّ رجاله، والنازل ما كثر.',14],
+ mudabbaj:['المدبّج','أن يروي كل قرين عن الآخر.',27],muttafaq:['المتفق والمفترق','اتفاق الأسماء لفظًا وخطًّا مع اختلاف الأشخاص.',28],mutalif:['المؤتلف والمختلف','اتفاق الأسماء خطًّا واختلافها لفظًا.',29]
+};
+function tn(k,c){return `<button type="button" class="tn ${c}" data-m="${k}">${MAPDEF[k][0]}</button>`;}
+$('#tree').innerHTML=`<span class="tn root">الحديث</span><div class="vl"></div>
+<div class="brs"><div class="br"><div class="vl"></div><span class="tn gs" style="cursor:default">المقبول</span><div class="vl"></div>
+<div class="kids">${tn('sahih','g')}${tn('sahih2','gs')}${tn('hasan','g')}${tn('hasan2','gs')}</div></div>
+<div class="br"><div class="vl"></div>${tn('daif','rs')}<div class="vl"></div>
+<div class="kids"><div class="grp"><div class="gt">سقط في السند</div><div class="kids">${tn('mursal','r')}${tn('munqati','r')}${tn('mudal','r')}${tn('mudallas','r')}</div></div>
+<div class="grp"><div class="gt">خطأ أو طعن في الراوي</div><div class="kids">${tn('shadh','r')}${tn('munkar','r')}${tn('muallal','r')}${tn('mudtarib','r')}${tn('maqlub','r')}${tn('mudraj','r')}${tn('matruk','r')}${tn('mawdu','r')}</div></div></div></div></div>`;
+$('#mapmore').innerHTML=[
+ ['إلى مَن يُنسب الكلام؟',['marfu','mawquf','maqtu']],
+ ['كم راويًا رواه؟',['gharib','aziz','mashhur','fard']],
+ ['صفات الإسناد',['musnad','muttasil','muanan','mubham','musalsal','aali']],
+ ['أسماء الرواة',['mudabbaj','muttafaq','mutalif']]
+].map(([h,ks])=>`<div class="panel"><h2>${h}</h2><div class="kids" style="justify-content:flex-start;margin-top:8px">${ks.map(k=>tn(k,'b')).join('')}</div></div>`).join('');
+document.addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;const d=MAPDEF[b.dataset.m];
+ $('#mapinfo').innerHTML=`<div class="result neutral"><div class="name">${d[0]}</div><p>${d[1]}</p><p style="margin-top:6px"><button class="linkbtn" data-goto="${d[2]}">اقرأ البيت ${an(d[2])} وشرحه</button></p></div>`;
+ $('#mapinfo').scrollIntoView({behavior:'smooth',block:'nearest'});});
+
+/* ---------- QUIZ ---------- */
+const Q=[
+['ما الذي ليس من شروط الحديث الصحيح؟',['اتصال السند','ضبط الرواة','كثرة الرواة','السلامة من العلة'],2,'شروط الصحيح خمسة: الاتصال، والعدالة، والضبط، وعدم الشذوذ، وعدم العلة. وكثرة الرواة ليست شرطًا.',3],
+['الفرق بين الصحيح لذاته والحسن لذاته في:',['اتصال السند','ضبط الراوي','عدالة الراوي','عدد الرواة'],1,'الحسن لذاته مثل الصحيح، إلا أن راويه خفيف الضبط.',5],
+['ما أُضيف إلى الصحابي من قول أو فعل يسمّى:',['المرفوع','المقطوع','الموقوف','المسند'],2,'«وما أضفته إلى الأصحاب من قول وفعل فهو موقوف زُكن».',15],
+['ما أُضيف إلى التابعي يسمّى:',['المنقطع','المقطوع','المرسل','الموقوف'],1,'المقطوع وصف للمتن (قائله تابعي)، والمنقطع وصف للسند.',7],
+['المسند هو:',['كل حديث متصل','المرفوع بسند متصل','كل حديث مرفوع','ما رواه أكثر من ثلاثة'],1,'المسند يجمع الرفع والاتصال.',8],
+['ما رفعه التابعي إلى النبي ﷺ يسمّى:',['المعضل','المرسل','المعلّق','المدرج'],1,'المرسل: سقط منه الصحابي.',16],
+['سند سقط منه راويان متتاليان في أثنائه:',['منقطع','مرسل','معضل','مدلّس'],2,'«والمعضل الساقط منه اثنان»، بشرط التوالي.',18],
+['ما رواه اثنان أو ثلاثة عند الناظم:',['الغريب','العزيز','المشهور','المتواتر'],1,'«عزيز مرويُّ اثنين أو ثلاثه».',12],
+['إذا كانت طبقات الحديث: ٥ ثم ١ ثم ٤، فهو:',['مشهور','عزيز','غريب','متواتر'],2,'يُحكم بأقلّ طبقة، وفيها راوٍ واحد.',16],
+['الثقة الذي يخالف من هو أوثق منه، حديثه:',['منكر','شاذّ','موضوع','مضطرب'],1,'الشاذّ: مخالفة الثقة لمن هو أوثق منه.',21],
+['الضعيف الذي تفرّد بما لا يُحتمل منه، حديثه:',['شاذّ','معلّل','منكر','مدبّج'],2,'«والمنكر الفرد به راوٍ غدا تعديله لا يحمل التفرّدا».',30],
+['أن يُسقط الراوي شيخه ويروي عمّن فوقه بلفظ «عن»:',['تدليس الإسناد','تدليس الشيوخ','الإرسال','الإدراج'],0,'هذا النوع الأول من التدليس.',19],
+['أن يصف شيخه بكنية لا يُعرف بها:',['تدليس الشيوخ','المبهم','المقلوب','المؤتلف'],0,'«والثانِ لا يُسقطه لكن يصف أوصافه بما به لا ينعرف».',20],
+['سبب خفيّ يقدح في صحة حديث ظاهره السلامة:',['الشذوذ','العلة','الاضطراب','الإدراج'],1,'هذه العلة، والحديث الذي فيه علة هو المعلّل.',24],
+['حديث رُوي على أوجه مختلفة متساوية لا ترجيح بينها:',['المقلوب','المضطرب','المدرج','الشاذّ'],1,'إذا أمكن الترجيح أو الجمع زال الاضطراب.',25],
+['كلام راوٍ دخل في الحديث متصلًا به:',['المدرج','المقلوب','الموقوف','المسلسل'],0,'مثل «أسبغوا الوضوء» من كلام أبي هريرة.',26],
+['إبدال راوٍ براوٍ، أو إسناد حديث لمتن آخر:',['المضطرب','المقلوب','المدلّس','المؤتلف'],1,'المقلوب قسمان كما في البيت ٢٢.',22],
+['أن يروي كل واحد من القرينين عن الآخر:',['رواية الأقران','المدبّج','المسلسل','المتفق والمفترق'],1,'فإن روى أحدهما فقط فهي رواية الأقران.',27],
+['«عبّاس» و«عيّاش» مثال على:',['المتفق والمفترق','المؤتلف والمختلف','المبهم','المقلوب'],1,'اتفقا خطًّا واختلفا لفظًا.',29],
+['ما انفرد به راوٍ أجمعوا على ضعفه:',['المنكر','المتروك','الموضوع','الغريب'],1,'«متروكه ما واحد به انفرد وأجمعوا لضعفه فهو كرد».',31],
+['العالي من الأسانيد ما:',['كثر رجاله','قلّ رجاله','رواه أهل بلد واحد','اتفق رواته على صفة'],1,'«وكل ما قلّت رجاله علا».',14],
+['ما اتفق رواته على قول «أما والله أنبأني الفتى»:',['المسلسل','المعنعن','المسند','العزيز'],0,'المسلسل: ما اتفق رواته على صفة واحدة.',10],
+['الثقة هو من جمع:',['الإسلام والبلوغ','العدالة والضبط','الحفظ والكتابة','العلو والشهرة'],1,'العدالة + الضبط = الثقة.',4],
+['كم عدد أبيات البيقونية؟',['٣٠','٣٢','٣٤','٤٠'],2,'«فوق الثلاثين بأربع أتت».',34]
+];
+let order=[],qi=0,score=0,answered=false;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function startQuiz(n){order=shuffle(Q.map((_,i)=>i)).slice(0,n);qi=0;score=0;renderQ();}
+function renderQ(){
+  const box=$('#quiz');
+  if(qi>=order.length){const best=store.get('bq-best',0);const pct=Math.round(score/order.length*100);if(pct>best)store.set('bq-best',pct);
+    box.innerHTML=`<div class="score"><div class="big">${an(score)} / ${an(order.length)}</div><p>${pct>=80?'ممتاز، أنت جاهز لهذه الأنواع.':pct>=50?'جيّد، راجع الأبيات التي أخطأت فيها ثم أعد المحاولة.':'لا بأس، اقرأ المتن مشروحًا بيتًا بيتًا ثم أعد الاختبار.'}</p><p style="color:var(--muted);font-size:14px">أفضل نتيجة لك: ${an(Math.max(pct,best))}٪</p><div class="row" style="justify-content:center"><button class="btn primary" id="qAgain">اختبار جديد</button></div></div>`;return;}
+  const [q,opts,c]=Q[order[qi]];answered=false;
+  box.innerHTML=`<div class="qhead"><span>السؤال ${an(qi+1)} من ${an(order.length)}</span><span>الصحيح: ${an(score)}</span></div>
+  <div class="bar" style="margin-bottom:10px"><i style="width:${qi/order.length*100}%"></i></div>
+  <div class="qtext">${q}</div><div class="opts">${opts.map((o,i)=>`<button class="opt" type="button" data-o="${i}">${o}</button>`).join('')}</div><div class="expl" id="expl"></div>`;
+}
+$('#quiz').addEventListener('click',e=>{
+  if(e.target.id==='qAgain'){startQuiz(10);return;}
+  if(e.target.id==='qNext'){qi++;renderQ();return;}
+  const b=e.target.closest('.opt');if(!b||answered)return;answered=true;
+  const [,,c,ex,v]=Q[order[qi]];const o=+b.dataset.o;
+  $('#quiz').querySelectorAll('.opt').forEach((x,i)=>{x.disabled=true;if(i===c)x.classList.add('right');});
+  if(o===c)score++;else b.classList.add('wrong');
+  $('#expl').innerHTML=`<div class="result ${o===c?'good':'badr'}"><div class="name">${o===c?'أحسنت':'ليس هذا'}</div><p>${ex}</p><p style="margin-top:6px"><button class="linkbtn" data-goto="${v}">اقرأ البيت ${an(v)}</button></p></div><div class="row" style="justify-content:flex-start;margin-top:10px"><button class="btn primary" id="qNext">${qi+1<order.length?'السؤال التالي':'النتيجة'}</button></div>`;
+});
+
+/* ---------- routing ---------- */
+function route(){
+  const h=(location.hash||'#matn').slice(1);const tab=['matn','isnad','map','test'].includes(h)?h:'matn';
+  document.querySelectorAll('[data-view]').forEach(s=>s.hidden=s.dataset.view!==tab);
+  document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab?'page':'false'));
+  store.set('bq-tab',tab);
+}
+window.addEventListener('hashchange',route);
+
+/* ---------- boot ---------- */
+renderFilters();renderList();renderVerse();updProg();renderLab();renderAn();renderQail();renderAdad();renderShadh();startQuiz(10);
+if(!location.hash){const t=store.get('bq-tab','matn');if(t!=='matn')location.hash=t;}
+route();
+})();
+</script>
+
+</body></html>
