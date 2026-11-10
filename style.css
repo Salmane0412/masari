@@ -322,3 +322,16 @@ h2.neg{color:var(--neg)}
 .verse.hz-cur{background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:8px}
 .verse.hz-dim{opacity:.28}
 .verse.vh .w,.verse.vh .w i{color:transparent!important;background:color-mix(in srgb,var(--mute) 30%,transparent);border-radius:5px}
+
+/* قفل الدخول */
+html.locked body>#app{visibility:hidden}
+#pinlock{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.pl-in{width:100%;max-width:320px;text-align:center}
+.pl-logo{font-family:var(--quran);font-size:40px;color:var(--accent)}
+.pl-t{font-weight:700;font-size:18px;margin:6px 0 18px}
+.pl-dots{display:flex;justify-content:center;gap:14px;min-height:16px}.pl-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--mute)}.pl-dots i.on{background:var(--accent);border-color:var(--accent)}
+.pl-msg{color:var(--neg);font-size:14px;min-height:22px;margin:12px 0}
+.pl-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;direction:ltr}
+.pl-pad button{height:64px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:24px;font-weight:600;color:var(--ink);max-width:76px;justify-self:center;width:100%}
+.pl-pad button:active{background:var(--sunk)}
+.pl-forgot{margin-top:20px;background:none;border:0;color:var(--mute);text-decoration:underline;font-size:14px}

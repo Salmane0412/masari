@@ -62,7 +62,7 @@ function seedUnits(t) {
   return U;
 }
 function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
-  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = ''; S.health.seeded = 2; } if (!S.prog || S.prog.v !== 2) { S.prog = window.PROG.blank('2026-11-08', '2027-02-08'); S.settings.start = '2026-11-08'; S.settings.end = '2027-02-07'; } if (!S.health.seeded) { S.health.seeded = 1; if (!S.health.age) S.health.age = ''; if (!S.health.h) S.health.h = ''; if (!S.health.w) S.health.w = ''; if (!S.health.gw) S.health.gw = ''; S.health.pace = 0.75; if (!S.health.weights.length) S.health.weights = []; } S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
+  S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = ''; S.health.seeded = 2; } if (!S.prog || S.prog.v !== 2) { S.prog = window.PROG.blank('2026-11-08', '2027-02-08'); S.settings.start = '2026-11-08'; S.settings.end = '2027-02-07'; } if (!S.health.seeded) S.health.seeded = 1; S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
 function load() {
@@ -828,7 +828,7 @@ views.more = () => {
     ['التنظيم', [['tasks', '✓', 'المهام', 'اليوم والقادمة والمشاريع، بإدخال سريع'], ['fin', '€', 'المال والزكاة', 'الميزانية والمصاريف والأهداف والديون وحاسبة الزكاة']]],
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
     ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
-    ['النظام', [['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
+    ['النظام', [['pin', '🔐', 'رمز الدخول', 'قفل مساري برمز سري على هذا الجهاز'], ['lock', '🔒', 'قفل الهاتف', 'ما يمكن وما لا يمكن'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
   ];
   return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="tiles">${items.map(([k, g, t, m]) => `<a class="tile t-${k}" href="#/${k}"><span class="tic">${window.ic ? ic(k, 22) : g}</span><b>${t}</b><span class="m">${m}</span></a>`).join('')}</div>`).join('');
 };
@@ -871,6 +871,15 @@ function reportText() {
   const st = dayState(), P = st.P, t = todayStr(), last = S.tests.filter(x => x.d === t).slice(-1)[0];
   return `تقرير مساري ${t}\nحفظ جديد منجز: ${P.L.new.length} من ${P.quota}\nمراجعات منجزة: ${P.L.rev.length}\nمتبقٍ من مهام اليوم: ${st.left}\nاختبارات اليوم: ${st.quizzes}${last ? ' (آخرها ' + last.ok + '/' + last.n + ')' : ''}\nتركيز: ${S.focus[t] || 0} دقيقة\n${st.left === 0 && st.quizzes >= 1 ? '✅ أنهيتُ مهام اليوم' : '⏳ لم أنهِ مهام اليوم بعد'}`;
 }
+views.pin = () => { const c = window.PIN && PIN.get();
+  return `<div class="sess-h"><a class="btn sm iconbtn" href="#/more" aria-label="رجوع">${ic('back', 20)}</a><div class="tt"><b style="font-size:20px">رمز الدخول</b><span class="sub">${c ? 'مفعّل على هذا الجهاز' : 'غير مفعّل'}</span></div></div>
+  <div class="note">من يفتح رابط مساري على جهاز آخر يرى تطبيقًا فارغًا: بياناتك محفوظة في هذا الجهاز وفي مستودعك الخاص فقط. هذا الرمز يحميها ممن يمسك جهازك (الهاتف أو الحاسوب).</div>
+  ${c ? `<label class="field"><span>يُقفل تلقائيًا بعد مغادرة التطبيق بـ</span><select id="pin-auto">${[[0, 'فورًا'], [1, 'دقيقة'], [5, '5 دقائق'], [15, '15 دقيقة'], [60, 'ساعة']].map(([v, l]) => `<option value="${v}"${(c.auto || 0) === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+  <div class="btns"><button class="btn pri" data-act="pin-lock">اقفل الآن</button><button class="btn" data-act="pin-change">تغيير الرمز</button><button class="btn warn" data-act="pin-off">إلغاء الرمز</button></div>` :
+  `<label class="field"><span>رمز جديد (4 إلى 8 أرقام)</span><input type="password" inputmode="numeric" pattern="[0-9]*" id="pin-1" autocomplete="new-password" dir="ltr"></label>
+  <label class="field"><span>أعد كتابته</span><input type="password" inputmode="numeric" pattern="[0-9]*" id="pin-2" autocomplete="new-password" dir="ltr"></label>
+  <button class="btn pri" data-act="pin-set">تفعيل الرمز</button>`}
+  <p class="sub" style="margin-top:14px">إن نسيت الرمز فلا يمكن استرجاعه: الحل الوحيد مسح بيانات هذا الجهاز ثم استرجاعها من GitHub. فعّل المزامنة قبل ذلك.</p>`; };
 views.code = () => `<div class="hero-title">رمز اليوم</div><div id="codebox"><div class="empty">جارٍ التحقق…</div></div>`;
 async function fillCode() {
   const box = document.getElementById('codebox'); if (!box) return;
@@ -1035,7 +1044,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ pin: 'more', fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -1188,6 +1197,9 @@ document.addEventListener('click', e => {
     case 'gh-copycode': if (!ghReady()) { toast('اضبط المستودع والرمز أولًا'); break; }
       { const code = 'masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('نُسخ رمز الربط'), () => { const el = $('#gh-code'); if (el) { el.value = code; el.select(); } toast('انسخ الرمز من الحقل'); }); } break;
     case 'gh-usecode': try { const v = $('#gh-code').value.trim().replace(/^masari-link:/, ''); const o = JSON.parse(b64d(v)); if (!o.r || !o.t) throw 0; gh.repo = o.r; gh.token = o.t; ghSave(); ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); route(); } catch (e) { toast('رمز غير صالح'); } break;
+    case 'pin-set': { const p1 = $('#pin-1').value.trim(), p2 = $('#pin-2').value.trim(); if (!/^\d{4,8}$/.test(p1)) return toast('من 4 إلى 8 أرقام'); if (p1 !== p2) return toast('الرمزان مختلفان'); PIN.setPin(p1, 1).then(() => { const c = PIN.get(); c.len = p1.length; localStorage.setItem('masari.pin', JSON.stringify(c)); route(); toast('فُعّل رمز الدخول'); }); break; }
+    case 'pin-lock': PIN.lock(); break;
+    case 'pin-off': case 'pin-change': { const cur = prompt('اكتب الرمز الحالي'); if (!cur) return; PIN.check(cur).then(ok => { if (!ok) return toast('رمز خاطئ'); PIN.clear(); route(); toast(act === 'pin-off' ? 'أُلغي الرمز' : 'اكتب الرمز الجديد'); }); break; }
     case 'gh-push': ghPush(true); break;
     case 'gh-pull': ghPull(false); break;
     case 'export': download(`masari-backup-${t}.json`, JSON.stringify(S), 'application/json'); break;
@@ -1212,6 +1224,7 @@ document.addEventListener('change', e => {
   if (id === 'pg-start' && v) { S.prog.start = v; save(); return route(); }
   if (id === 'pg-end' && v) { S.prog.end = v; save(); return route(); }
   if (id === 'pg-cap' && +v > 0) { S.prog.cap = +v; save(); return route(); }
+  if (id === 'pin-auto') { const c = PIN.get(); c.auto = +v; localStorage.setItem('masari.pin', JSON.stringify(c)); toast('تم الحفظ'); return; }
   if (id === 'lk-mode') { S.lock.mode = v; save(); return fillCode(); }
   if (id === 'fa-img2') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
   if (id === 'fa-img') { const f = e.target.files[0]; if (f) ocrFile(f); return; }
