@@ -462,7 +462,7 @@ function expectedOf(i) {
   return { exp, owner };
 }
 function followEval(exp, heard, from) {
-  const st = new Array(exp.length); let p = from || 0, miss = 0;
+  const st = new Array(exp.length); let p = from || 0, miss = 0, started = false;
   for (let hi = 0; hi < heard.length; hi++) {
     if (p >= exp.length) break;
     const h = heard[hi]; let f = -1, two = 0, join = 0;
@@ -472,9 +472,9 @@ function followEval(exp, heard, from) {
       if (hi + 1 < heard.length && wcost(exp[p + d], h + heard[hi + 1]) <= 0.4) { f = d; two = 1; break; } // كلمة مقسومة إلى كلمتين
     }
     if (f >= 0) {
-      for (let k = 0; k < f; k++) st[p + k] = exp[p + k].length <= 3 ? 'ok' : 'bad'; // الكلمات القصيرة كثيرًا ما يُسقطها التعرّف
+      started = true; // كلمة فاتت التعرّف: لا تُحسب خطأً (التعرّف يُسقط كلمات كثيرة)؛ الخطأ الحقيقي = كلمات مسموعة لا تطابق شيئًا
       st[p + f] = 'ok'; p += f + 1; if (join) { st[p] = 'ok'; p++; } if (two) hi++; miss = 0;
-    } else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
+    } else if (started) { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
   return { st, p };
 }
@@ -487,11 +487,23 @@ function followEvalTwoPass(exp, committed, interim, from) {
   return { st, p: Math.max(a.p, b.p) };
 }
 const fol = { on: false, rec: null, base: '', cur: '', fin: 0, from: 0, keep: [], paused: false, stopOnErr: true, exp: [], owner: [], st: [], p: 0, unit: -1 };
-const cleanHeard = t => { let h = normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean); return h; };
+const cleanHeard = t => normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean);
+const near = (a, b) => a === b || (Math.min(a.length, b.length) >= 3 && lev(a, b) <= 1);
+/* يحذف من أول المقطع المسموع البسملة والاستعاذة (لا تُحسب من الآيات) */
+function stripIntro(ws) {
+  if (!ws.length) return ws;
+  if (fol.exp[0] === 'بسم' && fol.p === 0 && !fol.from) return ws;
+  let i = 0, ch = true;
+  while (ch && i < ws.length) {
+    ch = false;
+    if (ws[i] && /^(اعوذ|اعوز|عوذ)/.test(ws[i])) { i += ws.slice(i, i + 4).length >= 4 ? 4 : ws.length - i; ch = true; continue; }
+    if (near(ws[i], 'بسم') && ws[i + 1] && near(ws[i + 1], 'الله') && (ws.length - i <= 3 || (ws[i + 2] && near(ws[i + 2], 'الرحمن')))) { i += 2; if (ws[i] && near(ws[i], 'الرحمن')) i++; if (ws[i] && near(ws[i], 'الرحيم')) i++; ch = true; }
+  }
+  return ws.slice(i);
+}
 const heardWords = () => {
-  let h = cleanHeard(fol.base); let i = cleanHeard(fol.cur);
-  if (h.slice(0, 2).join() === 'بسم,الله' && fol.exp.slice(0, 2).join() !== 'بسم,الله') h = h.slice(4);
-  return { committed: h, interim: i };
+  const committed = fol.base.split('\n').flatMap(c => stripIntro(cleanHeard(c)));
+  return { committed, interim: stripIntro(cleanHeard(fol.cur)) };
 };
 function followPaint() {
   const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from);
@@ -549,9 +561,9 @@ function followStart() {
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = e => { let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += ' ' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
+    rec.onresult = e => { let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
     rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
-    rec.onend = () => { if (fol.paused) return; fol.base += ' ' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
+    rec.onend = () => { if (fol.paused) return; fol.base += '\n' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }
   };
   folStatus('🎙 اسمح للمتصفح بالميكروفون ثم ابدأ التلاوة من أول المقطع…'); startRec();
