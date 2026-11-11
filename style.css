@@ -335,3 +335,19 @@ html.locked body>#app{visibility:hidden}
 .pl-pad button{height:64px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:24px;font-weight:600;color:var(--ink);max-width:76px;justify-self:center;width:100%}
 .pl-pad button:active{background:var(--sunk)}
 .pl-forgot{margin-top:20px;background:none;border:0;color:var(--mute);text-decoration:underline;font-size:14px}
+
+/* الصلاة */
+.nextp{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),var(--surface))}
+.nextp b{font-size:26px}.nextp .cd{color:var(--accent);font-weight:700}.nextp.mini b{font-size:20px}
+.ptimes .row.cur{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.pt{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;min-width:56px;text-align:center}
+.pchk,.pchk0{width:34px;height:34px;flex:none}.pchk{border-radius:50%;border:2px solid var(--line);background:none;color:var(--accent-ink);font-weight:700}
+.pchk.on{background:var(--accent);border-color:var(--accent)}
+.chip small{opacity:.7}
+.dks{display:grid;gap:10px;margin:10px 0}
+.dk{display:flex;flex-direction:column;gap:6px;text-align:start;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.dk b{font-size:14px;color:var(--accent)}.dkt{font-size:21px;line-height:2;text-align:right}
+.dkm{display:flex;justify-content:space-between;align-items:center;gap:8px}.dkm small{color:var(--mute);font-size:12px}
+.dkc{min-width:54px;text-align:center;padding:4px 10px;border-radius:99px;background:var(--sunk);font-weight:700}
+.dk.done{opacity:.55}.dk.done .dkc{background:var(--accent);color:var(--accent-ink)}
+.qib{display:flex;gap:16px;align-items:center}.qarrow{font-size:44px;line-height:1;color:var(--accent);width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:2px solid var(--line)}

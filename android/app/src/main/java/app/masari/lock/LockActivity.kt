@@ -40,7 +40,7 @@ class LockActivity : Activity() {
             if (req == 0L) {
                 root.addView(label("هذه الشاشة قد تُستعمل لحذف مساري أو إيقاف حمايته. إن كنت متأكدًا فاطلب الإلغاء: ينتظر ٢٤ ساعة ثم تُفتح لك نافذة ٣٠ دقيقة.", 17f))
                 root.addView(button("اطلب إلغاء الحماية") {
-                    Store.setDisableReq(this, System.currentTimeMillis()); Toast.makeText(this, "سُجّل الطلب. عُد بعد ٢٤ ساعة.", Toast.LENGTH_LONG).show(); goHome()
+                    Store.setDisableReq(this, System.currentTimeMillis()); Events.add(this, "protect"); Partner.send(this, "طلب إلغاء الحماية", "طلب إلغاء حماية مساري (تُفتح بعد 24 ساعة).", "disable"); Toast.makeText(this, "سُجّل الطلب. عُد بعد ٢٤ ساعة.", Toast.LENGTH_LONG).show(); goHome()
                 })
             } else {
                 val h = Store.disableRemainingMs(this) / 3600_000L
@@ -53,23 +53,46 @@ class LockActivity : Activity() {
             setContentView(root); return
         }
 
-        root.addView(label("📖 هذا التطبيق مقفل", 26f))
-        root.addView(label("أنهِ حفظ اليوم واجتز الاختبار في مساري، ثم أدخل رمز اليوم.", 17f))
+        val reason = intent.getStringExtra("reason") ?: "until"
+        if (reason == "banned") {
+            root.addView(label("⛔ تطبيق محظور نهائيًا", 26f))
+            root.addView(label("اخترتَ حظر هذا التطبيق بلا استثناء. وقتك أثمن منه.", 17f))
+            root.addView(button("رجوع للشاشة الرئيسية") { goHome() })
+            setContentView(root); return
+        }
+        if (reason == "budget") {
+            root.addView(label("⏱ انتهى وقتك اليوم لهذا التطبيق", 24f))
+            root.addView(label("استعمله على الحاسوب في وقته، أو اطلب من شريكك رمزًا ليمنحك 15 دقيقة.", 17f))
+        } else {
+            root.addView(label("📖 هذا التطبيق مقفل", 26f))
+            root.addView(label("أنهِ مهام اليوم في مساري فيُفتح تلقائيًا، أو أدخل رمز اليوم أو رمز شريكك.", 17f))
+        }
         val input = EditText(this)
-        input.inputType = InputType.TYPE_CLASS_NUMBER; input.hint = "رمز من ٦ أرقام"; input.textSize = 28f
+        input.inputType = InputType.TYPE_CLASS_NUMBER; input.hint = "رمز من 6 أرقام"; input.textSize = 28f
         input.setTextColor(Color.WHITE); input.setHintTextColor(Color.GRAY); input.gravity = Gravity.CENTER
         root.addView(input)
         root.addView(button("فتح") {
             val wait = Store.lockedUntil(this) - System.currentTimeMillis()
             if (wait > 0) { Toast.makeText(this, "محاولات كثيرة. انتظر ${wait / 60000 + 1} دقيقة.", Toast.LENGTH_LONG).show(); return@button }
-            if (Codes.verify(this, input.text.toString())) {
+            val code = input.text.toString()
+            if (reason == "budget") {
+                if (Codes.verifyPartner(this, code)) {
+                    val pkg = intent.getStringExtra("pkg") ?: ""
+                    if (pkg.isNotEmpty()) Policy.addUsage(this, pkg, -15 * 60L)
+                    Store.clearFails(this); Events.add(this, "extra_time"); Partner.send(this, "وقت إضافي", "منحتَه 15 دقيقة إضافية.", "extra")
+                    Toast.makeText(this, "15 دقيقة إضافية", Toast.LENGTH_LONG).show(); finish()
+                } else { Store.recordFail(this); input.setText(""); Toast.makeText(this, "رمز الشريك غير صحيح", Toast.LENGTH_SHORT).show() }
+                return@button
+            }
+            if (Codes.verify(this, code)) {
                 Store.clearFails(this); Store.setUnlocked(this)
+                if (Codes.verifySelf(this, code)) Store.setDayDone(this) else Events.add(this, "partner_unlock")
                 Toast.makeText(this, "فُتحت التطبيقات لهذا اليوم. بارك الله فيك.", Toast.LENGTH_LONG).show(); finish()
             } else { Store.recordFail(this); input.setText(""); Toast.makeText(this, "رمز خاطئ", Toast.LENGTH_SHORT).show() }
         })
-        root.addView(button("✍️ فتح بالكتابة: لماذا بدأت المشروع") {
-            startActivity(Intent(this, WhyActivity::class.java).putExtra(WhyActivity.KIND, WhyActivity.APP)); finish() })
         root.addView(button("افتح مساري لأنهي مهامي") { startActivity(Intent(this, MainActivity::class.java)); finish() })
+        if (reason != "budget") root.addView(button("✍️ فتح بالكتابة (يُبلَّغ شريكك)") {
+            startActivity(Intent(this, WhyActivity::class.java).putExtra(WhyActivity.KIND, WhyActivity.APP)); finish() })
         root.addView(button("رجوع للشاشة الرئيسية") { goHome() })
         setContentView(root)
     }

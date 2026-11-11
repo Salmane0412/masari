@@ -825,6 +825,7 @@ views.focus = () => {
 /* ---------- المزيد ---------- */
 views.more = () => {
   const G2 = [
+    ['العبادة', [['salat', '🕌', 'الصلاة والأذكار', 'المواقيت والأذان والسنن وأذكار الصباح والمساء والقبلة']]],
     ['التنظيم', [['tasks', '✓', 'المهام', 'اليوم والقادمة والمشاريع، بإدخال سريع'], ['fin', '€', 'المال والزكاة', 'الميزانية والمصاريف والأهداف والديون وحاسبة الزكاة']]],
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
     ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
@@ -1044,7 +1045,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ pin: 'more', fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
@@ -1262,7 +1263,7 @@ setInterval(() => {
 /* ---------- démarrage ---------- */
 load(); applyTj();
 window.addEventListener('hashchange', route);
-route();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', route); else route(); // après le chargement de tous les modules
 ghPull(true);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });

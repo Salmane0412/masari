@@ -45,12 +45,14 @@ object Codes {
         return (n % 1000000).toString().padStart(6, '0')
     }
 
-    fun verify(c: Context, input: String): Boolean {
-        val sec = Store.secret(c); if (sec.isEmpty()) return false
-        val code = input.trim()
-        return if (Store.mode(c) == "partner") {
-            val now = System.currentTimeMillis() / 30000L
-            (-3L..3L).any { totp(sec, now + it) == code }
-        } else dailyCode(sec, Store.today()) == code
+    fun verifySelf(c: Context, input: String): Boolean {
+        val sec = Store.selfSecret(c); if (sec.isEmpty()) return false
+        return dailyCode(sec, Store.today()) == input.trim()
     }
+    fun verifyPartner(c: Context, input: String): Boolean {
+        val sec = Store.partnerSecret(c); if (sec.isEmpty()) return false
+        val now = System.currentTimeMillis() / 30000L
+        return (-3L..3L).any { totp(sec, now + it) == input.trim() }
+    }
+    fun verify(c: Context, input: String): Boolean = verifySelf(c, input) || verifyPartner(c, input)
 }

@@ -45,9 +45,21 @@ class MainActivity : Activity() {
 
     override fun onDestroy() { bridge?.release(); super.onDestroy() }
 
+    fun startVpn() {
+        val i = android.net.VpnService.prepare(this)
+        if (i != null) startActivityForResult(i, 42) else startService(Intent(this, DnsVpnService::class.java))
+    }
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(r: Int, res: Int, d: Intent?) {
+        super.onActivityResult(r, res, d)
+        if (r == 42 && res == RESULT_OK) startService(Intent(this, DnsVpnService::class.java))
+    }
+
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         Store.markFirstRun(this)
+        Policy.checkPending(this)
+        Alarms.scheduleAll(this)
         web = WebView(this)
         val s: WebSettings = web.settings
         s.javaScriptEnabled = true
@@ -55,6 +67,7 @@ class MainActivity : Activity() {
         s.mediaPlaybackRequiresUserGesture = false
         bridge = SpeechBridge(this, web)
         web.addJavascriptInterface(bridge!!, "AndroidSpeech")
+        web.addJavascriptInterface(NativeBridge(this), "MasariNative")
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest): Boolean {
                 if (r.url.host == HOST) return false
@@ -75,13 +88,6 @@ class MainActivity : Activity() {
         }
         val frame = FrameLayout(this)
         frame.addView(web, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
-        val gear = Button(this)
-        gear.text = "⚙"
-        gear.alpha = 0.6f
-        gear.setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
-        val lp = FrameLayout.LayoutParams(150, 150, Gravity.BOTTOM or Gravity.START)
-        lp.bottomMargin = 220; lp.leftMargin = 12
-        frame.addView(gear, lp)
         setContentView(frame)
         web.loadUrl("https://salmane0412.github.io/masari/")
     }

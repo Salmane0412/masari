@@ -71,6 +71,8 @@ class WhyActivity : Activity() {
         })
         ok.setOnClickListener {
             if (quality(last) < need) return@setOnClickListener
+            Events.add(this, "long_text")
+            Partner.send(this, if (kind == PROTECT) "فتح الحماية بالرسالة الطويلة" else "فتح التطبيقات بالرسالة الطويلة", "كتب الرسالة الطويلة ففُتحت 30 دقيقة.", "long_text")
             if (kind == PROTECT) { Store.setDisableReq(this, System.currentTimeMillis() - 24L * 3600_000L)
                 Toast.makeText(this, "فُتحت نافذة ٣٠ دقيقة لتعديل مساري.", Toast.LENGTH_LONG).show()
             } else { Store.setEmergency(this)

@@ -1,0 +1,10 @@
+const assert = require('node:assert/strict'); const P = require('../prayer.js'); let n = 0; const T = (m, f) => { f(); n++; console.log('✓', m); };
+const mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const near = (a, b, tol, msg) => assert.ok(Math.abs(mins(a) - mins(b)) <= tol, `${msg}: ${a} vs ${b}`);
+const PARIS = { lat: 48.8566, lng: 2.3522, method: 'MWL', asr: 1 };
+T('باريس 11 نوفمبر: الشروق والغروب والزوال معقولة', () => { const d = P.day('2026-11-11', { ...PARIS, tz: 1 }); near(d.sunrise, '07:55', 6, 'sunrise'); near(d.maghrib, '17:14', 6, 'sunset'); near(d.dhuhr, '12:36', 4, 'dhuhr'); assert.ok(Math.abs((mins(d.sunrise) + mins(d.maghrib)) / 2 - mins(d.dhuhr)) <= 3); assert.ok(mins(d.fajr) < mins(d.sunrise) - 80); assert.ok(mins(d.asr) > mins(d.dhuhr) + 120 && mins(d.asr) < mins(d.maghrib)); assert.ok(mins(d.isha) > mins(d.maghrib) + 60); });
+T('ترتيب الأوقات وتغير الطريقة', () => { const a = P.day('2026-11-11', { ...PARIS, tz: 1 }), b = P.day('2026-11-11', { ...PARIS, method: 'UOIF', tz: 1 }); assert.ok(mins(b.fajr) > mins(a.fajr)); assert.ok(mins(b.isha) < mins(a.isha)); const c = P.day('2026-11-11', { ...PARIS, asr: 2, tz: 1 }); assert.ok(mins(c.asr) > mins(a.asr)); });
+T('الصيف في باريس: الفجر 18° يُضبط ولا يكون NaN', () => { const d = P.day('2026-06-21', { ...PARIS, tz: 2 }); for (const k of ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']) assert.match(d[k], /^\d\d:\d\d$/, k); near(d.sunrise, '05:47', 6, 'sunrise juin'); near(d.maghrib, '21:58', 6, 'sunset juin'); assert.ok(mins(d.fajr) > 120 && mins(d.fajr) < mins(d.sunrise)); });
+T('مكة: أم القرى العشاء بعد المغرب بـ90 دقيقة', () => { const d = P.day('2026-11-11', { lat: 21.4225, lng: 39.8262, method: 'UQ', tz: 3 }); assert.equal(mins(d.isha) - mins(d.maghrib), 90); near(d.dhuhr, '12:05', 4, 'dhuhr mecque'); });
+T('القبلة من باريس ≈ 119°', () => { const q = P.qibla(48.8566, 2.3522); assert.ok(q > 117 && q < 121, String(q)); });
+console.log(`\n${n} tests OK`);

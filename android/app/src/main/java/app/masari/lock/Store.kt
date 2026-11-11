@@ -21,6 +21,13 @@ object Store {
     fun setWebBlock(c: Context, v: Boolean) { p(c).edit().putBoolean("webBlock", v).apply() }
     fun domains(c: Context): Set<String> = (p(c).getString("domains", "") ?: "").split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
     fun setDomains(c: Context, t: String) { p(c).edit().putString("domains", t).apply() }
+    // v2 : deux clés séparées — celle du jour (calculée par le site Masari) et celle du partenaire (Google Authenticator)
+    fun selfSecret(c: Context): String = p(c).getString("selfSecret", null) ?: (if (mode(c) == "self") secret(c) else "")
+    fun setSelfSecret(c: Context, s: String) { p(c).edit().putString("selfSecret", s.trim()).apply() }
+    fun partnerSecret(c: Context): String = p(c).getString("partnerSecret", null) ?: (if (mode(c) == "partner") secret(c) else "")
+    fun setPartnerSecret(c: Context, s: String) { p(c).edit().putString("partnerSecret", s.trim()).apply() }
+    fun dayDoneToday(c: Context): Boolean = p(c).getString("dayDone", "") == today()
+    fun setDayDone(c: Context) { p(c).edit().putString("dayDone", today()).putString("unlocked", today()).apply() }
     fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today() || emergencyActive(c)
     fun emergencyActive(c: Context): Boolean = p(c).getLong("emergencyUntil", 0L) > System.currentTimeMillis()
     fun setEmergency(c: Context) { p(c).edit().putLong("emergencyUntil", System.currentTimeMillis() + 30 * 60_000L).apply() }
