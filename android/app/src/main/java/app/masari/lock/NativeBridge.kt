@@ -19,7 +19,24 @@ class NativeBridge(private val act: MainActivity) {
     private fun accOn(): Boolean = (Settings.Secure.getString(c.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "").contains(c.packageName + "/")
     private fun notifOn(): Boolean = (Settings.Secure.getString(c.contentResolver, "enabled_notification_listeners") ?: "").contains(c.packageName)
 
-    @JavascriptInterface fun version(): String = "2.0"
+    @JavascriptInterface fun version(): String = "2.1"
+
+    /** Enregistre un fichier texte (export, .ics…) dans Téléchargements. */
+    @JavascriptInterface fun saveFile(name: String, mime: String, text: String): String = try {
+        val safe = name.replace(Regex("[^A-Za-z0-9._-]"), "_")
+        if (Build.VERSION.SDK_INT >= 29) {
+            val v = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, safe); put(android.provider.MediaStore.Downloads.MIME_TYPE, mime)
+                put(android.provider.MediaStore.Downloads.RELATIVE_PATH, "Download/")
+            }
+            val u = c.contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v)!!
+            c.contentResolver.openOutputStream(u)!!.use { it.write(text.toByteArray()) }
+        } else {
+            val f = java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), safe)
+            f.writeText(text)
+        }
+        "ok"
+    } catch (e: Exception) { "error" }
 
     @JavascriptInterface fun status(): String {
         val am = c.getSystemService(AlarmManager::class.java)

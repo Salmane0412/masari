@@ -16,10 +16,17 @@ import android.net.Uri
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.JsResult
+import android.webkit.JsPromptResult
+import android.webkit.ValueCallback
+import android.webkit.DownloadListener
+import android.widget.EditText
+import android.graphics.Color
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
     private var bridge: SpeechBridge? = null
+    private var fileCb: ValueCallback<Array<Uri>>? = null
     private var micCb: ((Boolean) -> Unit)? = null
     private val HOST = "salmane0412.github.io"
 
@@ -52,6 +59,7 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(r: Int, res: Int, d: Intent?) {
         super.onActivityResult(r, res, d)
+        if (r == 43) { fileCb?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(res, d)); fileCb = null }
         if (r == 42 && res == RESULT_OK) startService(Intent(this, DnsVpnService::class.java))
     }
 
@@ -78,7 +86,28 @@ class MainActivity : Activity() {
                 if (Uri.parse(url ?: "").host == HOST) v.evaluateJavascript(SpeechBridge.POLYFILL, null)
             }
         }
+        web.setBackgroundColor(Color.parseColor("#0e1a24"))
+        window.statusBarColor = Color.parseColor("#0e1a24"); window.navigationBarColor = Color.parseColor("#0e1a24")
+        web.setDownloadListener(DownloadListener { url, _, _, _, _ -> try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) {} })
         web.webChromeClient = object : WebChromeClient() {
+            // Sans ces trois méthodes, WebView ignore silencieusement alert/confirm/prompt : les boutons « ne répondent pas ».
+            override fun onJsAlert(v: WebView, url: String?, m: String?, r: JsResult): Boolean {
+                AlertDialog.Builder(this@MainActivity).setMessage(m).setPositiveButton("حسنًا") { _, _ -> r.confirm() }.setOnCancelListener { r.cancel() }.show(); return true
+            }
+            override fun onJsConfirm(v: WebView, url: String?, m: String?, r: JsResult): Boolean {
+                AlertDialog.Builder(this@MainActivity).setMessage(m).setPositiveButton("نعم") { _, _ -> r.confirm() }
+                    .setNegativeButton("لا") { _, _ -> r.cancel() }.setOnCancelListener { r.cancel() }.show(); return true
+            }
+            override fun onJsPrompt(v: WebView, url: String?, m: String?, def: String?, r: JsPromptResult): Boolean {
+                val et = EditText(this@MainActivity); et.setText(def ?: ""); et.textDirection = android.view.View.TEXT_DIRECTION_LOCALE
+                AlertDialog.Builder(this@MainActivity).setMessage(m).setView(et).setPositiveButton("موافق") { _, _ -> r.confirm(et.text.toString()) }
+                    .setNegativeButton("إلغاء") { _, _ -> r.cancel() }.setOnCancelListener { r.cancel() }.show(); return true
+            }
+            override fun onShowFileChooser(w: WebView, cb: ValueCallback<Array<Uri>>, p: FileChooserParams): Boolean {
+                fileCb?.onReceiveValue(null); fileCb = cb
+                try { startActivityForResult(p.createIntent(), 43) } catch (e: Exception) { fileCb = null; return false }
+                return true
+            }
             override fun onPermissionRequest(req: PermissionRequest) {
                 runOnUiThread {
                     if (req.origin.host != HOST) { req.deny(); return@runOnUiThread }

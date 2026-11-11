@@ -304,7 +304,7 @@ views.today = () => {
   return `
   <div class="hero-title">اليوم ${Math.min(dayN, total)} من ${total}</div>
   <div class="sub">${kline} · بقي ${P.daysLeft} يومًا حتى ${fmtD(S.settings.end, { day: 'numeric', month: 'long' })}</div>
-  ${(window.TODAY_TOP || []).map(f => { try { return f(); } catch (e) { return ''; } }).join('')}
+  ${(window.PIN && !PIN.get() && !localStorage.getItem('masari.pinskip')) ? `<div class="card" style="border-color:var(--accent)"><b>🔐 فعّل رمز الدخول</b><p class="muted">بياناتك شخصية (مالية، عبادات، ملاحظات). اجعل لها قفلًا برمز سري.</p><div class="btns"><a class="btn pri" href="#/pin">تفعيل الآن</a><button class="btn" data-act="pin-skip">لاحقًا</button></div></div>` : ''}${(window.TODAY_TOP || []).map(f => { try { return f(); } catch (e) { return ''; } }).join('')}
   <div class="card sum">
     ${ringHtml(tAll ? dAll / tAll : 1, `${dAll}/${tAll}`, 'مهام اليوم', 120)}
     <div class="sumr"><a href="#/plan" class="sumlink"><b>${c.total}</b>/240 <span class="m">محفوظ في البرنامج</span></a>
@@ -1039,7 +1039,7 @@ function route() {
   closeSheet();
   const top = $('#top'), view = $('#view'), tabs = $('#tabs');
   const inSess = name === 's';
-  top.innerHTML = `<span class="brand"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
+  top.innerHTML = `<span class="brand"><img class="logo" src="icon-192.png" alt="" width="28" height="28"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
   if (!inSess) { if (fol.on) followStop(); stopAudio(); }
   tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${window.ic ? ic(k) : g}</b>${l}</a>`).join('')}</div>`;
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }
@@ -1186,6 +1186,7 @@ document.addEventListener('click', e => {
       { const code = 'masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('نُسخ رمز الربط'), () => { const el = $('#gh-code'); if (el) { el.value = code; el.select(); } toast('انسخ الرمز من الحقل'); }); } break;
     case 'gh-usecode': try { const v = $('#gh-code').value.trim().replace(/^masari-link:/, ''); const o = JSON.parse(b64d(v)); if (!o.r || !o.t) throw 0; gh.repo = o.r; gh.token = o.t; ghSave(); ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); route(); } catch (e) { toast('رمز غير صالح'); } break;
     case 'pin-set': { const p1 = $('#pin-1').value.trim(), p2 = $('#pin-2').value.trim(); if (!/^\d{4,8}$/.test(p1)) return toast('من 4 إلى 8 أرقام'); if (p1 !== p2) return toast('الرمزان مختلفان'); PIN.setPin(p1, 1).then(() => { const c = PIN.get(); c.len = p1.length; localStorage.setItem('masari.pin', JSON.stringify(c)); route(); toast('فُعّل رمز الدخول'); }); break; }
+    case 'pin-skip': localStorage.setItem('masari.pinskip', '1'); route(); break;
     case 'pin-lock': PIN.lock(); break;
     case 'pin-off': case 'pin-change': { const cur = prompt('اكتب الرمز الحالي'); if (!cur) return; PIN.check(cur).then(ok => { if (!ok) return toast('رمز خاطئ'); PIN.clear(); route(); toast(act === 'pin-off' ? 'أُلغي الرمز' : 'اكتب الرمز الجديد'); }); break; }
     case 'gh-push': ghPush(true); break;
@@ -1224,7 +1225,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.tj !== undefined) { S.settings.tjCol[e.target.dataset.tj] = e.target.value; applyTj(); return; } if (e.target.id === 'note') { const [, , kind, id] = location.hash.split('/'); if (kind === 'b') { const it = getItem(kind, id); it.st.note = e.target.value; save(); } } });
 
-function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+function download(name, text, type) { if (window.MasariNative && MasariNative.saveFile) { try { toast(MasariNative.saveFile(name, type || 'text/plain', text) === 'ok' ? 'حُفظ في مجلد التنزيلات' : 'تعذّر الحفظ'); return; } catch (e) {} } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 function downloadICS() {
   const s = S.settings, start = s.start.replace(/-/g, ''), until = s.end.replace(/-/g, '') + 'T235900', now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
   const names = ['مساري: الحفظ', 'مساري: المراجعة'], L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Masari//AR', 'CALSCALE:GREGORIAN'];
