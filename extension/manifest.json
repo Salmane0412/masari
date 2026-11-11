@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Masari Guard",
+  "description": "حجب المواقع المضيّعة للوقت حتى تُنهي مهام يومك في مساري، بالرمز نفسه.",
+  "version": "1.0.0",
+  "icons": { "128": "icon.png" },
+  "permissions": ["declarativeNetRequest", "storage", "alarms", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "options_page": "options.html",
+  "action": { "default_title": "Masari Guard", "default_popup": "options.html" },
+  "content_scripts": [{ "matches": ["https://salmane0412.github.io/masari/*"], "js": ["content.js"] }],
+  "web_accessible_resources": [{ "resources": ["blocked.html", "blocked.js", "style.css"], "matches": ["<all_urls>"] }]
+}

@@ -106,8 +106,8 @@
     save(); pushNative(); rer();
   });
   // صفحة «اليوم»: الصلاة القادمة
-  window.TODAY_HOOKS = window.TODAY_HOOKS || [];
-  window.TODAY_HOOKS.unshift(() => { const nx = next(), log = (ST().log[todayStr()] || {}), nf = FARD.filter(k => log[k]).length;
+  window.TODAY_TOP = window.TODAY_TOP || [];
+  window.TODAY_TOP.push(() => { const nx = next(), log = (ST().log[todayStr()] || {}), nf = FARD.filter(k => log[k]).length;
     return `<a class="card nextp mini" href="#/salat"><span class="sub">${nx.tomorrow ? 'فجر الغد' : 'الصلاة القادمة'}</span><b>${P.NAMES[nx.k]} <span dir="ltr">${nx.at}</span></b><span class="cd">بعد ${left(nx.left)} · الفرائض ${nf}/5</span></a>`; });
   setTimeout(pushNative, 1500);
 })();

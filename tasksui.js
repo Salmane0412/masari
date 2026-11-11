@@ -16,6 +16,19 @@
       <button class="tchk" data-tk="toggle" data-id="${it.id}" aria-label="${it.done ? 'إلغاء الإنجاز' : 'إنجاز'}" aria-pressed="${!!it.done}"><i></i></button>
       <button class="tbody" data-tk="edit" data-id="${it.id}"><span class="tt">${esc(it.t)}</span><span class="m">${[it.p && esc(it.p), dueTxt(it, t), it.rep && REP_IC + ' ' + K.REP[it.rep]].filter(Boolean).join(' · ')}${subs}${it.n ? ' · ✎' : ''}</span></button></div>`;
   }
+  function gcal(it) {
+    const d = it.due.replace(/-/g, ''); let dates;
+    if (it.time) { const [h, m] = it.time.split(':').map(Number), e = new Date(2000, 0, 1, h, m + 30); dates = `${d}T${it.time.replace(':', '')}00/${d}T${String(e.getHours()).padStart(2, '0')}${String(e.getMinutes()).padStart(2, '0')}00`; }
+    else dates = `${d}/${addDays(it.due, 1).replace(/-/g, '')}`;
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(it.t) + '&dates=' + dates + '&ctz=Europe/Paris&details=' + encodeURIComponent((it.n || '') + (it.p ? '\n#' + it.p : ''));
+  }
+  function ics(items) {
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Masari//Taches//AR'], z = s => String(s).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+    items.forEach(it => { const d = it.due.replace(/-/g, ''); L.push('BEGIN:VEVENT', 'UID:' + it.id + '@masari', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'SUMMARY:' + z(it.t));
+      if (it.time) { L.push('DTSTART;TZID=Europe/Paris:' + d + 'T' + it.time.replace(':', '') + '00', 'DURATION:PT30M'); } else L.push('DTSTART;VALUE=DATE:' + d);
+      if (it.n) L.push('DESCRIPTION:' + z(it.n)); L.push('BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', 'DESCRIPTION:' + z(it.t), 'END:VALARM', 'END:VEVENT'); });
+    L.push('END:VCALENDAR'); return L.join('\r\n');
+  }
   const list = (L, t, empty) => L.length ? `<div class="tlist">${L.map(x => row(x, t)).join('')}</div>` : (empty ? `<div class="empty">${empty}</div>` : '');
 
   views.tasks = () => {
@@ -34,7 +47,7 @@
       <div class="chips scroll">${['', ...T.projects].map(p => `<button class="chip${proj === p ? ' on' : ''}" data-tk="proj" data-p="${esc(p)}">${p ? esc(p) : 'الكل'}</button>`).join('')}<button class="chip" data-tk="proj-add">+ مشروع</button></div>
       ${body}
       <details class="more"><summary>استيراد أو تصدير</summary><div class="sub">استورد قائمة مهام بصيغة JSON (يعدّها لك Claude من رسالتك)، أو صدّر مهامك.</div>
-      <div class="btns" style="margin:8px 0"><label class="btn" style="display:inline-flex;align-items:center">استيراد ملف<input type="file" id="tk-imp" accept=".json,application/json" hidden></label><button class="btn" data-tk="export">تصدير</button></div></details>`;
+      <div class="btns" style="margin:8px 0"><label class="btn" style="display:inline-flex;align-items:center">استيراد ملف<input type="file" id="tk-imp" accept=".json,application/json" hidden></label><button class="btn" data-tk="export">تصدير</button><button class="btn" data-tk="ics">المهام المؤرّخة إلى التقويم (.ics)</button></div></details>`;
   };
 
   function sheet(it) {
@@ -49,7 +62,7 @@
       ${it ? `<div class="field"><span class="flabel">خطوات</span><div class="tlist">${it.sub.map((s, i) => `<div class="trow sub${s.d ? ' done' : ''}"><button class="tchk" data-tk="sub" data-id="${it.id}" data-i="${i}" aria-pressed="${s.d}"><i></i></button><span class="tbody"><span class="tt">${esc(s.t)}</span></span><button class="btn sm" data-tk="subdel" data-id="${it.id}" data-i="${i}" aria-label="حذف">✕</button></div>`).join('')}</div>
         <div class="tadd"><input type="text" id="tk-sub" placeholder="خطوة جديدة"><button class="btn" data-tk="subadd" data-id="${it.id}">+</button></div></div>
         ${it.rep && it.cnt ? `<div class="sub">أُنجزت ${it.cnt} مرة${it.lastDone ? ' · آخرها ' + fmtD(it.lastDone) : ''}</div>` : ''}` : ''}
-      <div class="btns" style="margin-top:12px"><button class="btn pri" data-tk="save" data-id="${it ? it.id : ''}">حفظ</button>${it ? `<button class="btn" data-tk="tomorrow" data-id="${it.id}">إلى الغد</button><button class="btn warn" data-tk="del" data-id="${it.id}">حذف</button>` : ''}<button class="btn" data-act="close">إغلاق</button></div>`);
+      <div class="btns" style="margin-top:12px"><button class="btn pri" data-tk="save" data-id="${it ? it.id : ''}">حفظ</button>${it ? `<button class="btn" data-tk="tomorrow" data-id="${it.id}">إلى الغد</button>${it.due ? `<a class="btn" href="${gcal(it)}" target="_blank" rel="noopener" style="text-decoration:none">＋ تقويم Google</a>` : ''}<button class="btn warn" data-tk="del" data-id="${it.id}">حذف</button>` : ''}<button class="btn" data-act="close">إغلاق</button></div>`);
   }
   const rerender = () => { if (!location.hash.startsWith('#/tasks')) return route(); const y = scrollY; $('#view').innerHTML = views.tasks(); scrollTo(0, y); };
 
@@ -90,6 +103,7 @@
       case 'subdel': it.sub.splice(+b.dataset.i, 1); save(); sheet(it); rerender(); break;
       case 'subadd': { const v = $('#tk-sub').value.trim(); if (!v) return; it.sub.push({ t: v, d: false }); save(); sheet(it); rerender(); setTimeout(() => { const i = $('#tk-sub'); if (i) i.focus(); }, 30); break; }
       case 'purge': { const n = K.purgeDone(T, addDays(t, -30)); save(); rerender(); toast(n ? `حُذفت ${n}` : 'لا شيء أقدم من 30 يومًا'); break; }
+      case 'ics': { const L = T.items.filter(x => !x.done && x.due && x.due >= t); if (!L.length) return toast('لا مهام مؤرّخة قادمة'); download('masari-taches.ics', ics(L), 'text/calendar'); toast('افتح الملف ليُضاف إلى تقويمك'); break; }
       case 'export': download(`masari-taches-${t}.json`, JSON.stringify({ projects: T.projects, items: T.items }, null, 1), 'application/json'); break;
     }
   });
@@ -101,7 +115,7 @@
         const o = JSON.parse(r.result), T = D(), arr = Array.isArray(o) ? o : o.items || o.tasks; if (!Array.isArray(arr)) throw 0;
         (o.projects || []).forEach(p => { if (!T.projects.includes(p)) T.projects.push(p); });
         const have = new Set(T.items.map(x => x.t + '|' + x.due)); let n = 0;
-        arr.forEach(x => { const it = typeof x === 'string' ? K.parseQuick(x, todayStr(), T.projects) : x; if (!it.t || have.has(it.t + '|' + (it.due || ''))) return; K.add(T, { t: it.t, n: it.n || it.notes || '', p: it.p || it.project || '', due: it.due || '', time: it.time || '', pr: +it.pr || 3, rep: it.rep || '', sub: (it.sub || []).map(s => typeof s === 'string' ? { t: s, d: false } : s) }, todayStr()); n++; });
+        arr.forEach(x => { const it = typeof x === 'string' ? K.parseQuick(x, todayStr(), T.projects) : x; if (!it.t || have.has(it.t + '|' + (it.due || ''))) return; K.add(T, { t: it.t, n: it.n || it.notes || '', p: it.p || it.project || '', due: it.due || (it.rep ? todayStr() : ''), time: it.time || '', pr: +it.pr || 3, rep: it.rep || '', sub: (it.sub || []).map(s => typeof s === 'string' ? { t: s, d: false } : s) }, todayStr()); n++; });
         save(); rerender(); toast(`استوردت ${n} مهمة`);
       } catch (x) { toast('ملف غير صالح'); }
     };
