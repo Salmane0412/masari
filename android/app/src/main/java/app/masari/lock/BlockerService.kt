@@ -48,7 +48,7 @@ class BlockerService : AccessibilityService() {
         val cfg = Policy.current(this)
 
         if (pkg in protectedPkgs) {
-            if (Store.disableAllowed(this)) return
+            if (Store.disableAllowed(this) || Store.settingsPass(this)) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {

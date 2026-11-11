@@ -81,7 +81,14 @@ class NativeBridge(private val act: MainActivity) {
     @JavascriptInterface fun setPrayer(json: String) { Alarms.setPrayer(c, json) }
     @JavascriptInterface fun setReminders(json: String) { Alarms.setReminders(c, json) }
 
-    @JavascriptInterface fun open(what: String) {
+    /** Ouvre un réglage. Les écrans protégés (ils permettraient d'enlever la protection) demandent la fenêtre libre ou le code du partenaire. */
+    @JavascriptInterface fun open(what: String, code: String?): String {
+        val guarded = what in setOf("accessibility", "notif", "exact", "battery", "dnd")
+        if (guarded && !(Store.setupWindow(c) || Store.disableAllowed(c))) {
+            if (code.isNullOrBlank()) return "need-code"
+            if (!Codes.verifyPartner(c, code)) return "bad-code"
+            Store.setSettingsPass(c); Partner.send(c, "فتح الإعدادات", "استُعمل رمزك لفتح إعدادات الهاتف 3 دقائق.", "pass", 3)
+        }
         act.runOnUiThread {
             try {
                 when (what) {
@@ -95,5 +102,6 @@ class NativeBridge(private val act: MainActivity) {
                 }
             } catch (e: Exception) { }
         }
+        return "ok"
     }
 }

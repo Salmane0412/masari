@@ -26,6 +26,9 @@ object Store {
     fun setSelfSecret(c: Context, s: String) { p(c).edit().putString("selfSecret", s.trim()).apply() }
     fun partnerSecret(c: Context): String = p(c).getString("partnerSecret", null) ?: (if (mode(c) == "partner") secret(c) else "")
     fun setPartnerSecret(c: Context, s: String) { p(c).edit().putString("partnerSecret", s.trim()).apply() }
+    // Passage de 3 minutes vers les réglages protégés, accordé par le code du partenaire
+    fun settingsPass(c: Context): Boolean = p(c).getLong("settingsPass", 0L) > System.currentTimeMillis()
+    fun setSettingsPass(c: Context) { p(c).edit().putLong("settingsPass", System.currentTimeMillis() + 3 * 60_000L).apply() }
     fun dayDoneToday(c: Context): Boolean = p(c).getString("dayDone", "") == today()
     fun setDayDone(c: Context) { p(c).edit().putString("dayDone", today()).putString("unlocked", today()).apply() }
     fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today() || emergencyActive(c)

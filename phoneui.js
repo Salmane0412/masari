@@ -104,7 +104,7 @@
     const b = e.target.closest('[data-ph]'); if (!b || !N()) return;
     const k = b.dataset.k;
     switch (b.dataset.ph) {
-      case 'open': N().open(k); setTimeout(rer, 1500); break;
+      case 'open': { let r = N().open(k, ''); if (r === 'need-code') { const code = prompt('هذه الشاشة تسمح بإيقاف الحماية، فتحتاج رمز شريكك (أو انتظار 24 ساعة):'); if (!code) return; r = N().open(k, code); } if (r === 'bad-code') toast('رمز الشريك غير صحيح'); setTimeout(rer, 1500); break; }
       case 'rm': collect(); draft[k] = (draft[k] || []).filter(p => p !== b.dataset.p); rer(); break;
       case 'rmb': collect(); delete draft.budgets[b.dataset.p]; rer(); break;
       case 'pick': collect(); pickQ = ''; pickSheet(k); break;
