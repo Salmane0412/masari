@@ -1,109 +1,187 @@
 {
- "generated": "2026-11-09T13:28+00:00",
+ "generated": "2026-11-12T13:36+00:00",
  "days": 8,
  "cats": {
   "actus": [
    {
-    "t": "Default 'admin:admin' Server Password Helps Researchers Hack Two Automakers, Unlock and Start Cars",
-    "u": "https://thehackernews.com/2026/11/default-adminadmin-server-password.html",
-    "d": "2026-11-09",
-    "s": "The login systems behind two car brands' mobile apps could be taken over completely, two security researchers found, allowing them to access any customer's account and, for an owner with a connected car, unlock the doors and start the engin",
+    "t": "Google Cloud Warns Three AMD Turin CPU Flaws Could Leak Data Across Processes in VMs",
+    "u": "https://thehackernews.com/2026/11/google-cloud-warns-three-amd-turin-cpu.html",
+    "d": "2026-11-12",
+    "s": "Google Cloud VMs on AMD Turin chips need a guest OS patch and a stop-and-start to protect against three CPU side-channel flaws, Google said this week. The company has already applied mitigations against attacks between VMs, and between VMs ",
     "src": "The Hacker News",
     "cat": "actus"
    },
    {
-    "t": "Web3Auth Flaw Exploited to Steal Keplr Crypto, Provider Empties Other Wallets for Safety",
-    "u": "https://thehackernews.com/2026/11/web3auth-flaw-exploited-to-steal-keplr.html",
-    "d": "2026-11-09",
-    "s": "Some people who set up a Keplr crypto wallet with their Google or Apple account have had money stolen by an attacker. Keplr uses a company called Web3Auth to run that Google and Apple sign-in. The attacker used a security flaw at that compa",
+    "t": "Webinar: See How Identity Blind Spots Put Your SOC at Risk and How to Close Them",
+    "u": "https://thehackernews.com/2026/11/your-soc-sees-alert-but-does-it-know.html",
+    "d": "2026-11-12",
+    "s": "Security teams have more alerts, logs, and monitoring tools than ever. Yet when an attack happens, one simple question can still take too long to answer: Who or what is behind this activity, and what can they access? A suspicious login migh",
     "src": "The Hacker News",
     "cat": "actus"
    },
    {
-    "t": "LNbits Urges All Operators to Shut Down Their Bitcoin Lightning Wallet Servers Amid Attacks",
-    "u": "https://thehackernews.com/2026/11/lnbits-urges-all-operators-to-shut-down.html",
-    "d": "2026-11-09",
-    "s": "Everyone running LNbits, a free, open-source Bitcoin Lightning wallet system, should shut down their servers now because of a wave of attacks, the project said yesterday. It has several security fixes to release and asked operators to be ca",
+    "t": "New N-central Exploits Work Against Patched Servers, Enable Root RCE and Windows SYSTEM Access",
+    "u": "https://thehackernews.com/2026/11/new-n-central-exploits-work-against.html",
+    "d": "2026-11-12",
+    "s": "N-able on Thursday said it's investigating a new public disclosure containing claims of additional vulnerabilities in on-premise versions of N-central running version 2026.4.1 HF2. \"Based on our initial review, the server issue described de",
     "src": "The Hacker News",
     "cat": "actus"
    },
    {
-    "t": "Taiwan-Based Hacker Used BOSSAI AI Agents to Steal Taipei Emergency Dispatch Records",
-    "u": "https://thehackernews.com/2026/11/taiwan-based-hacker-used-bossai-ai.html",
-    "d": "2026-11-09",
-    "s": "A single attacker using AI agents pulled emergency dispatch records covering seven Taipei districts, researchers at Acronis's Threat Research Unit said last week. The agents also found a Taipei fire department platform exposing patient data",
-    "src": "The Hacker News",
-    "cat": "actus",
-    "ia_secu": true
-   },
-   {
-    "t": "Former OpenAI Engineer Pleads Not Guilty to Planting Covert Device in Executive Meeting Room",
-    "u": "https://thehackernews.com/2026/11/former-openai-engineer-pleads-not.html",
-    "d": "2026-11-09",
-    "s": "The OpenAI engineer who was arrested and charged last month for planting a covert audio recording device in the company's office has pleaded not guilty. According to reports from Bloomberg and CNBC, Saudi national Abdulrahman Alfozan made a",
-    "src": "The Hacker News",
-    "cat": "actus",
-    "ia_secu": true
-   },
-   {
-    "t": "U.S. Agencies Warn Refrigeration Controller Attacks Could Cause Fires and Inventory Losses",
-    "u": "https://thehackernews.com/2026/11/us-agencies-warn-refrigeration.html",
-    "d": "2026-11-09",
-    "s": "U.S. government agencies have warned that threat actors are actively targeting industrial refrigeration and cold-chain monitoring systems globally with an aim to cause service disruptions, fire hazards, and loss of inventory. \"The actors ma",
+    "t": "Calendar Invites and Live Proxies: Inside a Google Session Hijacking Campaign",
+    "u": "https://thehackernews.com/2026/11/calendar-invites-and-live-proxies.html",
+    "d": "2026-11-12",
+    "s": "Since mid-August 2026, a phishing operation has been stealing live Google sessions from corporate users. Every check defenders normally lean on to judge a link came back clean, and the operator designed it that way on purpose. The Threat Re",
     "src": "The Hacker News",
     "cat": "actus"
    },
    {
-    "t": "CISA Flags SonicWall SonicOS MFA Bypass Flaw Amid Reports of Possible Exploitation",
-    "u": "https://thehackernews.com/2026/11/cisa-flags-sonicwall-sonicos-mfa-bypass.html",
-    "d": "2026-11-09",
-    "s": "The U.S. Cybersecurity and Infrastructure Security Agency (CISA) has added a high-severity vulnerability impacting SonicWall SonicOS to its Known Exploited Vulnerabilities (KEV) catalog, following reports that it said may have been exploite",
+    "t": "PTC Patches Critical Windchill and FlexPLM Flaw That Could Enable Remote Code Execution",
+    "u": "https://thehackernews.com/2026/11/ptc-patches-critical-windchill-and.html",
+    "d": "2026-11-12",
+    "s": "PTC has released patches for a new critical vulnerability impacting Windchill and FlexPLM software that, if successfully exploited, could result in remote code execution. The security flaw, tracked as CVE-2026-126325, carries a CVSS v4 scor",
     "src": "The Hacker News",
     "cat": "actus"
    },
    {
-    "t": "Ukraine dismantles crypto scam network that stole €4.3 million",
-    "u": "https://www.bleepingcomputer.com/news/security/ukraine-dismantles-crypto-scam-network-that-stole-43-million/",
-    "d": "2026-11-09",
-    "s": "Ukrainian law enforcement arrested four suspects in a case involving the theft of more than €4.3 million using a network of cryptocurrency investment scam call centers. [...]",
+    "t": "Critical Pre-Auth MongoDB Flaw (CVE-2026-118383) Can Crash Lagging Servers on Failover",
+    "u": "https://thehackernews.com/2026/11/critical-pre-auth-mongodb-flaw-cve-2026.html",
+    "d": "2026-11-12",
+    "s": "A critical flaw in MongoDB Server allows an unauthenticated attacker to send two requests that trigger a crash on the database server. The crash occurs only if that server is later chosen to take over as the main server while it still lacks",
+    "src": "The Hacker News",
+    "cat": "actus"
+   },
+   {
+    "t": "Node.js Fixes 16 Flaws, Including HTTP/2 Bugs That Crash Servers and Leak Other Connections' Data",
+    "u": "https://thehackernews.com/2026/11/nodejs-fixes-16-flaws-including-http2.html",
+    "d": "2026-11-12",
+    "s": "A flaw fixed in Node.js this week lets unauthenticated clients crash servers that use the runtime's built-in HTTP/2 support on the 24.x and 26.x release lines. A second HTTP/2 flaw can cause a server to send a client pieces of its memory, i",
+    "src": "The Hacker News",
+    "cat": "actus"
+   },
+   {
+    "t": "Attacker Used 4,837 Hijacked GitHub Accounts to Run a CI Secret Stealer in 1,806+ Repositories",
+    "u": "https://thehackernews.com/2026/11/4837-hijacked-github-accounts-ran-ci.html",
+    "d": "2026-11-12",
+    "s": "Starting Tuesday, an attacker used stolen credentials for 4,837 GitHub accounts to plant a secret stealer in repositories those accounts could write to, according to Aikido Security, a security software company. The stealer is built to take",
+    "src": "The Hacker News",
+    "cat": "actus"
+   },
+   {
+    "t": "Critical Apache HTTP/2 Flaw Could Let Unauthenticated Attackers Execute Code Remotely",
+    "u": "https://thehackernews.com/2026/11/critical-apache-http2-flaw-could-let.html",
+    "d": "2026-11-12",
+    "s": "A critical flaw in Apache HTTP Server's HTTP/2 module, mod_http2, can let a remote attacker run code on the server. Tracked as CVE-2026-119618, it affects versions 2.4.55 through 2.4.70 and is fixed in version 2.4.71, released yesterday. On",
+    "src": "The Hacker News",
+    "cat": "actus"
+   },
+   {
+    "t": "ScreenConnect Attacks Target at Least 288 Endpoints Across 48 Organizations With Rogue Clients",
+    "u": "https://thehackernews.com/2026/11/screenconnect-attacks-target-at-least.html",
+    "d": "2026-11-12",
+    "s": "ConnectWise has taken the precautionary step of disabling five third-party extensions in partner environments following reports of unauthorized access. In an advisory posted on its site, the company said there is no evidence that the incide",
+    "src": "The Hacker News",
+    "cat": "actus"
+   },
+   {
+    "t": "Microsoft: Recent Windows updates cause SQL Server performance issues",
+    "u": "https://www.bleepingcomputer.com/news/microsoft/microsoft-recent-windows-updates-cause-sql-server-performance-issues/",
+    "d": "2026-11-12",
+    "s": "Microsoft has confirmed that Windows updates released since the October 2026 Patch Tuesday are causing SQL Server performance and stability issues. [...]",
     "src": "BleepingComputer",
     "cat": "actus"
    },
    {
-    "t": "Iris Ohyama data cloud breach exposes info of 7.7 million customers",
-    "u": "https://www.bleepingcomputer.com/news/security/iris-ohyama-data-cloud-breach-exposes-info-of-77-million-customers/",
-    "d": "2026-11-08",
-    "s": "Japanese manufacturer Iris Ohyama, the operator of the Iris Plaza shopping platform, disclosed that personal information belonging to about 7.7 million people may have been exposed after unauthorized access to a third-party cloud service th",
-    "src": "BleepingComputer",
-    "cat": "actus"
-   },
-   {
-    "t": "Claude Code's “Don't Ask Again” File Exposes Passwords and Keys in 1,122 Public Copies on GitHub",
-    "u": "https://thehackernews.com/2026/11/claude-codes-dont-ask-again-file.html",
-    "d": "2026-11-07",
-    "s": "Passwords and API keys that developers typed into commands they approved in Claude Code are sitting in public GitHub repositories, where anyone can read them. When a user selects \"Yes, and don't ask again,\" Anthropic's AI coding assistant c",
-    "src": "The Hacker News",
-    "cat": "actus",
-    "ia_secu": true
-   },
-   {
-    "t": "Hackers pull off $133 million French bank heist via service provider",
-    "u": "https://www.bleepingcomputer.com/news/security/hackers-pull-off-133-million-french-bank-heist-via-service-provider/",
-    "d": "2026-11-07",
-    "s": "French cooperative bank Crédit Mutuel Arkéa was targeted in a cyberattack that enabled fraudulent transactions of up to $133 million, forcing it to respond by suspending certain systems.v [...]",
-    "src": "BleepingComputer",
-    "cat": "actus"
-   },
-   {
-    "t": "CTM360 Exposes Fake Gift Card Scams Exploiting Trusted Brands",
-    "u": "https://www.bleepingcomputer.com/news/security/ctm360-exposes-fake-gift-card-scams-exploiting-trusted-brands/",
-    "d": "2026-11-07",
-    "s": "Scammers are impersonating major brands and celebrities to lure consumers into fake gift card giveaways that collect personal information and trigger unwanted subscriptions. CTM360 reveals how these campaigns use deceptive verification step",
+    "t": "Microsoft confirms Windows security updates installation issues",
+    "u": "https://www.bleepingcomputer.com/news/microsoft/microsoft-confirms-kb5132061-installation-issues-0x80070306-0x800f0989-0x800f0993-errors/",
+    "d": "2026-11-12",
+    "s": "Microsoft has confirmed reports that the November 2026 security updates are failing to install on Windows 11 systems with the October preview update. [...]",
     "src": "BleepingComputer",
     "cat": "actus"
    }
   ],
   "soc": [
+   {
+    "t": "Exploit Attempts for GPUStack Authentication Bypass (CVE-2026-102895), (Thu, Nov 12th)",
+    "u": "https://isc.sans.edu/diary/rss/33514",
+    "d": "2026-11-12",
+    "s": "CVE-2026-102895 is a trivial authentication-bypass vulnerability. GPUStack is also an attractive target. It is open-source software that manages clusters of GPUs, which are typically used to run AI workloads. All versions of GPUStack prior ",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "ISC Stormcast For Thursday, November 12th, 2026 https://isc.sans.edu/podcastdetail/10176, (Thu, Nov 12th)",
+    "u": "https://isc.sans.edu/diary/rss/33512",
+    "d": "2026-11-12",
+    "s": "",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "Microsoft Patch Tuesday November 2026, (Tue, Nov 10th)",
+    "u": "https://isc.sans.edu/diary/rss/33508",
+    "d": "2026-11-11",
+    "s": "Microsoft continues its AI-induced patch surge, addressing 1,260 different vulnerabilities this month. 68 of these vulnerabilities are considered critical. 167 of the vulnerabilities are Chromium issues affecting Microsoft Edge.&#xd;",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "ISC Stormcast For Wednesday, November 11th, 2026 https://isc.sans.edu/podcastdetail/10174, (Wed, Nov 11th)",
+    "u": "https://isc.sans.edu/diary/rss/33510",
+    "d": "2026-11-11",
+    "s": "",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "The global socket: how threat actors are weaponizing GSocket for stealthy C2",
+    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/11/global-socket-how-threat-actors-weaponizing-gsocket-stealthy-c2/",
+    "d": "2026-11-11",
+    "s": "Threat actors are deploying GSocket on compromised Linux servers to keep encrypted remote access after the original vulnerability is patched. Learn how to detect, investigate, and remediate this activity. The post The global socket: how thr",
+    "src": "Microsoft Security",
+    "cat": "soc"
+   },
+   {
+    "t": "Lessons from 59 Linux Kernel Bug Reports",
+    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/11/lessons-from-59-linux-kernel-bug-reports/",
+    "d": "2026-11-11",
+    "s": "Microsoft FORGE Lab researchers used codename MDASH to investigate Linux kernel vulnerabilities, resulting in 59 upstream bug reports, 33 assigned CVEs, and 38 merged fixes. The research includes eight demonstrated local root privilege-esca",
+    "src": "Microsoft Security",
+    "cat": "soc"
+   },
+   {
+    "t": "Apple Patches Everyting: November 2026 Edition, (Tue, Nov 10th)",
+    "u": "https://isc.sans.edu/diary/rss/33506",
+    "d": "2026-11-10",
+    "s": "&#xd;",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "ISC Stormcast For Tuesday, November 10th, 2026 https://isc.sans.edu/podcastdetail/10172, (Tue, Nov 10th)",
+    "u": "https://isc.sans.edu/diary/rss/33504",
+    "d": "2026-11-10",
+    "s": "",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
+   {
+    "t": "Detecting sleeper agents hiding in AI model neurons",
+    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/10/detecting-sleeper-agents-hiding-in-ai-model-neurons/",
+    "d": "2026-11-10",
+    "s": "Microsoft Research has released new threat research detailing how a capable agent model could be turned into a sleeper agent by editing fewer than ten neurons to inject a short payload; Microsoft Research has also found that this threat is ",
+    "src": "Microsoft Security",
+    "cat": "soc",
+    "ia_secu": true
+   },
+   {
+    "t": "Attackers Searching for SAP Netweaver Webshells, (Mon, Nov 9th)",
+    "u": "https://isc.sans.edu/diary/rss/33502",
+    "d": "2026-11-09",
+    "s": "Just saw a new (to me) URL in our honeypot data today:&#xd;",
+    "src": "SANS ISC",
+    "cat": "soc"
+   },
    {
     "t": "ISC Stormcast For Monday, November 9th, 2026 https://isc.sans.edu/podcastdetail/10170, (Mon, Nov 9th)",
     "u": "https://isc.sans.edu/diary/rss/33500",
@@ -113,397 +191,317 @@
     "cat": "soc"
    },
    {
-    "t": "Scans for Sshole Vulnerability (CVE-2026-123158), (Sun, Nov 8th)",
-    "u": "https://isc.sans.edu/diary/rss/33498",
-    "d": "2026-11-08",
-    "s": "Our honeypots use \"Cowrie\" to collect SSH data. With the emergence of the \"sshole\" vulnerability last week, we are now seeing an increase in attempts to exploit the vulnerability. Our data is a bit limited in this respect. Our honeypots col",
-    "src": "SANS ISC",
-    "cat": "soc"
-   },
-   {
-    "t": "ARTEX abuse expands as cybercriminals target financial sector",
-    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/06/artex-abuse-expands-as-cybercriminals-target-financial-sector/",
-    "d": "2026-11-07",
-    "s": "In October 2026, the financially motivated threat actor Storm-3358 began targeting organizations in the financial sector using the agentic AI offensive framework ARTEX. The post ARTEX abuse expands as cybercriminals target financial sector ",
-    "src": "Microsoft Security",
-    "cat": "soc"
-   },
-   {
-    "t": "ISC Stormcast For Friday, November 6th, 2026 https://isc.sans.edu/podcastdetail/10168, (Fri, Nov 6th)",
-    "u": "https://isc.sans.edu/diary/rss/33494",
-    "d": "2026-11-06",
-    "s": "",
-    "src": "SANS ISC",
-    "cat": "soc"
-   },
-   {
-    "t": "Vulnerability Scans for Older Cisco IOS Vulnerability / Opt-Out Headers, (Thu, Nov 5th)",
-    "u": "https://isc.sans.edu/diary/rss/33492",
-    "d": "2026-11-05",
-    "s": "This morning, I was browsing our honeypot data for any new and existing PHP exploit attempts. Instead, I first ran into some GeoServer exploits, but found them to be too boring to write up. This Cisco IOS exploit attempt was a bit more inte",
-    "src": "SANS ISC",
-    "cat": "soc"
-   },
-   {
-    "t": "ISC Stormcast For Thursday, November 5th, 2026 https://isc.sans.edu/podcastdetail/10166, (Thu, Nov 5th)",
-    "u": "https://isc.sans.edu/diary/rss/33490",
-    "d": "2026-11-05",
-    "s": "",
-    "src": "SANS ISC",
-    "cat": "soc"
-   },
-   {
-    "t": "Threat actors use agentic AI tooling to find and abuse exposed secrets",
-    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/05/threat-actors-use-agentic-ai-tooling-to-find-and-abuse-exposed-secrets/",
-    "d": "2026-11-05",
-    "s": "Microsoft Threat Intelligence has observed threat actors using the agentic offensive security framework ARTEX to search GitHub for OAuth application secrets, which can be used to compromise the associated OAuth application and perform authe",
+    "t": "FORGE Lab uses agentic tools to identify memory safety issues in Rust",
+    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/09/forge-lab-uses-agentic-tools-to-identify-memory-safety-issues-in-rust/",
+    "d": "2026-11-09",
+    "s": "Microsoft FORGE Lab researchers found memory-safety bugs in Rust's core and std libraries, including cases where safe Rust code can trigger undefined behavior. Using Hyenas, FORGE's frontier research version of codename MDASH, the team inve",
     "src": "Microsoft Security",
     "cat": "soc",
     "ia_secu": true
-   },
-   {
-    "t": "New investments to reduce on-premises security risk",
-    "u": "https://techcommunity.microsoft.com/blog/microsoft-security-blog/new-investments-to-reduce-on-premises-security-risk/4570381",
-    "d": "2026-11-05",
-    "s": "We’re announcing a new on-premises security initiative, bringing together guidance, migration, and product investments. The post New investments to reduce on-premises security risk appeared first on Microsoft Security Blog .",
-    "src": "Microsoft Security",
-    "cat": "soc"
-   },
-   {
-    "t": "​​​​What’s new in Microsoft Security: November 2026",
-    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/05/whats-new-in-microsoft-security-november-2026/",
-    "d": "2026-11-05",
-    "s": "Microsoft Security’s November 2026 updates strengthen AI agent security, least privilege, threat protection, and exposure management. The post ​​​​What’s new in Microsoft Security: November 2026 appeared first on Microsoft Security Blog .",
-    "src": "Microsoft Security",
-    "cat": "soc"
-   },
-   {
-    "t": "Email threat landscape: Q3 2026 trends and insights",
-    "u": "https://www.microsoft.com/en-us/security/blog/2026/11/05/email-threat-landscape-q3-2026-trends-and-insights/",
-    "d": "2026-11-05",
-    "s": "Microsoft Threat Intelligence observed a sharp rise in email-based phishing activity at the end of Q3 2026 (July – September), even as QR code phishing declined, CAPTCHA-gated phishing recovered, and malicious messages spoofing familiar bus",
-    "src": "Microsoft Security",
-    "cat": "soc"
-   },
-   {
-    "t": "The Classics Return: Vulnerable E-Mail Scripts, (Wed, Nov 4th)",
-    "u": "https://isc.sans.edu/diary/rss/33488",
-    "d": "2026-11-04",
-    "s": "One of the early web application vulnerabilities I remember was CVE-2000-0411 &#x5b;CVE&#x5d;. This was a simple vulnerability in a CGI-bin script used to send e-mail. The vulnerability was pretty straightforward: Adding additional paramete",
-    "src": "SANS ISC",
-    "cat": "soc"
-   },
-   {
-    "t": "ISC Stormcast For Wednesday, November 4th, 2026 https://isc.sans.edu/podcastdetail/10164, (Wed, Nov 4th)",
-    "u": "https://isc.sans.edu/diary/rss/33486",
-    "d": "2026-11-04",
-    "s": "",
-    "src": "SANS ISC",
-    "cat": "soc"
    }
   ],
   "ia": [
    {
-    "t": "Your Experts Have Partners. There's HOPE for Keeping Them Together",
-    "u": "https://huggingface.co/blog/amazon/higher-order-pruning-experts",
-    "d": "2026-11-09",
-    "s": "",
-    "src": "Hugging Face",
-    "cat": "ia"
-   },
-   {
-    "t": "The Web Is More Than Enough, by Paul Ford",
-    "u": "https://simonwillison.net/2026/Nov/9/hn-50421091/",
-    "d": "2026-11-09",
-    "s": "My comment on The Web Is More Than Enough, by Paul Ford &mdash; Hacker News. OK, this comment convinced me to give that a shot. Here's a thing I made in Three.js this morning - a Nudibranch themed Faberge Egg: https://static.simonwillison.n",
-    "src": "Simon Willison",
-    "cat": "ia"
-   },
-   {
-    "t": "Hide your slop PR descriptions behind",
-    "u": "https://simonwillison.net/2026/Nov/9/details-summary/",
-    "d": "2026-11-09",
-    "s": "Most of the changes I make to my projects these days come in the form of PRs opened for me by Claude Code or Codex. The PR is my unit of work - I use them to bundle commits together, iterating on them until a feature is complete, document d",
-    "src": "Simon Willison",
-    "cat": "ia"
-   },
-   {
-    "t": "parse_number() as a SQLite extension: C vs Rust",
-    "u": "https://simonwillison.net/2026/Nov/8/sqlite-parse-number-c-vs-rust/",
-    "d": "2026-11-08",
-    "s": "Research: parse_number() as a SQLite extension: C vs Rust I was out walking the dog when I got curious about how easy/difficult it would be to write a SQLite C extension that adds a parse_number() function for turning strings like -$1,234.5",
-    "src": "Simon Willison",
-    "cat": "ia"
-   },
-   {
-    "t": "datasette #3046: Don't serve link: rel=next HTTP headers to Firefox for HTML pages",
-    "u": "https://simonwillison.net/2026/Nov/7/link-rel-next/",
-    "d": "2026-11-07",
-    "s": "datasette #3046: Don&#x27;t serve link: rel=next HTTP headers to Firefox for HTML pages I was looking at the Firefox network panel today when I noticed that requests to a Datasette table page were triggering an HTTP prefetch to the next pag",
-    "src": "Simon Willison",
-    "cat": "ia"
-   },
-   {
-    "t": "Terry Pratchett's Study",
-    "u": "https://simonwillison.net/2026/Nov/7/hn-50407316/",
-    "d": "2026-11-07",
-    "s": "My comment on Terry Pratchett&#x27;s Study &mdash; Hacker News. Terry Pratchett once wrote about the concept of \"horizontal wealth\". Vertical wealth is where you spend money on rich people stuff - yachts and suchlike. Horizontal wealth is w",
-    "src": "Simon Willison",
-    "cat": "ia"
-   },
-   {
-    "t": "ToyBlocks: A controlled world for robot learning and evaluation",
-    "u": "https://huggingface.co/blog/allenai/toyblocks",
-    "d": "2026-11-06",
-    "s": "",
-    "src": "Hugging Face",
-    "cat": "ia"
-   },
-   {
-    "t": "Egyptian and Nigerian English join the Open ASR Leaderboard",
-    "u": "https://huggingface.co/blog/open-asr-leaderboard-liva",
-    "d": "2026-11-06",
-    "s": "",
-    "src": "Hugging Face",
-    "cat": "ia"
-   },
-   {
-    "t": "Partnering with Hacktron to find vulnerabilities in OpenAI’s systems",
-    "u": "https://openai.com/index/partnering-with-hacktron",
-    "d": "2026-11-06",
-    "s": "OpenAI is partnering with Hacktron to find vulnerabilities, test connections with third-party services, and strengthen defenses with frontier AI.",
+    "t": "Holiday Extras is rethinking what it can build with Codex",
+    "u": "https://openai.com/business/customer-stories/holidays-extras-codex",
+    "d": "2026-11-12",
+    "s": "With Codex, Holiday Extras is turning customer expertise into better apps, higher booking conversion and new possibilities for growth.",
     "src": "OpenAI",
     "cat": "ia"
    },
    {
-    "t": "Measuring how AI agents handle everyday wet-lab science",
-    "u": "https://openai.com/index/measuring-how-ai-agents-handle-wet-lab-science",
-    "d": "2026-11-06",
-    "s": "OpenAI introduces BioBasicsBench, a 100-task benchmark measuring how well AI agents interpret raw experimental data and handle everyday wet-lab science.",
+    "t": "Supporting research on AI and children’s safety",
+    "u": "https://openai.com/index/children-first-declaration",
+    "d": "2026-11-12",
+    "s": "OpenAI commits $2 million to research on AI and children’s safety. The work supports shared tools to measure risks and opportunities for young people.",
     "src": "OpenAI",
     "cat": "ia"
    },
    {
-    "t": "Quoting Nilay Patel",
-    "u": "https://simonwillison.net/2026/Nov/6/nilay-patel/",
-    "d": "2026-11-06",
-    "s": "The products aren't good enough to sell people on the costs. You cannot tell people that you have to listen to the whine of a data center in their backyard for AI overviews and some of the most hilarious deep fake slop in history. It's not ",
+    "t": "Gilbert + Tobin rethinks the business of law with AI",
+    "u": "https://openai.com/index/gilbert-tobin-sam-nickless",
+    "d": "2026-11-12",
+    "s": "A conversation with Sam Nickless, Partner and Chief Executive Officer at Gilbert + Tobin.",
+    "src": "OpenAI",
+    "cat": "ia"
+   },
+   {
+    "t": "BotPsy: On-Device Personal Assistant with a Sub-Billion-Parameter Agentic Language Model",
+    "u": "https://huggingface.co/blog/qvac/botpsy",
+    "d": "2026-11-11",
+    "s": "",
+    "src": "Hugging Face",
+    "cat": "ia"
+   },
+   {
+    "t": "Token Pooling-Aware Training for Multi-Vector Embedding Models",
+    "u": "https://huggingface.co/blog/token-pooling",
+    "d": "2026-11-11",
+    "s": "",
+    "src": "Hugging Face",
+    "cat": "ia"
+   },
+   {
+    "t": "ChatGPT Plus for veterans and servicemembers",
+    "u": "https://openai.com/index/chatgpt-plus-for-veterans",
+    "d": "2026-11-11",
+    "s": "More than 20,000 veterans and transitioning service members have claimed a free year of ChatGPT Plus. See how they use it to prepare for civilian careers.",
+    "src": "OpenAI",
+    "cat": "ia"
+   },
+   {
+    "t": "JioStar’s chief architect on AI discovery at 500M-user scale",
+    "u": "https://openai.com/index/jiostar-vijay-seshadri",
+    "d": "2026-11-11",
+    "s": "JioStar’s Vijay Seshadri explains AI discovery at 500M-user scale. Read his lessons on evals, guardrails, and taking AI into production.",
+    "src": "OpenAI",
+    "cat": "ia"
+   },
+   {
+    "t": "AlphaGenome 2: Deciphering how cells read DNA to better understand disease",
+    "u": "https://deepmind.google/blog/alphagenome-2-deciphering-how-cells-read-dna-to-better-understand-disease/",
+    "d": "2026-11-11",
+    "s": "Predicting how DNA sequences and their variations impact specific human cell types and disease.",
+    "src": "Google DeepMind",
+    "cat": "ia"
+   },
+   {
+    "t": "Gemini Decisions API",
+    "u": "https://simonwillison.net/2026/Nov/11/gemini-decisions-api/",
+    "d": "2026-11-11",
+    "s": "Gemini Decisions API Google join Jev and OpenAI in the decision model category with \"Gemini Decision 1\". This new model API is almost identical to Jev: it supports the same three types of questions (yes/no, choice, and rubric-scoring) and e",
     "src": "Simon Willison",
     "cat": "ia"
    },
    {
-    "t": "New NVIDIA Cosmos 3 Open Models for Interactive World Simulation",
-    "u": "https://huggingface.co/blog/nvidia/cosmos-interactive-world-simulation",
-    "d": "2026-11-05",
-    "s": "",
-    "src": "Hugging Face",
+    "t": "aws-emulator",
+    "u": "https://simonwillison.net/2026/Nov/11/aws-emulator/",
+    "d": "2026-11-11",
+    "s": "aws-emulator Finally, an official emulator from AWS to run tests against a local clone of their many different services without having to provision a paid API key to do so. It's written in Rust by a huge swarm of agents - 29,684 commits in ",
+    "src": "Simon Willison",
+    "cat": "ia"
+   },
+   {
+    "t": "Browse tools.simonwillison.net by tag",
+    "u": "https://simonwillison.net/2026/Nov/11/tools-tags/",
+    "d": "2026-11-11",
+    "s": "Browse tools.simonwillison.net by tag I've been wanting a better way to browse my collection of vibe-coded tools (244 and counting) for a while. I had a few Fable 5.2 credits left over before my weekly reset so I set it to work using tree-s",
+    "src": "Simon Willison",
+    "cat": "ia"
+   },
+   {
+    "t": "llm 0.37.2",
+    "u": "https://simonwillison.net/2026/Nov/11/llm/",
+    "d": "2026-11-11",
+    "s": "Release: llm 0.37.2 Fixes a security issue reported by Daniel de Araujo in GHSA-v9h7-jj4g-f862 and GHSA-r639-rr7r-x72w . LLM has a mechanism called extra-openai-models.yaml - now managed by the new-in-0.37 llm openai endpoint add command - ",
+    "src": "Simon Willison",
     "cat": "ia"
    }
   ],
   "alertes": [
    {
-    "t": "Multiples vulnérabilités dans le noyau Linux d'Ubuntu (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1469/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans le noyau Linux d'Ubuntu. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire, une atteinte à l'intégrité des données et un contournement de la ",
+    "t": "Multiples vulnérabilités dans les produits Apple (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1487/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans les produits Apple. Certaines d'entre elles permettent à un attaquant de provoquer une atteinte à la confidentialité des données, une atteinte à l'intégrité des données et un contournemen",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans le noyau Linux de SUSE (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1470/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans le noyau Linux de SUSE. Certaines d'entre elles permettent à un attaquant de provoquer une atteinte à la confidentialité des données, une atteinte à l'intégrité des données et un contourn",
+    "t": "Multiples vulnérabilités dans Google Chrome (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1488/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans Google Chrome. Elles permettent à un attaquant de provoquer un problème de sécurité non spécifié par l'éditeur. Google indique que la vulnérabilité CVE-2026-125350 est activement exploité",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans le noyau Linux de Red Hat (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1471/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans le noyau Linux de Red Hat. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance, une élévation de privilèges et un déni de service à ",
+    "t": "Multiples vulnérabilités dans Roundcube (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1489/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans Roundcube. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire, une falsification de requêtes côté serveur (SSRF) et une injection de requêtes ",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans les produits IBM (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1472/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans les produits IBM. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance, une élévation de privilèges et un déni de service à distance.",
+    "t": "Multiples vulnérabilités dans Mozilla Firefox (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1490/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans Mozilla Firefox. Elles permettent à un attaquant de provoquer une élévation de privilèges et un problème de sécurité non spécifié par l'éditeur.",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans le noyau Linux de Debian (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1473/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans le noyau Linux de Debian. Elles permettent à un attaquant de provoquer une élévation de privilèges, une atteinte à la confidentialité des données et un déni de service.",
+    "t": "Multiples vulnérabilités dans le greffon OpenID Connect OpenID Provider (OIDC OP) pour Shibboleth (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1491/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans le greffon OpenID Connect OpenID Provider (OIDC OP) pour Shibboleth. Elles permettent à un attaquant de provoquer un contournement de la politique de sécurité.",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Vulnérabilité dans les produits VMware (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1474/",
-    "d": "2026-11-06",
-    "s": "Une vulnérabilité a été découverte dans les produits VMware. Elle permet à un attaquant de provoquer une exécution de code arbitraire à distance.",
+    "t": "Vulnérabilité dans Atlassian Confluence Data Center (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1492/",
+    "d": "2026-11-10",
+    "s": "Une vulnérabilité a été découverte dans Atlassian Confluence Data Center. Elle permet à un attaquant de provoquer une exécution de code arbitraire à distance.",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans les produits Splunk (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1475/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans les produits Splunk. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance, une atteinte à la confidentialité des données et une attei",
+    "t": "Multiples vulnérabilités dans Synology DSM (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1493/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans Synology DSM. Certaines d'entre elles permettent à un attaquant de provoquer un déni de service à distance, une atteinte à la confidentialité des données et une falsification de requêtes ",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans les produits Cisco (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1476/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans les produits Cisco. Elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance.",
+    "t": "Vulnérabilité dans Schneider Electric EcoStruxure (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1494/",
+    "d": "2026-11-10",
+    "s": "Une vulnérabilité a été découverte dans Schneider Electric EcoStruxure. Elle permet à un attaquant de provoquer une exécution de code arbitraire.",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Vulnérabilité dans les produits Mitel (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1477/",
-    "d": "2026-11-06",
-    "s": "Une vulnérabilité a été découverte dans les produits Mitel. Elle permet à un attaquant de provoquer une exécution de code arbitraire à distance.",
+    "t": "Multiples vulnérabilités dans Siemens SIMATIC (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1495/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans Siemens SIMATIC. Elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance et un contournement de la politique de sécurité.",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans les produits Foxit (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1478/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans les produits Foxit. Elles permettent à un attaquant de provoquer une falsification de requêtes côté serveur (SSRF) et une injection de code indirecte à distance (XSS).",
+    "t": "Multiples vulnérabilités dans OpenSSL (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1496/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans OpenSSL. Certaines d'entre elles permettent à un attaquant de provoquer un déni de service à distance, une atteinte à la confidentialité des données et un contournement de la politique de",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Multiples vulnérabilités dans Mattermost Server (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1479/",
-    "d": "2026-11-06",
-    "s": "De multiples vulnérabilités ont été découvertes dans Mattermost Server. Elles permettent à un attaquant de provoquer un problème de sécurité non spécifié par l'éditeur.",
+    "t": "Multiples vulnérabilités dans les produits SAP (10 novembre 2026)",
+    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1497/",
+    "d": "2026-11-10",
+    "s": "De multiples vulnérabilités ont été découvertes dans les produits SAP. Certaines d'entre elles permettent à un attaquant de provoquer une exécution de code arbitraire à distance, un déni de service à distance et une atteinte à la confidenti",
     "src": "CERT-FR avis",
     "cat": "alertes"
    },
    {
-    "t": "Vulnérabilité dans Alpine (06 novembre 2026)",
-    "u": "https://www.cert.cyber.gouv.fr/avis/CERTFR-2026-AVI-1480/",
-    "d": "2026-11-06",
-    "s": "Une vulnérabilité a été découverte dans Alpine. Elle permet à un attaquant de provoquer un contournement de la politique de sécurité.",
-    "src": "CERT-FR avis",
+    "t": "CISA Adds Six Known Exploited Vulnerabilities to Catalog",
+    "u": "https://www.cisa.gov/news-events/alerts/2026/11/10/cisa-adds-six-known-exploited-vulnerabilities-catalog",
+    "d": "2026-11-10",
+    "s": "CISA has added six new vulnerabilities to its Known Exploited Vulnerabilities (KEV) Catalog , based on evidence of active exploitation. CVE-2026-20320 Cisco BroadWorks Improper Restriction of XML External Entity Reference Vulnerability&nbsp",
+    "src": "CISA",
     "cat": "alertes"
    }
   ]
  },
  "ia_secu": [
   {
-   "t": "Taiwan-Based Hacker Used BOSSAI AI Agents to Steal Taipei Emergency Dispatch Records",
-   "u": "https://thehackernews.com/2026/11/taiwan-based-hacker-used-bossai-ai.html",
-   "d": "2026-11-09",
-   "s": "A single attacker using AI agents pulled emergency dispatch records covering seven Taipei districts, researchers at Acronis's Threat Research Unit said last week. The agents also found a Taipei fire department platform exposing patient data",
+   "t": "AntiFox AI Pentesting Platform Linked to Attacks That Accessed AWS Production Secrets",
+   "u": "https://thehackernews.com/2026/11/antifox-ai-pentesting-platform-linked.html",
+   "d": "2026-11-11",
+   "s": "Cybersecurity researchers have disclosed details of a campaign in which an emerging agentic penetration testing platform called AntiFox has been used to steal Amazon Web Services (AWS) credentials and pivot laterally into compromised enviro",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Former OpenAI Engineer Pleads Not Guilty to Planting Covert Device in Executive Meeting Room",
-   "u": "https://thehackernews.com/2026/11/former-openai-engineer-pleads-not.html",
-   "d": "2026-11-09",
-   "s": "The OpenAI engineer who was arrested and charged last month for planting a covert audio recording device in the company's office has pleaded not guilty. According to reports from Bloomberg and CNBC, Saudi national Abdulrahman Alfozan made a",
+   "t": "We Built An Agent That Broke All of Our Security Rules. Here's What We Learned.",
+   "u": "https://thehackernews.com/2026/11/we-built-agent-that-broke-all-of-our.html",
+   "d": "2026-11-11",
+   "s": "We tell customers three things about securing AI agents: they need their own identities, access that fits the job they’re given, and traceability that’s separate from any human’s. That was true for us at Token as well. Then, we built an age",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Claude Code's “Don't Ask Again” File Exposes Passwords and Keys in 1,122 Public Copies on GitHub",
-   "u": "https://thehackernews.com/2026/11/claude-codes-dont-ask-again-file.html",
-   "d": "2026-11-07",
-   "s": "Passwords and API keys that developers typed into commands they approved in Claude Code are sitting in public GitHub repositories, where anyone can read them. When a user selects \"Yes, and don't ask again,\" Anthropic's AI coding assistant c",
+   "t": "Railway Says Stolen Customer AI Keys Led to $740,000 in Estimated Unauthorized Usage Charges",
+   "u": "https://thehackernews.com/2026/11/railway-says-stolen-customer-ai-keys.html",
+   "d": "2026-11-11",
+   "s": "AI provider keys that customers stored on Railway were stolen in an October breach and used to commit an estimated $740,000 in unauthorized spending, the platform-as-a-service provider said yesterday. It has promised to pay those charges it",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "OpenAI Launches GPT-6 Cyber After AI Helps Find 81 Firefox Flaws, 948 Linux Exploits",
-   "u": "https://thehackernews.com/2026/11/openai-launches-gpt-6-cyber-after-ai.html",
-   "d": "2026-11-06",
-   "s": "OpenAI on Thursday unveiled GPT‑6 Cyber, which it described as a major step forward in security research that brings together stronger cybersecurity capabilities with a step-change improvement in model alignment. The new model is \"more capa",
+   "t": "Microsoft Researchers Show AI Agents Can Be Backdoored by Editing Fewer Than 10 Neurons",
+   "u": "https://thehackernews.com/2026/11/microsoft-researchers-show-ai-agents.html",
+   "d": "2026-11-11",
+   "s": "An AI model can be given a hidden backdoor by editing fewer than 10 of its rarely used neurons, without retraining the model, Microsoft researchers have shown. When a chosen trigger appears, the model outputs an attacker's command, which an",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Malicious Browser Extensions Could Use Claude Dispatch to Run Code on Users' Computers",
-   "u": "https://thehackernews.com/2026/11/malicious-browser-extensions-could-use.html",
-   "d": "2026-11-06",
-   "s": "A browser extension that can run scripts on claude.ai could make Claude Desktop run code on a person's computer, researchers at Forever Security, an endpoint security company, showed in a test. The attack needs Dispatch, a Claude feature th",
+   "t": "SGLang RCE Exploit Breaches NEAR AI, Steals Data From 18 Agents and About 100 Users",
+   "u": "https://thehackernews.com/2026/11/sglang-rce-exploit-breaches-near-ai.html",
+   "d": "2026-11-11",
+   "s": "An attacker exploited a remote code execution flaw in SGLang, an open-source inference engine, and ran code on one of NEAR AI's inference servers last Sunday. The attacker could also have seen requests being processed on that server that da",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Runaway AI hacking agent behind WorkOS breach after escaping sandbox",
-   "u": "https://www.bleepingcomputer.com/news/security/runaway-ai-hacking-agent-behind-workos-breach-after-escaping-sandbox/",
-   "d": "2026-11-06",
-   "s": "WorkOS says an AI-powered hacking agent that breached its internal sales application and accessed customer information was operated by a security researcher who claims the tool escaped its testing environment and unintentionally attacked th",
+   "t": "Notion says Fireworks breach exposed customer AI chat transcripts",
+   "u": "https://www.bleepingcomputer.com/news/security/notion-says-fireworks-breach-exposed-customer-ai-chat-transcripts/",
+   "d": "2026-11-11",
+   "s": "Notion, the digital workspace platform, disclosed that a security breach at its AI infrastructure provider, Fireworks AI, exposed Notion AI chat transcripts in a small number of workspaces. [...]",
    "src": "BleepingComputer",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "OpenAI's new GPT-6 Cyber AI finds 81 Firefox flaws, 948 Linux bugs",
-   "u": "https://www.bleepingcomputer.com/news/security/openais-new-gpt-6-cyber-ai-finds-81-firefox-flaws-948-linux-bugs/",
-   "d": "2026-11-06",
-   "s": "OpenAI has revealed GPT-6 Cyber, a new artificial intelligence model that has discovered 81 previously unknown high-severity Firefox vulnerabilities and developed working exploits for 948 distinct Linux kernel flaws. [...]",
+   "t": "Hackers use AntiFox AI agents in AWS credential-theft attacks",
+   "u": "https://www.bleepingcomputer.com/news/security/hackers-use-antifox-ai-agents-in-aws-credential-theft-attacks/",
+   "d": "2026-11-11",
+   "s": "Attackers are using Alibaba Cloud to host self-managed instances of AntiFox, an open-source agentic penetration testing platform, to target web services and AWS environments. [...]",
    "src": "BleepingComputer",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Researchers Bypass ChatGPT Lockdown Mode to Exfiltrate Chats Without User Interaction",
-   "u": "https://thehackernews.com/2026/11/researchers-bypass-chatgpt-lockdown.html",
-   "d": "2026-11-05",
-   "s": "Cybersecurity researchers have disclosed details of a now-patched vulnerability that could be exploited to bypass Lockdown Mode protections in OpenAI ChatGPT. Lockdown Mode was introduced by the artificial intelligence (AI) company in June ",
+   "t": "Fireworks AI Confirms Wider Breach Affecting Customer Datasets, Model Weights and Notion AI Chats",
+   "u": "https://thehackernews.com/2026/11/fireworks-ai-breach-widens-to-expose.html",
+   "d": "2026-11-10",
+   "s": "Fireworks AI disclosed on Monday that its investigation into a security incident first reported early last month&nbsp; uncovered further malicious activity, affecting account and billing information, alongside secrets, datasets, and incompl",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "OpenAI AI Pipeline Generates 948 Linux Root Escalation Exploits in 30-Hour Run",
-   "u": "https://thehackernews.com/2026/11/openai-ai-pipeline-generates-948-linux.html",
-   "d": "2026-11-05",
-   "s": "OpenAI on Wednesday detailed a pipeline that employed an upcoming cyber-focused artificial intelligence (AI) model to validate and patch 948 local privilege escalation vulnerabilities in Linux for $1.2 million in API costs. \"Our prototype i",
+   "t": "Anthropic's Claude Fable 5.2 Beats GPT-6 Cyber in Multi-Stage Cyberattack Benchmark",
+   "u": "https://thehackernews.com/2026/11/anthropics-claude-fable-52-beats-gpt-6.html",
+   "d": "2026-11-10",
+   "s": "Anthropic on Monday released Claude Fable 5.2 and Claude Mythos 5.2 models, which it said exhibit improvements in coding, reasoning, and vision. During pre-release training, the large language models (LLMs) helped its engineers \"complete ot",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "CERT-In Flags AI-Driven Attacks as Backdoored ARTEX Exposes 62 Consoles to Root Access",
-   "u": "https://thehackernews.com/2026/11/backdoored-docker-image-for-artex-ai.html",
-   "d": "2026-11-05",
-   "s": "The Indian Computer Emergency Response Team (CERT-In) has disclosed that an artificial intelligence (AI)-assisted threat actor it tracks as Crafty Falcon is targeting organizations in the Banking, Financial Services, and Insurance (BFSI) se",
-   "src": "The Hacker News",
+   "t": "Railway breach leads to $740,000 in fraudulent AI charges",
+   "u": "https://www.bleepingcomputer.com/news/apple/railway-breach-leads-to-740-000-in-fraudulent-ai-charges/",
+   "d": "2026-11-10",
+   "s": "Cloud hosting provider Railway says hackers exploited vulnerabilities in its infrastructure to steal customer authentication secrets and generate approximately $740,000 in fraudulent AI usage, potentially exposing credentials for up to 100,",
+   "src": "BleepingComputer",
    "cat": "actus",
    "ia_secu": true
   },
   {
-   "t": "Threat actors use agentic AI tooling to find and abuse exposed secrets",
-   "u": "https://www.microsoft.com/en-us/security/blog/2026/11/05/threat-actors-use-agentic-ai-tooling-to-find-and-abuse-exposed-secrets/",
-   "d": "2026-11-05",
-   "s": "Microsoft Threat Intelligence has observed threat actors using the agentic offensive security framework ARTEX to search GitHub for OAuth application secrets, which can be used to compromise the associated OAuth application and perform authe",
+   "t": "Detecting sleeper agents hiding in AI model neurons",
+   "u": "https://www.microsoft.com/en-us/security/blog/2026/11/10/detecting-sleeper-agents-hiding-in-ai-model-neurons/",
+   "d": "2026-11-10",
+   "s": "Microsoft Research has released new threat research detailing how a capable agent model could be turned into a sleeper agent by editing fewer than ten neurons to inject a short payload; Microsoft Research has also found that this threat is ",
    "src": "Microsoft Security",
    "cat": "soc",
    "ia_secu": true
   },
   {
-   "t": "Researchers Uncover Prompt Adware Hidden in OpenAI Codex Jailbreak Toolkit",
-   "u": "https://thehackernews.com/2026/11/researchers-uncover-prompt-adware.html",
-   "d": "2026-11-04",
-   "s": "Cybersecurity researchers have disclosed details of an OpenAI Codex jailbreak bundle that's designed to modify an artificial intelligence (AI) agent's trusted instructions to insert advertisements for a third-party AI gateway. The phenomeno",
+   "t": "Taiwan-Based Hacker Used BOSSAI AI Agents to Steal Taipei Emergency Dispatch Records",
+   "u": "https://thehackernews.com/2026/11/taiwan-based-hacker-used-bossai-ai.html",
+   "d": "2026-11-09",
+   "s": "A single attacker using AI agents pulled emergency dispatch records covering seven Taipei districts, researchers at Acronis's Threat Research Unit said last week. The agents also found a Taipei fire department platform exposing patient data",
    "src": "The Hacker News",
    "cat": "actus",
    "ia_secu": true
