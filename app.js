@@ -432,7 +432,7 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button></div>
+  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
   <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div><div id="hz-panel"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
@@ -567,13 +567,13 @@ function followStart() {
   if (fol.on) return followStop();
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
-  fol.last = Date.now(); fol.hint = 0; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
+  fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
   Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
+    rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; try { for (let i = e.resultIndex; i < e.results.length; i++) (fol.log = fol.log || []).push({ t: Date.now() - (fol.t0 || Date.now()), fin: !!e.results[i].isFinal, txt: e.results[i][0].transcript }); } catch (x) { } let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
     rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
     rec.onend = () => { if (fol.paused) return; fol.base += '\n' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }
@@ -1136,6 +1136,7 @@ document.addEventListener('click', e => {
     case 'follow': followStart(); break;
     case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;
+    case 'fol-diag': { const rep = { unit: fol.unit, expected: fol.exp, heard: fol.log || [], base: fol.base, state: fol.st, pos: fol.p, ua: navigator.userAgent, native: !!window.__nativeApp }; const txt = JSON.stringify(rep); download('masari-diagnostic.json', txt, 'application/json'); try { navigator.clipboard && navigator.clipboard.writeText(txt); } catch (e) { } break; }
     case 'fol-skip': followResume(+d.from); break;
     case 'end-ext': S.settings.end = addDays(S.settings.end, +d.d); save(); route(); toast('مُدّد الموعد'); break;
     case 'rcap-up': S.settings.reviewCap += 4; save(); route(); toast('رُفع حد المراجعة اليومي'); break;
