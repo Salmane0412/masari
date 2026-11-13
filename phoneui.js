@@ -27,9 +27,9 @@
   views.lock = () => views.phone();
   views.phone = () => {
     if (!N()) return noNative();
-    const st = J(N().status(), {});
-    if (!apps) apps = J(N().apps(), []);
-    if (!draft) draft = J(N().config(), {});
+    let st = {}; try { st = J(N().status(), {}); } catch (e) { window.DIAG && DIAG.log('native-status', e.message); st = { errors: [String(e.message)] }; }
+    try { if (!apps) apps = J(N().apps(), []); } catch (e) { window.DIAG && DIAG.log('native-apps', e.message); apps = []; }
+    try { if (!draft) draft = J(N().config(), {}); } catch (e) { window.DIAG && DIAG.log('native-config', e.message); draft = {}; }
     const d = draft, use = st.usage || {}, ev = st.events || {};
     const checks = [
       ['accessibility', 'خدمة الحجب (إمكانية الوصول)', st.accessibility, 'أساس الحجب كله'],
@@ -42,7 +42,8 @@
     const bad = checks.filter(c => !c[2]).length;
     const tgUsed = Math.round((use['org.telegram.messenger'] || 0) / 60), tgB = (d.budgets || {})['org.telegram.messenger'];
     const pend = st.pendingAt ? Math.max(0, Math.ceil((st.pendingAt - Date.now()) / 3600000)) : 0;
-    return `<div class="hero-title">الهاتف والحجب</div>
+    const errNote = (st.errors && st.errors.length) ? `<div class="note warnb">تعذّر قراءة بعض حالات الهاتف: ${esc(st.errors.slice(0, 3).join(' ; '))}. أرسل لي سجلّ التشخيص.</div>` : '';
+    return `<div class="hero-title">الهاتف والحجب</div>${errNote}
     <div class="sub">${st.setupWindow ? '🟢 نافذة الإعداد مفتوحة: كل التعديلات تُطبَّق فورًا' : 'التشديد يُطبَّق فورًا، والتخفيف بعد 24 ساعة أو برمز شريكك'}</div>
     ${pend ? `<div class="note warnb">تعديل لتخفيف القيود ينتظر: يُطبَّق بعد ${pend} ساعة. <button class="btn sm" data-ph="cancel">إلغاؤه</button></div>` : ''}
     <div class="card kpi3 phk"><div><span>اليوم</span><b>${st.dayDone ? '✅ أُنجز' : st.unlocked ? 'مفتوح' : '🔒 محجوب'}</b></div><div><span>تيليغرام</span><b>${tgUsed}${tgB !== undefined ? '/' + tgB : ''} د</b></div><div><span>محاولات محظورة</span><b>${ev.banned || 0}</b></div></div>

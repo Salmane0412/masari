@@ -15,8 +15,10 @@ import android.provider.Settings
 object VpnGuard {
     private var last = 0L
     fun otherVpnActive(c: Context): Boolean {
-        val cm = c.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        return cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true }
+        return try {
+            val cm = c.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true }
+        } catch (e: Exception) { false }
     }
     fun check(c: Context) {
         if (!Store.webBlock(c) || DnsVpnService.running) return

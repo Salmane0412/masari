@@ -544,7 +544,7 @@ function voiceTest() {
 }
 function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fol.owner[i - 1] === g) i--; return i; }
 function followHalt(kb) {
-  fol.paused = true; try { fol.rec && fol.rec.abort(); } catch (x) { }
+  fol.paused = true; try { fol.rec && fol.rec.abort(); } catch (x) { } try { window.DIAG && DIAG.log('halt', 'expected=' + fol.exp[kb] + ' idx=' + kb + ' heard=' + (fol.base || '').split('\n').slice(-2).join(' | ')); } catch (x) { }
   beep(330, 350); say('قِف');
   const g = fol.owner[kb], from = ayahStartIdx(kb); noteError(g, 1); save();
   try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (x) { }
@@ -573,8 +573,8 @@ function followStart() {
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; try { for (let i = e.resultIndex; i < e.results.length; i++) (fol.log = fol.log || []).push({ t: Date.now() - (fol.t0 || Date.now()), fin: !!e.results[i].isFinal, txt: e.results[i][0].transcript }); } catch (x) { } let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
-    rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
+    rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; try { for (let i = e.resultIndex; i < e.results.length; i++) { (fol.log = fol.log || []).push({ t: Date.now() - (fol.t0 || Date.now()), fin: !!e.results[i].isFinal, txt: e.results[i][0].transcript }); if (e.results[i].isFinal && window.DIAG) DIAG.log('heard', e.results[i][0].transcript); } } catch (x) { } let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
+    rec.onerror = e => { window.DIAG && DIAG.log('sr-error', e.error); if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
     rec.onend = () => { if (fol.paused) return; fol.base += '\n' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }
   };
