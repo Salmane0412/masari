@@ -863,7 +863,7 @@ views.more = () => {
     ['التنظيم', [['tasks', '✓', 'المهام', 'اليوم والقادمة والمشاريع، بإدخال سريع'], ['fin', '€', 'المال والزكاة', 'الميزانية والمصاريف والأهداف والديون وحاسبة الزكاة']]],
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
     ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
-    ['النظام', [['pin', '🔐', 'رمز الدخول', 'قفل مساري برمز سري على هذا الجهاز'], ['phone', '📱', 'الهاتف والحجب', 'القواعد والشريك والأذونات والتذكيرات'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
+    ['النظام', [['pin', '🔐', 'رمز الدخول', 'قفل مساري برمز سري على هذا الجهاز'], ['phone', '📱', 'الهاتف والحجب', 'القواعد والشريك والأذونات والتذكيرات'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['ideas', '💡', 'صندوق الأفكار', 'اكتب فكرتك قبل أن تنساها + سجلّ التشخيص'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
   ];
   return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="tiles">${items.map(([k, g, t, m]) => `<a class="tile t-${k}" href="#/${k}"><span class="tic">${window.ic ? ic(k, 22) : g}</span><b>${t}</b><span class="m">${m}</span></a>`).join('')}</div>`).join('');
 };
@@ -1065,7 +1065,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', ideas: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');

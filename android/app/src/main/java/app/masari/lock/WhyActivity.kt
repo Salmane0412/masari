@@ -22,13 +22,12 @@ import android.widget.Toast
 /** Déblocage « par l'effort »: écrire à la main (sans coller) pourquoi tu as lancé ce projet. */
 class WhyActivity : Activity() {
     companion object { const val KIND = "kind"; const val APP = "app"; const val PROTECT = "protect"
-        const val MIN_APP = 600; const val MIN_PROTECT = 1500 }
+}
 
     private var last = ""
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         val kind = intent.getStringExtra(KIND) ?: APP
-        val need = if (kind == PROTECT) MIN_PROTECT else MIN_APP
         val col = LinearLayout(this); col.orientation = LinearLayout.VERTICAL
         col.setPadding(40, 100, 40, 40); col.setBackgroundColor(Color.parseColor("#0E1A24"))
         col.layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -36,13 +35,17 @@ class WhyActivity : Activity() {
         fun tv(t: String, s: Float): TextView { val v = TextView(this); v.text = t; v.textSize = s
             v.setTextColor(Color.parseColor("#E6EFF0")); v.setPadding(0, 12, 0, 12); return v }
 
-        col.addView(tv(if (kind == PROTECT) "✍️ كتابة الرسالة الطويلة لإلغاء الحماية" else "✍️ اكتب لماذا بدأت هذا المشروع", 22f))
-        col.addView(tv("اكتب بيدك، بكلماتك أنت، لماذا اخترت مساري ولماذا تريد الاستمرار. اللصق ممنوع، والتكرار لا يُحتسب. الحد الأدنى: $need حرفًا.", 15f))
+        col.addView(tv(if (kind == PROTECT) "✍️ انسخ بيدك هذه الرسالة لإلغاء الحماية" else "✍️ انسخ بيدك هذه الرسالة لفتح التطبيقات", 22f))
+        col.addView(tv("اقرأ ثم اكتب النص نفسه حرفًا بحرف. اللصق ممنوع، وأي خطأ يوقف التقدّم حتى تصحّحه.", 15f))
+        val target = if (kind == PROTECT) MANIFESTO + " " + MANIFESTO_LONG else MANIFESTO
+        val shown = tv(target, 17f); shown.setBackgroundColor(Color.parseColor("#16293a")); shown.setPadding(24, 24, 24, 24)
+        col.addView(shown)
+        val need = norm(target).length
         val counter = tv("0 / $need", 16f)
         val input = EditText(this)
         input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-        input.minLines = 10; input.gravity = Gravity.TOP or Gravity.START; input.textSize = 17f
-        input.setTextColor(Color.WHITE); input.setHintTextColor(Color.GRAY); input.hint = "لقد بدأت هذا المشروع لأن…"
+        input.minLines = 8; input.gravity = Gravity.TOP or Gravity.START; input.textSize = 17f
+        input.setTextColor(Color.WHITE); input.setHintTextColor(Color.GRAY); input.hint = "اكتب الرسالة هنا…"
         input.isLongClickable = false; input.setTextIsSelectable(false)
         val deny = object : ActionMode.Callback {
             override fun onCreateActionMode(m: ActionMode?, menu: Menu?) = false
@@ -64,13 +67,14 @@ class WhyActivity : Activity() {
                     Toast.makeText(this@WhyActivity, "اللصق ممنوع: اكتب بيدك.", Toast.LENGTH_SHORT).show(); return
                 }
                 last = t
-                val q = quality(t)
-                counter.text = "$q / $need"
-                ok.isEnabled = q >= need
+                val typed = norm(t); val tn = norm(target)
+                val good = tn.startsWith(typed)
+                counter.text = if (good) "${typed.length} / $need" else "❌ خطأ: صحّح آخر ما كتبت (${typed.length} / $need)"
+                ok.isEnabled = good && typed.length == tn.length
             }
         })
         ok.setOnClickListener {
-            if (quality(last) < need) return@setOnClickListener
+            if (norm(last) != norm(target)) return@setOnClickListener
             Events.add(this, "long_text")
             Partner.send(this, if (kind == PROTECT) "فتح الحماية بالرسالة الطويلة" else "فتح التطبيقات بالرسالة الطويلة", "كتب الرسالة الطويلة ففُتحت 30 دقيقة.", "long_text")
             if (kind == PROTECT) { Store.setDisableReq(this, System.currentTimeMillis() - 24L * 3600_000L)
@@ -84,14 +88,10 @@ class WhyActivity : Activity() {
         val sv = ScrollView(this); sv.addView(col); setContentView(sv)
     }
 
-    /** يحتسب فقط الكلمات المتنوعة: كلمة مكررة أكثر من مرتين لا تُحسب. */
-    private fun quality(t: String): Int {
-        val seen = HashMap<String, Int>(); var n = 0
-        for (w in t.split(Regex("\\s+"))) {
-            if (w.isEmpty()) continue
-            val c = (seen[w] ?: 0) + 1; seen[w] = c
-            if (c <= 2) n += w.length + 1
-        }
-        return n
-    }
+    /** توحيد الكتابة: بلا تشكيل ولا اختلاف في الهمزات ولا في المسافات. */
+    private fun norm(t: String): String = t.replace(Regex("[\\u064B-\\u065F\\u0670\\u0640]"), "")
+        .replace(Regex("[أإآٱ]"), "ا").replace('ى', 'ي').replace('ة', 'ه').replace(Regex("[\\s\\p{Punct}،؛؟…«»]+"), " ").trim()
+
+    private val MANIFESTO = "لقد اخترت أن آخذ نفسي بيدي، وأن أترك ما يضرّني من العادات والإدمانات، وأن أعيش حياة إنسان حقيقي لا تقوده شهواته. غايتي الكبرى أن أكون عبدًا صالحًا وعالمًا، وأن أغيّر في العالم ما استطعتُ، وأن أبلغ أعلى درجات الجنة بإذن الله. وإن لم ألتزم بهذا فقد أصل إلى آخر عمري ولم أفعل شيئًا."
+    private val MANIFESTO_LONG = "أنا متأخّر أصلًا في طلب العلم وفي حفظ القرآن، وعندي مشكلات وعادات سيّئة يجب أن أعالجها. إن لم أركّز وأعالجها فستضرّني في صحتي ووزني ورياضتي وفي ديني ودنياي. أعلم أن الطريق ليس سهلًا وقد أتعثّر وأسقط، لكنني لن أتوقف. فليس في الحياة فرصة ثانية، وإن لم أعمل على هذه الفرصة فقد ضاعت. فلأكن صادقًا مع نفسي ومع ربي، ولأواصل."
 }
