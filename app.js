@@ -432,7 +432,7 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
+  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
   <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div><div id="hz-panel"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
@@ -570,7 +570,7 @@ function followStart() {
   fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
   Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
-  const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
+  document.body.classList.add('following'); const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
     rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; try { for (let i = e.resultIndex; i < e.results.length; i++) { (fol.log = fol.log || []).push({ t: Date.now() - (fol.t0 || Date.now()), fin: !!e.results[i].isFinal, txt: e.results[i][0].transcript }); if (e.results[i].isFinal && window.DIAG) DIAG.log('heard', e.results[i][0].transcript); } } catch (x) { } let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
@@ -589,6 +589,7 @@ function followHint() {
   folStatus('💡 تلميح: ' + fol.exp.slice(p, p + n).join(' '));
 }
 function followStop() {
+  document.body.classList.remove('following');
   clearInterval(fol.hintTimer); document.querySelectorAll('.w.f-hint').forEach(e => e.classList.remove('f-hint'));
   fol.on = false; try { fol.rec && fol.rec.stop(); } catch (x) { } fol.rec = null;
   const btn = $('#fol-btn'); if (btn) btn.textContent = '🎙 تلاوة بمتابعة مباشرة';
@@ -1067,6 +1068,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
 const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', ideas: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
+  route.y = window.scrollY;
   const h = location.hash.replace(/^#\/?/, '') || 'today';
   const [name, a, b, c] = h.split('/');
   closeSheet();
@@ -1078,7 +1080,8 @@ function route() {
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }
   else if (name === 'book') view.innerHTML = views.book(a);
   else view.innerHTML = (views[name] || views.today)();
-  window.scrollTo(0, 0);
+  if (route.last === h) window.scrollTo(0, route.y || 0); else window.scrollTo(0, 0);
+  route.last = h;
   if (name === 'library' || name === 'books') loadPacks();
   if (name === 'code') fillCode();
   document.body.classList.toggle('inquiz', name === 'quiz' && !!quiz && !quiz.done);
@@ -1257,7 +1260,17 @@ document.addEventListener('change', e => {
   const map = { 'st-qsec': () => s.quizSec = Math.min(120, Math.max(5, +v || 20)), 'st-maxnew': () => { s.maxNew = Math.max(0, +v || 0); route(); }, 'st-start': () => s.start = v, 'st-end': () => s.end = v, 'st-cap': () => s.reviewCap = Math.max(1, +v || 8), 'st-rep': () => s.rep = Math.max(1, +v || 20), 'st-bcap': () => s.bookCap = Math.max(0, +v || 0), 'st-font': () => s.font = Math.min(56, Math.max(20, +v || 30)), 'st-t0': () => s.times[0] = v, 'st-t1': () => s.times[1] = v };
   if (map[id]) { map[id](); save(); toast('تم الحفظ'); }
 });
-document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.tj !== undefined) { S.settings.tjCol[e.target.dataset.tj] = e.target.value; applyTj(); return; } if (e.target.id === 'note') { const [, , kind, id] = location.hash.split('/'); if (kind === 'b') { const it = getItem(kind, id); it.st.note = e.target.value; save(); } } });
+document.addEventListener('input', e => {
+  const t = e.target, id = t.id || '', v = t.value, s = S.settings;
+  if (t.type !== 'checkbox' && t.tagName !== 'SELECT') {
+    // حفظ فوري أثناء الكتابة: لا نعتمد على حدث «change» الذي لا يصل في WebView إذا خرجتَ من الصفحة دون إخفاء لوحة المفاتيح
+    const m = { 'st-start': () => v && (s.start = v), 'st-end': () => v && (s.end = v), 'st-cap': () => +v > 0 && (s.reviewCap = +v), 'st-rep': () => +v > 0 && (s.rep = +v), 'st-bcap': () => v !== '' && (s.bookCap = Math.max(0, +v)), 'st-font': () => +v >= 20 && +v <= 56 && (s.font = +v), 'st-qsec': () => +v >= 5 && +v <= 120 && (s.quizSec = +v), 'st-t0': () => v && (s.times[0] = v), 'st-t1': () => v && (s.times[1] = v) };
+    if (m[id]) { m[id](); save(); return; }
+    if (id.startsWith('hl-') && id !== 'hl-newW') { S.health[id.slice(3)] = v; save(); return; }
+    if (id === 'gh-repo') { gh.repo = v.trim(); ghSave(); return; }
+    if (id === 'gh-token') { gh.token = v.trim(); ghSave(); return; }
+  }
+  if (e.target.dataset && e.target.dataset.tj !== undefined) { S.settings.tjCol[e.target.dataset.tj] = e.target.value; applyTj(); return; } if (e.target.id === 'note') { const [, , kind, id] = location.hash.split('/'); if (kind === 'b') { const it = getItem(kind, id); it.st.note = e.target.value; save(); } } });
 
 function download(name, text, type) { if (window.MasariNative && MasariNative.saveFile) { try { toast(MasariNative.saveFile(name, type || 'text/plain', text) === 'ok' ? 'حُفظ في مجلد التنزيلات' : 'تعذّر الحفظ'); return; } catch (e) {} } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 function downloadICS() {

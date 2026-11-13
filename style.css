@@ -364,3 +364,10 @@ html.locked body>#app{visibility:hidden}
 .brand{display:inline-flex;align-items:center;gap:8px}.brand .logo{border-radius:7px;display:block}
 
 .w.f-hint{background:color-mix(in srgb,var(--accent) 28%,transparent);border-radius:5px}
+
+/* أثناء المتابعة: زر الإيقاف والحالة ثابتان أسفل الشاشة فلا حاجة للصعود */
+body.following #fol-ctl{position:fixed;left:10px;right:10px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:40;margin:0!important;padding:10px;background:var(--bg,#0e1a24);border:1px solid var(--accent);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.45);justify-content:center}
+body.following #fol-ctl .btn:not(#fol-btn){display:none}
+body.following #fol-ctl #fol-btn{width:100%;min-height:48px}
+body.following #fol-status{position:fixed;left:10px;right:10px;bottom:calc(138px + env(safe-area-inset-bottom));z-index:40;text-align:center;background:var(--bg,#0e1a24);padding:6px 10px;border-radius:10px}
+body.following #view{padding-bottom:170px}
