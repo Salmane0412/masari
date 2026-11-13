@@ -461,11 +461,21 @@ function expectedOf(i) {
   for (let g = u.a; g <= u.b; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
   return { exp, owner };
 }
-function followEval(exp, heard, from) {
-  const st = new Array(exp.length); let p = from || 0, miss = 0, started = false;
+function followEval(exp, heard, from, owner) {
+  const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0;
   for (let hi = 0; hi < heard.length; hi++) {
     if (p >= exp.length) break;
     const h = heard[hi]; let f = -1, two = 0, join = 0;
+    // تكرار الآية: إن عاد القارئ إلى أول آية سبق أن قرأها (أو التي قبلها) نرجع إليها ونمسح أخطاءها، لا نعدّها خطأً
+    if (started && owner && hi + 1 < heard.length) {
+      let rs = -1;
+      for (let k = Math.min(p, exp.length) - 1; k >= Math.max(from || 0, 0) && k >= 0; k--) {
+        if (k !== 0 && owner[k] === owner[k - 1]) continue;           // ليس أول آية
+        if (owner[k] < owner[p - 1] - 1) break;                         // أبعد من الآية السابقة
+        if (exp[k].length >= 3 && wcost(exp[k], h) <= 0.4 && k + 1 < exp.length && wcost(exp[k + 1], heard[hi + 1]) <= 0.4 && !(k === p)) { rs = k; break; }
+      }
+      if (rs >= 0 && rs < p) { for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
+    }
     for (let d = 0; d < 3 && p + d < exp.length; d++) {
       if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
       if (p + d + 1 < exp.length && wcost(exp[p + d] + exp[p + d + 1], h) <= 0.4) { f = d; join = 1; break; } // كلمتان مدمجتان في كلمة مسموعة
@@ -476,15 +486,16 @@ function followEval(exp, heard, from) {
       st[p + f] = 'ok'; p += f + 1; if (join) { st[p] = 'ok'; p++; } if (two) hi++; miss = 0;
     } else if (started) { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
-  return { st, p };
+  return { st, p, reps };
 }
 /* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
-function followEvalTwoPass(exp, committed, interim, from) {
-  const a = followEval(exp, committed, from);
+function followEvalTwoPass(exp, committed, interim, from, owner) {
+  const a = followEval(exp, committed, from, owner);
   if (!interim.length) return a;
-  const b = followEval(exp, committed.concat(interim), from), st = a.st.slice();
+  const b = followEval(exp, committed.concat(interim), from, owner), st = a.st.slice();
+  if (b.reps > a.reps) return b; // تكرار يجري الآن
   for (let k = a.p; k < exp.length; k++) if (b.st[k] === 'ok') st[k] = 'ok';
-  return { st, p: Math.max(a.p, b.p) };
+  return { st, p: Math.max(a.p, b.p), reps: a.reps };
 }
 const fol = { on: false, rec: null, base: '', cur: '', fin: 0, from: 0, keep: [], paused: false, stopOnErr: true, exp: [], owner: [], st: [], p: 0, unit: -1 };
 const cleanHeard = t => normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean);
@@ -506,10 +517,10 @@ const heardWords = () => {
   return { committed, interim: stripIntro(cleanHeard(fol.cur)) };
 };
 function followPaint() {
-  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from);
+  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from, fol.owner);
   for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
   fol.st = r.st; fol.p = r.p;
-  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
+  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
     const k = +el.dataset.wi, s = r.st[k];
@@ -556,19 +567,29 @@ function followStart() {
   if (fol.on) return followStop();
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
+  fol.last = Date.now(); fol.hint = 0; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
   Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
     const rec = fol.rec = new SR(); rec.lang = 'ar-SA'; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = e => { let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
+    rec.onresult = e => { fol.last = Date.now(); fol.hint = 0; let it = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fol.base += '\n' + r[0].transcript; else it += ' ' + r[0].transcript; } fol.cur = it; followPaint(); };
     rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; folStatus(SR_ERR[e.error] || ('خطأ في الميكروفون: ' + e.error)); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { fol.on = false; const b = $('#fol-btn'); if (b) b.textContent = '🎙 تلاوة بمتابعة مباشرة'; } };
     rec.onend = () => { if (fol.paused) return; fol.base += '\n' + fol.cur; fol.cur = ''; if (fol.on) { try { startRec(); } catch (x) { } } };
     try { rec.start(); } catch (x) { fol.on = false; folStatus('تعذّر تشغيل الميكروفون.'); }
   };
   folStatus('🎙 اسمح للمتصفح بالميكروفون ثم ابدأ التلاوة من أول المقطع…'); startRec();
 }
+/* بعد صمت: تلميح بالكلمة التالية، ثم بكلمتين إن طال التوقّف */
+function followHint() {
+  if (!fol.on || fol.paused || !fol.exp.length) return;
+  const idle = (Date.now() - (fol.last || Date.now())) / 1000; if (idle < 6) { document.querySelectorAll('.w.f-hint').forEach(e => e.classList.remove('f-hint')); return; }
+  const n = idle >= 12 ? 2 : 1, p = fol.p; if (p >= fol.exp.length) return;
+  for (let k = p; k < Math.min(p + n, fol.exp.length); k++) { const el = document.querySelector(`.w[data-wi="${k}"]`); if (el) { el.classList.add('f-hint'); el.classList.remove('hid'); } }
+  folStatus('💡 تلميح: ' + fol.exp.slice(p, p + n).join(' '));
+}
 function followStop() {
+  clearInterval(fol.hintTimer); document.querySelectorAll('.w.f-hint').forEach(e => e.classList.remove('f-hint'));
   fol.on = false; try { fol.rec && fol.rec.stop(); } catch (x) { } fol.rec = null;
   const btn = $('#fol-btn'); if (btn) btn.textContent = '🎙 تلاوة بمتابعة مباشرة';
   setTimeout(followFinish, 350);

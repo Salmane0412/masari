@@ -362,3 +362,5 @@ html.locked body>#app{visibility:hidden}
 .gbody{padding:4px 0 12px;line-height:1.9;font-size:14.5px}.gbody code{direction:ltr;unicode-bidi:isolate;background:var(--sunk);padding:1px 6px;border-radius:6px}
 
 .brand{display:inline-flex;align-items:center;gap:8px}.brand .logo{border-radius:7px;display:block}
+
+.w.f-hint{background:color-mix(in srgb,var(--accent) 28%,transparent);border-radius:5px}
