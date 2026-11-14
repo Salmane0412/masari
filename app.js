@@ -476,6 +476,11 @@ function followEval(exp, heard, from, owner) {
       }
       if (rs >= 0 && rs < p) { for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
     }
+    // لم تبدأ المطابقة بعد: إن بدأ القارئ من منتصف المقطع نبحث عن كلمتين متتاليتين مطابقتين في المقطع كله (تحديد الموضع تلقائيًا)
+    if (!started && hi + 1 < heard.length) {
+      let ok3 = false; for (let d = 0; d < 3 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { ok3 = true; break; }
+      if (!ok3) for (let k = p + 3; k + 1 < exp.length; k++) if (exp[k].length + exp[k + 1].length >= 6 && wcost(exp[k], h) <= 0.4 && wcost(exp[k + 1], heard[hi + 1]) <= 0.4) { p = k; break; }
+    }
     for (let d = 0; d < 3 && p + d < exp.length; d++) {
       if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
       if (p + d + 1 < exp.length && wcost(exp[p + d] + exp[p + d + 1], h) <= 0.4) { f = d; join = 1; break; } // كلمتان مدمجتان في كلمة مسموعة
@@ -520,6 +525,7 @@ function followPaint() {
   const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from, fol.owner);
   for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
   fol.st = r.st; fol.p = r.p;
+  followLocate(hw, r);
   if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
@@ -529,6 +535,20 @@ function followPaint() {
   });
   const c = document.querySelector('.w.f-cur'); if (c) { const b = c.getBoundingClientRect(); if (b.top < 120 || b.bottom > innerHeight - 140) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   folStatus(fol.on ? `🎙 يستمع إليك… صحيح ${ok} · أخطاء ${bad} · من ${fol.exp.length} كلمة` : '');
+}
+/* إن قرأ من موضع آخر غير هذا المقطع: نبحث عنه في المصحف كله ونعرض الانتقال إليه (البسملة وحدها لا تدلّ على موضع) */
+function followLocate(hw, r) {
+  if (!fol.on || fol.locDone || !window.QLOC) return;
+  const words = hw.committed.concat(hw.interim); if (words.length < 8) return;
+  let okc = 0; r.st.forEach(s => { if (s === 'ok') okc++; }); if (okc >= 4) { fol.locDone = true; return; }
+  try {
+    if (!fol.locBuilt) { QLOC.build(Q.ayas); fol.locBuilt = true; }
+    const f = QLOC.find(words); if (!f || f.pending || f.ambiguous || f.conf < 0.04) return;
+    fol.locDone = true;
+    const u = UI.findIndex(x => f.ayah0 >= x.a && f.ayah0 <= x.b); if (u < 0 || u === fol.unit) return;
+    window.DIAG && DIAG.log('locate', 'unit=' + u + ' aya=' + f.ayah0);
+    const o = $('#rec-out'); if (o) o.innerHTML = `<div class="note"><b>يبدو أنك تقرأ في موضع آخر:</b> ${refOf(f.ayah0)}.<div class="btns" style="margin-top:8px"><a class="btn pri" href="#/s/q/${u}/new" style="text-decoration:none">افتح هذا الموضع</a></div></div>`;
+  } catch (x) { window.DIAG && DIAG.log('locate-error', String(x && x.message || x)); }
 }
 function beep(f, ms) { try { const c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = f || 440; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); setTimeout(() => o.stop(), ms || 250); } catch (e) { } }
 function say(t, done) {
@@ -567,7 +587,7 @@ function followStart() {
   if (fol.on) return followStop();
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
-  fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
+  fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; fol.locDone = false; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
   Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   document.body.classList.add('following'); const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
