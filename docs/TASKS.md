@@ -27,3 +27,11 @@ Pour chaque point : tester réellement (adb + WebView), noter OK/KO et la preuve
 5. Pages et fonctions : parcourir chaque écran de l'app (accueil, séance, mushaf, examen 🎓, quiz, paramètres, santé, prières, tâches), relever erreurs console (`DIAG`), éléments coupés, boutons morts, textes mal alignés (RTL).
 6. Blocage : vérifier que le blocage tient après redémarrage du téléphone et après fermeture forcée de l'app (sans proposer de contournement).
 7. Espace disque et performances : temps de démarrage, mémoire, batterie sur 10 min de suivi.
+
+## Testeur — lot 2 : exploration fonctionnelle et audits (même méthode, rapport séparé)
+A. Chaque fonction de l'app, de bout en bout, comme un vrai utilisateur (créer, modifier, supprimer, recharger, hors ligne) : prières, tâches, santé, finances, études, suivi, examen 🎓, 🔊 test vocal (doit annoncer les premiers mots de l'aya, pas un numéro), mushaf, sauvegarde/export. Lister les bugs avec preuve.
+B. Accessibilité et confort : tailles de texte, contraste, mode sombre, une main, rotation, clavier à l'écran qui cache un champ.
+C. Données du mushaf : télécharger (internet libre sur le PC) le texte Tanzil Uthmani avec marques de pause (waqf) dans `C:\masari-data\qul\`, écrire un script qui l'aligne mot à mot avec `data.js` et mesure les écarts. Ne rien publier dans le dépôt public avant validation du chef.
+D. Horodatage mot par mot : si l'utilisateur a créé un compte QUL, récupérer la récitation avec segments d'Al-Husary ; sinon proposer une alternative libre (mesurer les durées par alignement forcé avec le modèle Coran local).
+E. Makharij : vérifier que les vidéos YouTube s'intègrent en iframe dans la WebView Android (lecture, plein écran, rotation).
+F. Idées : proposer au chef 10 améliorations concrètes, classées par valeur pour le hifz et coût, avec ce qui a été réellement observé.

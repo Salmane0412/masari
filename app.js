@@ -649,7 +649,11 @@ function voiceTest() {
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   if (fol.on) followStop(); stopAudio(); const u = UI[+id], g = u.a + rnd(u.b - u.a + 1);
   document.querySelectorAll('.w').forEach(e => e.classList.add('hid'));
-  say(`اقرأ من الآية ${toAr(Q.ayas[g][1])} من سورة ${CH[Q.ayas[g][0]].ar}`, () => { followStart(); fol.from = fol.owner.indexOf(g); fol.keep = []; folStatus(`🎙 اقرأ من ${refOf(g)}: النص مخفي`); });
+  // لا يعرف القارئ رقم الآية: نذكر أول كلمتين منها، ونُظهرهما ونُظهر أول كلمات الآية في الصفحة
+  let aw = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) aw = aw.slice(BISM_TOKENS);
+  const start = aw.slice(0, 2).join(' ');
+  const firstEl = document.querySelector(`.w[data-g="${g}"]`); if (firstEl) { firstEl.classList.remove('hid'); firstEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  say(`اقرأ من الآية التي تبدأ بـ ${start}`, () => { followStart(); fol.from = fol.owner.indexOf(g); fol.keep = []; folStatus(`🎙 اقرأ من: «${start}» (${refOf(g)}) — النص مخفي`); });
 }
 function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fol.owner[i - 1] === g) i--; return i; }
 function followHalt(kb) {
