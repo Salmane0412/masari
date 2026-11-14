@@ -551,21 +551,51 @@ function followLocate(hw, r) {
     const o = $('#rec-out'); if (o) o.innerHTML = `<div class="note"><b>يبدو أنك تقرأ في موضع آخر:</b> ${refOf(f.ayah0)}.<div class="btns" style="margin-top:8px"><a class="btn pri" href="#/s/q/${u}/new" style="text-decoration:none">افتح هذا الموضع</a></div></div>`;
   } catch (x) { window.DIAG && DIAG.log('locate-error', String(x && x.message || x)); }
 }
-/* اختبار الحفظ: يتلو القارئ (بصوت شيخ) آية، ثم يُطلب منك إكمال الآيات التالية حتى موضع التوقّف، ويُقيَّم ما تقرأ */
-function examRound() {
-  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
-  if (fol.on) followStop(); stopAudio(); const u = UI[+id];
-  if (u.b - u.a < 1) { toast('المقطع قصير جدًا للاختبار'); return; }
-  const s = u.a + rnd(u.b - u.a), e = Math.min(u.b, s + 1 + rnd(3));
-  document.querySelectorAll('.w').forEach(el => el.classList.add('hid'));
-  const o = $('#rec-out'); if (o) o.innerHTML = '';
-  const go = () => say(`أكمل من الآية ${toAr(Q.ayas[s + 1][1])} إلى الآية ${toAr(Q.ayas[e][1])}`, () => {
-    followStart(); fol.from = fol.owner.indexOf(s + 1); fol.keep = [];
-    fol.endIdx = fol.owner.lastIndexOf(e) + 1; fol.exam = { s, e };
-    folStatus(`🎙 أكمل بعد ${refOf(s)} حتى ${refOf(e)}: النص مخفي`);
-  });
-  folStatus(`🔊 استمع إلى ${refOf(s)}…`);
-  try { const a = aud.a = new Audio(audioUrl(s)); a.onended = go; a.onerror = go; a.play().catch(go); } catch (x) { go(); }
+/* اختبار الحفظ: أسئلة عشوائية في حزب (أو مقطع): يتلو القارئ أول الآية ثم تُكمل أنت نفس الآية؛ لا تلميح ولا توقّف عند الخطأ */
+const EX = { on: false, qs: [], i: 0, res: [] };
+function examPanel() {
+  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return; const u = UI[+id], o = $('#rec-out'); if (!o) return;
+  o.innerHTML = `<div class="note"><b>اختبار الحفظ</b><br>يقرأ القارئ أول الآية وتُكمل أنت نفس الآية، في مواضع عشوائية، عشرة أسئلة.<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="exam-go" data-scope="hizb">كل الحزب ${toAr(u.hizb)}</button><button class="btn" data-act="exam-go" data-scope="unit">هذا المقطع فقط</button></div></div>`;
+}
+function examBuild(scope, id) {
+  const u = UI[id], f = (u.hizb - 1) * 4, lo = scope === 'hizb' ? UI[f].a : u.a, hi = scope === 'hizb' ? UI[Math.min(NQ - 1, f + 3)].b : u.b, c = [];
+  for (let g = lo; g <= hi; g++) { const n = wordsOf(g).length - ((Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ? BISM_TOKENS : 0); if (n >= 4) c.push({ g, n }); }
+  return c.sort(() => Math.random() - 0.5).slice(0, 10).map(x => ({ g: x.g, k: Math.min(x.n - 1, Math.max(2, Math.round(x.n * (0.35 + 0.1 * rnd(4)))) ) , n: x.n }));
+}
+function playCue(g, frac, done) {
+  let fin = false; const a = aud.a = new Audio(audioUrl(g));
+  const end = () => { if (fin) return; fin = true; try { a.pause(); } catch (x) { } done(); };
+  a.onloadedmetadata = () => { if (isFinite(a.duration)) setTimeout(end, Math.max(900, a.duration * 1000 * frac)); };
+  a.onerror = end; a.onended = end; a.play().catch(end); setTimeout(end, 20000);
+}
+function examQuestion() {
+  const q = EX.qs[EX.i]; if (!q) return examSummary();
+  const unit = UI.findIndex(x => q.g >= x.a && q.g <= x.b), cur = +location.hash.split('/')[3];
+  const run = () => {
+    if (fol.on) followStop(); stopAudio();
+    document.querySelectorAll('.w').forEach(el => el.classList.add('hid'));
+    const o = $('#rec-out'); if (o) o.innerHTML = '';
+    folStatus(`🔊 السؤال ${toAr(EX.i + 1)} من ${toAr(EX.qs.length)}: استمع ثم أكمل الآية`);
+    playCue(q.g, q.k / q.n, () => {
+      beep(520, 150); fol.stopOnErr = false; followStart();
+      const first = fol.owner.indexOf(q.g), last = fol.owner.lastIndexOf(q.g);
+      fol.from = Math.max(first, first + q.k - 1); fol.keep = []; fol.endIdx = last + 1; fol.noHint = true; fol.exam = { g: q.g, end: last + 1 };
+      folStatus(`🎙 أكمل الآية (${toAr(EX.i + 1)}/${toAr(EX.qs.length)})`);
+    });
+  };
+  if (cur !== unit) { location.hash = `#/s/q/${unit}/new`; setTimeout(run, 500); } else run();
+}
+function examAfter() {
+  const q = fol.exam; fol.exam = null; fol.noHint = false; if (!q) return;
+  const ok = fol.p >= q.end && fol.st.slice(fol.from, q.end).every(s => s !== 'bad');
+  EX.res.push({ g: q.g, ok }); EX.i++;
+  const o = $('#rec-out'); if (!o) return;
+  o.insertAdjacentHTML('beforeend', `<div class="note ${ok ? '' : 'warnb'}">${ok ? '✓ أحسنت' : '✗ تحتاج مراجعة'} — ${refOf(q.g)}<div class="btns" style="margin-top:8px">${EX.i < EX.qs.length ? '<button class="btn pri" data-act="exam-next">السؤال التالي</button>' : '<button class="btn pri" data-act="exam-next">النتيجة</button>'}<button class="btn" data-act="exam-stop">إنهاء الاختبار</button></div></div>`);
+}
+function examSummary() {
+  const good = EX.res.filter(r => r.ok).length, bad = EX.res.filter(r => !r.ok), o = $('#rec-out'); EX.on = false; fol.stopOnErr = true;
+  if (o) o.innerHTML = `<div class="note"><b>نتيجة الاختبار: ${toAr(good)} من ${toAr(EX.res.length)}</b>${bad.length ? `<br>للمراجعة: ${bad.map(r => refOf(r.g)).join(' · ')}` : '<br>ما شاء الله، لم تنسَ شيئًا.'}</div>`;
+  folStatus('');
 }
 function beep(f, ms) { try { const c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = f || 440; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); setTimeout(() => o.stop(), ms || 250); } catch (e) { } }
 function say(t, done) {
@@ -605,7 +635,7 @@ function followStart() {
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
   fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; fol.locDone = false; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
-  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0, endIdx: null });
+  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0, endIdx: null, noHint: false });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   document.body.classList.add('following'); const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
@@ -620,6 +650,8 @@ function followStart() {
 /* بعد صمت: تلميح بالكلمة التالية، ثم بكلمتين إن طال التوقّف */
 function followHint() {
   if (!fol.on || fol.paused || !fol.exp.length) return;
+  if (fol.exam && (Date.now() - (fol.last || Date.now())) / 1000 > 25) { followStop(); return; }
+  if (fol.noHint) return;
   const idle = (Date.now() - (fol.last || Date.now())) / 1000; if (idle < 6) { document.querySelectorAll('.w.f-hint').forEach(e => e.classList.remove('f-hint')); return; }
   const n = idle >= 12 ? 2 : 1, p = fol.p; if (p >= fol.exp.length) return;
   for (let k = p; k < Math.min(p + n, fol.exp.length); k++) { const el = document.querySelector(`.w[data-wi="${k}"]`); if (el) { el.classList.add('f-hint'); el.classList.remove('hid'); } }
@@ -632,7 +664,8 @@ function followStop() {
   const btn = $('#fol-btn'); if (btn) btn.textContent = '🎙 تلاوة بمتابعة مباشرة';
   setTimeout(followFinish, 350);
 }
-function followFinish() {
+function followFinish() { followFinish0(); if (EX.on && fol.exam) examAfter(); }
+function followFinish0() {
   followPaint(); folStatus('');
   const { st, p } = fol, bad = {}, seen = {};
   fol.exp.forEach((w, k) => { if (k < fol.from) return; if (k >= p && st[k] === undefined) return; const g = fol.owner[k]; seen[g] = (seen[g] || 0) + 1; if (st[k] === 'bad') (bad[g] = bad[g] || []).push(k); });
@@ -1174,7 +1207,10 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'follow': followStart(); break;
-    case 'exam': examRound(); break;
+    case 'exam': examPanel(); break;
+    case 'exam-go': EX.on = true; EX.i = 0; EX.res = []; EX.qs = examBuild(d.scope, +location.hash.split('/')[3]); examQuestion(); break;
+    case 'exam-next': examQuestion(); break;
+    case 'exam-stop': examSummary(); if (fol.on) followStop(); break;
     case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;
     case 'fol-diag': { const rep = { unit: fol.unit, expected: fol.exp, heard: fol.log || [], base: fol.base, state: fol.st, pos: fol.p, ua: navigator.userAgent, native: !!window.__nativeApp }; const txt = JSON.stringify(rep); download('masari-diagnostic.json', txt, 'application/json'); try { navigator.clipboard && navigator.clipboard.writeText(txt); } catch (e) { } break; }
