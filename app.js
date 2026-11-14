@@ -501,6 +501,10 @@ function followEval(exp, heard, from, owner) {
     if (f >= 0) {
       started = true; // كلمة فاتت التعرّف: لا تُحسب خطأً (التعرّف يُسقط كلمات كثيرة)؛ الخطأ الحقيقي = كلمات مسموعة لا تطابق شيئًا
       st[p + f] = 'ok'; p += f + 1; if (join) { st[p] = 'ok'; p++; } if (two) hi++; miss = 0;
+    } else if (started && (() => { // قفزة: ما سمعناه يطابق موضعًا أبعد (آية سقطت من التعرّف): ننتقل إليه دون عدّ ما قبله خطأً
+      let jk = -1, jr = 0; for (let k = p + 3; k < exp.length; k++) { const r = run(k, hi); if (r >= 3 && r > jr) { jr = r; jk = k; if (r >= 4) break; } }
+      if (jk < 0) return false; p = jk; miss = 0; hi--; return true; })()) {
+      /* تمّت القفزة؛ تُعاد معالجة الكلمة نفسها عند الموضع الجديد */
     } else if (started) {
       // استبدال: كلمة (أو كلمتان/ثلاث) مسموعة لا تطابق شيئًا، ثم تعود التلاوة إلى الكلمة المتوقعة بعدها → خطأ حقيقي لا ثغرة في التعرّف
       let sub = 0;
@@ -610,9 +614,10 @@ function examQuestion() {
 }
 function examAfter() {
   const q = fol.exam; fol.exam = null; fol.noHint = false; if (!q) return;
+  const o = $('#rec-out'); if (!o) return;
+  if (!((fol.base || '').replace(/\s/g, '') || (fol.cur || '').trim())) { o.insertAdjacentHTML('beforeend', `<div class="note warnb">لم أسمع شيئًا، فلم أحسب هذا السؤال.<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="exam-retry">أعد السؤال</button><button class="btn" data-act="exam-stop">إنهاء الاختبار</button></div></div>`); return; }
   const ok = fol.p >= q.end && fol.st.slice(fol.from, q.end).every(s => s !== 'bad');
   EX.res.push({ g: q.g, ok }); EX.i++;
-  const o = $('#rec-out'); if (!o) return;
   o.insertAdjacentHTML('beforeend', `<div class="note ${ok ? '' : 'warnb'}">${ok ? '✓ أحسنت' : '✗ تحتاج مراجعة'} — ${refOf(q.g)}<div class="btns" style="margin-top:8px">${EX.i < EX.qs.length ? '<button class="btn pri" data-act="exam-next">السؤال التالي</button>' : '<button class="btn pri" data-act="exam-next">النتيجة</button>'}<button class="btn" data-act="exam-stop">إنهاء الاختبار</button></div></div>`);
 }
 function examSummary() {
@@ -1232,7 +1237,7 @@ document.addEventListener('click', e => {
     case 'follow': followStart(); break;
     case 'exam': examPanel(); break;
     case 'exam-go': EX.on = true; EX.i = 0; EX.res = []; EX.qs = examBuild(d.scope, +location.hash.split('/')[3]); examQuestion(); break;
-    case 'exam-next': examQuestion(); break;
+    case 'exam-next': case 'exam-retry': examQuestion(); break;
     case 'exam-stop': examSummary(); if (fol.on) followStop(); break;
     case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;

@@ -18,7 +18,9 @@ const { chromium } = require('playwright');
       run('E milieu 67:3', [C]),
       run('F milieu 67:5', ['ولقد زينا السماء الدنيا بمصابيح وجعلناها رجوما للشياطين واعتدنا لهم عذاب السعير']),
       run('G substitution', [A + ' الذي خلق الموت والدنيا ليبلوكم أيكم أكثر مالا وهو العزيز الغفور']),
-      run('H lecture parfaite 1-3', [A, B, C])
+      run('H lecture parfaite 1-3', [A, B, C]),
+      run('I aya 2 non entendue (saut de reconnaissance)', [A + ' ' + C]),
+      run('J ayas 2-4 non entendues puis 5', [A + ' ولقد زينا السماء الدنيا بمصابيح وجعلناها رجوما للشياطين'])
     ];
   });
   r.forEach(x => console.log(JSON.stringify(x))); console.log(errs);
