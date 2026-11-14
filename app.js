@@ -514,7 +514,14 @@ function followEval(exp, heard, from, owner) {
         for (let j = 0; j < m && !clash; j++) { if (heard[hi + j].length < 3) clash = true; for (let d = 0; d < m + 3 && p + d < exp.length; d++) if (wcost(exp[p + d], heard[hi + j]) <= 0.4) { clash = true; break; } }
         if (!clash) sub = m;
       }
-      if (sub) { for (let j = 0; j < sub; j++) st[p + j] = 'bad'; p += sub; hi += sub - 1; miss = 0; }
+      // إقحام: كلمة زائدة واضحة (٣ حروف فأكثر) لا تشبه ما حولها، ثم تعود التلاوة مباشرةً إلى الكلمة المتوقعة بتتابعٍ من كلمتين فأكثر → خطأ (زيادة)، يُعلَّم آخر كلمة صحيحة قبلها
+      let ins = false;
+      if (!sub && h.length >= 3 && p > from && run(p, hi + 1) >= 2) {
+        ins = true;
+        for (let d = Math.max(from || 0, p - 4); d < Math.min(exp.length, p + 4) && ins; d++) if (wcost(exp[d], h) <= 0.5) ins = false;
+      }
+      if (ins) { st[p - 1] = 'bad'; miss = 0; }
+      else if (sub) { for (let j = 0; j < sub; j++) st[p + j] = 'bad'; p += sub; hi += sub - 1; miss = 0; }
       else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
     } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
