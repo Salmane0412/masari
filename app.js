@@ -449,7 +449,7 @@ views.session = (kind, id, mode) => {
 
 
 /* ---------- متابعة التلاوة مباشرة (على طريقة ترتيل) ---------- */
-const normW = t => normAr(t).replace(/[^ء-ي]/g, '');
+const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); // الألف الخنجرية تُكتب ألفًا كما يكتبها التعرّف الصوتي
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
 const foldW = w => w.replace(/[ؤئء]/g, 'ا').replace(/ذ/g, 'ز').replace(/ث/g, 'س').replace(/ظ/g, 'ض').replace(/ط/g, 'ت').replace(/ص/g, 'س').replace(/ق/g, 'ك').replace(/ح/g, 'ه').replace(/ع/g, 'ا');
 function wcost(e, h) {
@@ -466,6 +466,7 @@ function expectedOf(i) {
 }
 function followEval(exp, heard, from, owner) {
   const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0;
+  const run = (k, i) => { let r = 0; while (r < 5 && k + r < exp.length && i + r < heard.length && wcost(exp[k + r], heard[i + r]) <= 0.4) r++; return r; };
   for (let hi = 0; hi < heard.length; hi++) {
     if (p >= exp.length) break;
     const h = heard[hi]; let f = -1, two = 0, join = 0;
@@ -475,14 +476,20 @@ function followEval(exp, heard, from, owner) {
       for (let k = Math.min(p, exp.length) - 1; k >= Math.max(from || 0, 0) && k >= 0; k--) {
         if (k !== 0 && owner[k] === owner[k - 1]) continue;           // ليس أول آية
         if (owner[k] < owner[p - 1] - 1) break;                         // أبعد من الآية السابقة
-        if (exp[k].length >= 3 && wcost(exp[k], h) <= 0.4 && k + 1 < exp.length && wcost(exp[k + 1], heard[hi + 1]) <= 0.4 && !(k === p)) { rs = k; break; }
+        if (exp[k].length >= 3 && wcost(exp[k], h) <= 0.4 && k + 1 < exp.length && run(k, hi) > run(p, hi) && wcost(exp[k + 1], heard[hi + 1]) <= 0.4 && !(k === p)) { rs = k; break; }
       }
       if (rs >= 0 && rs < p) { for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
     }
-    // لم تبدأ المطابقة بعد: إن بدأ القارئ من منتصف المقطع نبحث عن كلمتين متتاليتين مطابقتين في المقطع كله (تحديد الموضع تلقائيًا)
-    if (!started && hi + 1 < heard.length) {
-      let ok3 = false; for (let d = 0; d < 3 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { ok3 = true; break; }
-      if (!ok3) for (let k = p + 3; k + 1 < exp.length; k++) if (exp[k].length + exp[k + 1].length >= 6 && wcost(exp[k], h) <= 0.4 && wcost(exp[k + 1], heard[hi + 1]) <= 0.4) { p = k; break; }
+    // لم تبدأ المطابقة بعد: نختار أطول تتابع متطابق في المقطع كله (يبدأ القارئ من أي موضع) بدل أول كلمة مشابهة
+    if (!started) {
+      if (heard.length - hi >= 3) {
+        let r0 = 0; for (let d = 0; d < 3 && p + d < exp.length; d++) r0 = Math.max(r0, run(p + d, hi));
+        let bk = -1, br = 0; for (let k = p; k < exp.length; k++) { const r = run(k, hi); if (r > br) { br = r; bk = k; } }
+        if (br >= 3 && br > r0) p = bk;
+      } else if (hi + 1 < heard.length) {
+        let ok3 = false; for (let d = 0; d < 3 && p + d < exp.length; d++) if (wcost(exp[p + d], h) <= 0.4) { ok3 = true; break; }
+        if (!ok3) for (let k = p + 3; k + 1 < exp.length; k++) if (exp[k].length + exp[k + 1].length >= 6 && wcost(exp[k], h) <= 0.4 && wcost(exp[k + 1], heard[hi + 1]) <= 0.4) { p = k; break; }
+      }
     }
     for (let d = 0; d < 3 && p + d < exp.length; d++) {
       if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
@@ -492,7 +499,18 @@ function followEval(exp, heard, from, owner) {
     if (f >= 0) {
       started = true; // كلمة فاتت التعرّف: لا تُحسب خطأً (التعرّف يُسقط كلمات كثيرة)؛ الخطأ الحقيقي = كلمات مسموعة لا تطابق شيئًا
       st[p + f] = 'ok'; p += f + 1; if (join) { st[p] = 'ok'; p++; } if (two) hi++; miss = 0;
-    } else if (started) { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
+    } else if (started) {
+      // استبدال: كلمة (أو كلمتان/ثلاث) مسموعة لا تطابق شيئًا، ثم تعود التلاوة إلى الكلمة المتوقعة بعدها → خطأ حقيقي لا ثغرة في التعرّف
+      let sub = 0;
+      for (let m = 1; m <= 3 && !sub && hi + m < heard.length && p + m < exp.length; m++) {
+        if (wcost(exp[p + m], heard[hi + m]) > 0.4) continue;
+        let clash = false;
+        for (let j = 0; j < m && !clash; j++) { if (heard[hi + j].length < 3) clash = true; for (let d = 0; d < m + 3 && p + d < exp.length; d++) if (wcost(exp[p + d], heard[hi + j]) <= 0.4) { clash = true; break; } }
+        if (!clash) sub = m;
+      }
+      if (sub) { for (let j = 0; j < sub; j++) st[p + j] = 'bad'; p += sub; hi += sub - 1; miss = 0; }
+      else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
+    } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
   return { st, p, reps };
 }
