@@ -453,6 +453,12 @@ const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); 
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
 const foldW = w => w.replace(/[ؤئء]/g, 'ا').replace(/ذ/g, 'ز').replace(/ث/g, 'س').replace(/ظ/g, 'ض').replace(/ط/g, 'ت').replace(/ص/g, 'س').replace(/ق/g, 'ك').replace(/ح/g, 'ه').replace(/ع/g, 'ا');
 function wcost(e, h) {
+  const c = wcost0(e, h);
+  // كلمتان تبدآن بـ «ال»: الاشتراك في الألف واللام لا يكفي (البصر ≠ النظر)؛ تُقارَن الجذور بعد حذفها
+  if (c === 0.4 && e.length >= 4 && h.length >= 4 && e.startsWith('ال') && h.startsWith('ال')) { const se = e.slice(2), sh = h.slice(2); if (lev(foldW(se), foldW(sh)) > (se.length >= 5 ? 2 : 1)) return 1; }
+  return c;
+}
+function wcost0(e, h) {
   if (e === h) return 0; const d = lev(e, h);
   if (d <= (e.length >= 5 ? 2 : 1) && Math.max(e.length, h.length) >= 3) return 0.4;
   const fe = foldW(e), fh = foldW(h); if (fe === fh) return 0.4;
@@ -516,7 +522,8 @@ function followEval(exp, heard, from, owner) {
       }
       // إقحام: كلمة زائدة واضحة (٣ حروف فأكثر) لا تشبه ما حولها، ثم تعود التلاوة مباشرةً إلى الكلمة المتوقعة بتتابعٍ من كلمتين فأكثر → خطأ (زيادة)، يُعلَّم آخر كلمة صحيحة قبلها
       let ins = false;
-      if (!sub && h.length >= 3 && p > from && run(p, hi + 1) >= 2) {
+      const nearOk = () => { for (let j = 1; j <= 4 && hi + j < heard.length; j++) for (let d = 0; d < 2 && p + d < exp.length; d++) if (exp[p + d].length >= 4 && wcost(exp[p + d], heard[hi + j]) <= 0.4 && (d > 0 || j > 0)) return true; return false; };
+      if (!sub && h.length >= 3 && p > from && (run(p, hi + 1) >= 2 || (run(p, hi + 1) >= 1 && nearOk()) || (wcost(exp[p + 1] || '', heard[hi + 3] || '') <= 0.4 && (exp[p + 1] || '').length >= 4))) {
         ins = true;
         for (let d = Math.max(from || 0, p - 4); d < Math.min(exp.length, p + 4) && ins; d++) if (wcost(exp[d], h) <= 0.5) ins = false;
       }

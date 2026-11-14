@@ -17,3 +17,13 @@ Contexte : l'émulateur est abandonné (7,4 Go requis, 4 Go libres, pas d'accél
 ## Chef d'orchestre
 1. Synchronisation automatique par QR code (besoin : jeton GitHub créé par l'utilisateur).
 2. Mini-livre interactif des makhârij (17 schémas + vidéos intégrées).
+
+## Testeur — tournée complète sur le vrai téléphone (v41, 14/11 soir)
+Pour chaque point : tester réellement (adb + WebView), noter OK/KO et la preuve (capture, log) dans `docs/rapports/<date>-testeur-tournee.md` sur la branche `testeur`. Ne pas toucher à `app.js`.
+1. Rotation : après l'installation de l'APK reconstruit (configChanges), faire tourner le téléphone (portrait/paysage) pendant une session de suivi : la page, la position et l'écoute doivent rester. Tester aussi retour depuis une autre appli.
+2. Panneau d'erreurs : pendant le suivi, le panneau (`#rec-out`) doit rester en bas sans cacher le verset ; vérifier en portrait et en paysage, thème clair et sombre.
+3. Suivi : rejouer `substitution2.wav` (البصر→النظر) et la récitation avec « والعيش » : attendu = les deux signalées. Noter les fausses alertes.
+4. Arrêt « قف » : vérifier qu'il ne coupe pas une récitation juste (cas « رضيع البصر » du rapport v40).
+5. Pages et fonctions : parcourir chaque écran de l'app (accueil, séance, mushaf, examen 🎓, quiz, paramètres, santé, prières, tâches), relever erreurs console (`DIAG`), éléments coupés, boutons morts, textes mal alignés (RTL).
+6. Blocage : vérifier que le blocage tient après redémarrage du téléphone et après fermeture forcée de l'app (sans proposer de contournement).
+7. Espace disque et performances : temps de démarrage, mémoire, batterie sur 10 min de suivi.

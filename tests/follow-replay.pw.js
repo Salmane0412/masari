@@ -22,6 +22,8 @@ const { chromium } = require('playwright');
       run('K insertion 67:2 (rapport voix)', [A + ' الذي خلق الموت والحياة والعيش ليبلوكم أيكم أحسن عملا وهو العزيز الغفور']),
       run('L reprise 67:3 (rapport voix)', [A + ' ' + B + ' الذي خلق سبع سماوات فترى ما ترى سماوات طباقا ما ترى في خلق الرحمن من تفاوت فارجع البصر هل ترى من فطور']),
       run('M lecture parfaite 67:1-4', [A + ' ' + B + ' ' + C + ' ثم ارجع البصر كرتين ينقلب إليك البصر خاسئا وهو حسير']),
+      run('N substitution proche البصر->النظر', [A + ' ' + B + ' الذي خلق سبع سماوات طباقا ما ترى في خلق الرحمن من تفاوت فارجع النظر هل ترى من فطور']),
+      run('O insertion avec mot suivant deforme', [A + ' الذي خلق الموت والحياة والعيش نيه بلوكم ايكم احسن عملا وهو العزيز الغفور']),
       run('I aya 2 non entendue (saut de reconnaissance)', [A + ' ' + C]),
       run('J ayas 2-4 non entendues puis 5', [A + ' ولقد زينا السماء الدنيا بمصابيح وجعلناها رجوما للشياطين'])
     ];
