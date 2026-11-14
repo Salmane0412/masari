@@ -478,6 +478,8 @@ function followEval(exp, heard, from, owner) {
         if (owner[k] < owner[p - 1] - 1) break;                         // أبعد من الآية السابقة
         if (exp[k].length >= 3 && wcost(exp[k], h) <= 0.4 && k + 1 < exp.length && run(k, hi) > run(p, hi) && wcost(exp[k + 1], heard[hi + 1]) <= 0.4 && !(k === p)) { rs = k; break; }
       }
+      // إعادة جزء من وسط الآية (تكرار أو تداخل في نتائج التعرّف): نرجع إلى بداية الجزء المعاد دون عدّه خطأً
+      if (rs < 0) for (let k = p - 1; k >= Math.max(from || 0, p - 12, 0); k--) { const rk = run(k, hi); if (exp[k].length >= 2 && rk >= 3 && rk > run(p, hi)) { rs = k; break; } }
       if (rs >= 0 && rs < p) { for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
     }
     // لم تبدأ المطابقة بعد: نختار أطول تتابع متطابق في المقطع كله (يبدأ القارئ من أي موضع) بدل أول كلمة مشابهة

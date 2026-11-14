@@ -6,3 +6,6 @@ Cas du rapport (unité 224, Al-Mulk) rejoués avec `tests/follow-replay.pw.js` :
 3. Substitution non détectée : une ou plusieurs mots entendus qui ne correspondent à rien, suivis du bon mot attendu, sont marqués faux (un mot simplement manquant reste toléré).
 4. Alif khanjariyya : les mots attendus l'écrivent désormais comme un alif (سماوات), comme le fait la reconnaissance vocale ; avant, ils ne correspondaient pas.
 Non testé : audio réel (voir rapport local du testeur).
+
+## Ajout (log réel du téléphone, unité 18 = Al-Baqara 2:272…)
+Le log du téléphone (reconnaissance Google d'Android) montre qu'un résultat final peut recommencer par la fin du précédent (ici « تنفقوا من خير يوف اليكم »). L'application comptait 2 fautes fantômes (« وانتم », « لا »). Correctif : un retour sur une suite d'au moins 3 mots déjà passés (dans les 12 mots précédents) qui s'aligne mieux que la suite attendue est traité comme une reprise, pas comme une erreur. Rejeu du log : 64 mots justes, 0 faute (avant : 62 justes, 2 fautes fantômes).
