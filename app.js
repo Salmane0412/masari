@@ -432,7 +432,7 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
+  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn" data-act="exam">🎓 اختبار حفظ بصوت القارئ</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
   <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div><div id="hz-panel"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
@@ -526,6 +526,7 @@ function followPaint() {
   for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
   fol.st = r.st; fol.p = r.p;
   followLocate(hw, r);
+  if (fol.on && fol.endIdx != null && !fol.paused && r.p >= fol.endIdx) { fol.endIdx = null; beep(660, 250); say('قِف'); followStop(); return; }
   if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
@@ -549,6 +550,22 @@ function followLocate(hw, r) {
     window.DIAG && DIAG.log('locate', 'unit=' + u + ' aya=' + f.ayah0);
     const o = $('#rec-out'); if (o) o.innerHTML = `<div class="note"><b>يبدو أنك تقرأ في موضع آخر:</b> ${refOf(f.ayah0)}.<div class="btns" style="margin-top:8px"><a class="btn pri" href="#/s/q/${u}/new" style="text-decoration:none">افتح هذا الموضع</a></div></div>`;
   } catch (x) { window.DIAG && DIAG.log('locate-error', String(x && x.message || x)); }
+}
+/* اختبار الحفظ: يتلو القارئ (بصوت شيخ) آية، ثم يُطلب منك إكمال الآيات التالية حتى موضع التوقّف، ويُقيَّم ما تقرأ */
+function examRound() {
+  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
+  if (fol.on) followStop(); stopAudio(); const u = UI[+id];
+  if (u.b - u.a < 1) { toast('المقطع قصير جدًا للاختبار'); return; }
+  const s = u.a + rnd(u.b - u.a), e = Math.min(u.b, s + 1 + rnd(3));
+  document.querySelectorAll('.w').forEach(el => el.classList.add('hid'));
+  const o = $('#rec-out'); if (o) o.innerHTML = '';
+  const go = () => say(`أكمل من الآية ${toAr(Q.ayas[s + 1][1])} إلى الآية ${toAr(Q.ayas[e][1])}`, () => {
+    followStart(); fol.from = fol.owner.indexOf(s + 1); fol.keep = [];
+    fol.endIdx = fol.owner.lastIndexOf(e) + 1; fol.exam = { s, e };
+    folStatus(`🎙 أكمل بعد ${refOf(s)} حتى ${refOf(e)}: النص مخفي`);
+  });
+  folStatus(`🔊 استمع إلى ${refOf(s)}…`);
+  try { const a = aud.a = new Audio(audioUrl(s)); a.onended = go; a.onerror = go; a.play().catch(go); } catch (x) { go(); }
 }
 function beep(f, ms) { try { const c = beep.c || (beep.c = new (window.AudioContext || window.webkitAudioContext)()), o = c.createOscillator(), g = c.createGain(); o.frequency.value = f || 440; g.gain.value = 0.25; o.connect(g); g.connect(c.destination); o.start(); setTimeout(() => o.stop(), ms || 250); } catch (e) { } }
 function say(t, done) {
@@ -588,7 +605,7 @@ function followStart() {
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
   stopAudio();
   fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; fol.locDone = false; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
-  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0 });
+  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0, endIdx: null });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   document.body.classList.add('following'); const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
@@ -1157,6 +1174,7 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'follow': followStart(); break;
+    case 'exam': examRound(); break;
     case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;
     case 'fol-diag': { const rep = { unit: fol.unit, expected: fol.exp, heard: fol.log || [], base: fol.base, state: fol.st, pos: fol.p, ua: navigator.userAgent, native: !!window.__nativeApp }; const txt = JSON.stringify(rep); download('masari-diagnostic.json', txt, 'application/json'); try { navigator.clipboard && navigator.clipboard.writeText(txt); } catch (e) { } break; }
