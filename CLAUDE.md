@@ -37,3 +37,8 @@ Tests UI : `python3 -m http.server 8765` + Playwright Chromium (émulation Pixel
 7. Application Windows (blocage, recherche locale).
 8. Version pour la conjointe (contrôle partenaire).
 9. Modules طلب العلم (comparateur d'éditions, schéma des sciences, cours, calculateur d'héritage, scanner halal), tableau de bord OSINT, détection de contenu par IA.
+
+## Mushaf interactif (à faire, nécessite un accès réseau libre : la session cloud ne peut pas télécharger ces données)
+Objectif : cliquer un verset (tafsir…), un mot (infos du mot), une lettre (prononciation, règles de tajwid) ; waqf/ibtida identiques au Mushaf de Médine ; mushaf de tajwid universel (Hafs d'abord, autres riwayat ensuite).
+Sources identifiées : Quranic Universal Library (qul.tarteel.ai, « Download Resources ») : horodatage mot par mot (« recitation with segments », Al-Husary inclus, format `[index_mot, début, fin]`), mises en page de mushaf, textes Madani/Uthmani (dont tajwid), tafsirs, morphologie, traductions mot à mot. Vérifier les conditions d'utilisation avant de les empaqueter. Le texte actuel (`data.js`) n'a pas les signes de waqf (ۖ ۗ ۘ ۙ ۚ ۛ) : les ajouter depuis une source Madani avant de rendre le mushaf.
+Couleurs de tajwid : le mushaf de Dar al-Ma'rifa utilise trois familles (rouge, vert, bleu) en plusieurs teintes, gris pour les lettres non prononcées ; sa légende exacte n'est pas publique en ligne : à lire sur la première page du mushaf de l'utilisateur.
