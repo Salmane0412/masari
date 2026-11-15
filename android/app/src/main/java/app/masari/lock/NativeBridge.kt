@@ -106,7 +106,15 @@ class NativeBridge(private val act: MainActivity) {
 
     /** Ouvre un réglage. Les écrans protégés (ils permettraient d'enlever la protection) demandent la fenêtre libre ou le code du partenaire. */
     @JavascriptInterface fun open(what: String, code: String?): String {
-        val guarded = what in setOf("accessibility", "notif", "exact", "battery", "dnd")
+        // التفعيل حرّ دائمًا (لا رمز لتشغيل الحماية)؛ الرمز أو الانتظار لا يُطلبان إلا حين تكون الميزة مفعّلة الآن، أي لاحتمال إيقافها
+        val active = when (what) {
+            "accessibility" -> safe(true) { accOn() }
+            "notif" -> safe(true) { notifOn() }
+            "exact" -> safe(true) { Build.VERSION.SDK_INT < 31 || c.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() }
+            "battery" -> safe(true) { c.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(c.packageName) }
+            else -> true
+        }
+        val guarded = active && what in setOf("accessibility", "notif", "exact", "battery", "dnd")
         if (guarded && !(Store.setupWindow(c) || Store.disableAllowed(c))) {
             if (code.isNullOrBlank()) return "need-code"
             if (!Codes.verifyPartner(c, code)) return "bad-code"
