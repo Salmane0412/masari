@@ -29,6 +29,22 @@
 2. **Arrêt « قف »** : ne pas s'arrêter sur un seul mot mal reconnu en début de phrase. Par exemple, attendre 2 mots faux consécutifs, ou un résultat final qui confirme l'erreur.
 3. **Substitution perdue par Google** : seule une seconde passe audio (modèle local) peut la rattraper. Voir les rapports E et F.
 
+## Prototype du panneau (01 h 42, en mémoire de la page seulement, annulé par rechargement)
+Couches fixes relevées pendant l'arrêt :
+- `#rec-out` : z 20, de 710 à 836 px ;
+- `#fol-status` (« متوقف عند خطأ ») : z 40, de 730 à 762 px ;
+- `#fol-ctl` (« إنهاء وتقييم ») : z 40, de 758 à 828 px ;
+- `#tabs` : de 836 à 900 px.
+
+Le panneau est donc **dessous** les deux barres.
+
+Essai : `#rec-out` placé avec `bottom = hauteur de l'écran − haut de #fol-status + 6 px`, `max-height: 30vh`, puis défilement pour amener le mot fautif au-dessus du panneau.
+- **Portrait** : le message entier et ses 2 boutons (« أعد من الآية », « تجاوز الكلمة وتابع ») sont lisibles, et **le mot fautif « البصر » est visible** au-dessus, surligné. Capture `panneau-proto-portrait.png`.
+- **Paysage** (384 px de haut) : le panneau tient, mais le mot reste caché sous l'en-tête collant. Le paysage demande une disposition compacte : barres repliées en une ligne, ou panneau sur le côté.
+
+## Autre défaut visuel (vu sur les captures)
+Dans le mushaf avec les cases de mots (mode masquage), **les fonds des cases débordent sur la ligne suivante** : la case de « شَىْءٍ » recouvre le haut de la ligne d'en dessous, comme celles de « وَٱلْحَيَوٰةَ » ou de « ٱلْعَزِيزُ ». La hauteur des cases dépasse l'interligne. Captures `02-suivi-apres-rotation.png` et `panneau-proto-portrait.png`.
+
 ## Pas testé
 - Le micro réel cette nuit (pas d'audio à pleine puissance la nuit). Les phrases injectées sont de vraies transcriptions Google du 14/11, ou des transcriptions du modèle local.
 - Le blocage (voir `BLOQUE.md`).
