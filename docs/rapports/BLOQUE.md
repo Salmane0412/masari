@@ -19,4 +19,4 @@
 | Tâche | Pourquoi c'est bloqué | Ce que Salmane (ou le chef) doit faire |
 |---|---|---|
 | Activer « حماية من الحذف (مدير الجهاز) » | Le service de blocage de Masari renvoie à l'accueil dès que l'écran d'activation (`com.android.settings`) s'affiche, parce qu'il mentionne « مساري ». Il envoie aussi une fausse alerte au partenaire (rapport midi-3). | **Le chef** : laisser passer l'écran `DeviceAdminAdd` quand c'est l'app qui l'ouvre. **Salmane** : décider s'il veut l'activer maintenant par le chemin prévu dans l'app (ouverture des réglages avec le code du partenaire, 3 min), ou attendre la correction. |
-| Désinstallation refusée ? | Dépend de l'activation de l'administrateur. | Après activation : me prévenir, je vérifie l'appui long et Paramètres → Applications → Masari. |
+| Désinstallation refusée ? | Testé à 11 h 22 : refusée, mais par le service d'accessibilité (renvoi à l'accueil). L'administrateur **seul**, c'est-à-dire après une fermeture forcée qui coupe l'accessibilité, n'a pas été testé. | Me dire si je refais l'essai « Paramètres → Applications → Masari » juste après une fermeture forcée. Tu ne confirmes rien, puis tu réactives le service. |
