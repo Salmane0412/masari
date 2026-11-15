@@ -25,8 +25,12 @@
 
 Les 5 signes de la Dar al-Ma'rifa (م، صلى، قلى، ج، ∴) ont donc chacun un équivalent Unicode direct. Le « لا » existe aussi dans Tanzil, alors qu'il n'est pas dans la légende relevée par l'utilisateur. Il reste à vérifier si son mushaf l'imprime.
 
+## Rendu sur le téléphone (testé à 01 h 41)
+Une ligne de test a été insérée temporairement dans la page de la séance 224, avec la classe `.w` du mushaf (police déclarée : « Amiri Quran », puis « Noto Naskh Arabic »…). **Les 7 signes s'affichent comme de vrais glyphes**, au-dessus du mot qui précède : ج، صلى، قلى، م، ∴ (trois points)، س، لا. Aucun carré ni caractère manquant. Capture : `C:\masari-data\nuit\captures\waqf-zoom.png`.
+
+Ils sont petits à la taille actuelle du texte. Un léger agrandissement ou une couleur distincte les rendrait plus lisibles.
+
 ## Pas testé
-- Le rendu de ces signes dans la police de l'app sur le téléphone.
 - La concordance exacte avec la mise en page du Mushaf de Médine. Tanzil suit l'édition de Médine, mais rien n'a été comparé page par page.
 
 ## Proposition au chef
