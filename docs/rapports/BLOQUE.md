@@ -14,3 +14,9 @@
 | ~~Blocage après redémarrage~~ (testé le 15/11 à 09 h 23 : OK, rapport matin-2) | Ton code de déverrouillage est nécessaire après le redémarrage. | Me dire « je suis là » : je lance le redémarrage par adb et je mesure. |
 | Blocage effectif d'une app | La seule règle active vise Telegram, que je ne dois pas ouvrir. | Me dire quelle app je peux ouvrir pour vérifier qu'elle est bloquée, ou l'ouvrir toi-même devant moi. |
 | Pause de waqf et coupure de phrase (rapport matin-5) | L'audio joué par le haut-parleur du PC n'est pas transcrit par Google ; il faut une vraie voix près du téléphone. | Réciter 67:1–67:2 devant le téléphone, avec une pause d'environ 2 s au waqf ; je lance l'écoute et je mesure. |
+
+## Midi du 15/11
+| Tâche | Pourquoi c'est bloqué | Ce que Salmane (ou le chef) doit faire |
+|---|---|---|
+| Activer « حماية من الحذف (مدير الجهاز) » | Le service de blocage de Masari renvoie à l'accueil dès que l'écran d'activation (`com.android.settings`) s'affiche, parce qu'il mentionne « مساري ». Il envoie aussi une fausse alerte au partenaire (rapport midi-3). | **Le chef** : laisser passer l'écran `DeviceAdminAdd` quand c'est l'app qui l'ouvre. **Salmane** : décider s'il veut l'activer maintenant par le chemin prévu dans l'app (ouverture des réglages avec le code du partenaire, 3 min), ou attendre la correction. |
+| Désinstallation refusée ? | Dépend de l'activation de l'administrateur. | Après activation : me prévenir, je vérifie l'appui long et Paramètres → Applications → Masari. |
