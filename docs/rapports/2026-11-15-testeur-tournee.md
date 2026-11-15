@@ -26,6 +26,13 @@ Re-test sur cet APK : rotation pendant le suivi OK (pas de rechargement, p = 9 c
 | 6 | Blocage après redémarrage ou fermeture forcée | **BLOQUÉ** | Le service d'accessibilité n'est pas activé sur ce téléphone (`accessibility:false`, `enabled_accessibility_services = null`) : voir `BLOQUE.md`. |
 | 7 | Démarrage, mémoire, batterie (10 min de suivi) | **Mesuré** | Démarrage à froid (`am start -W`, 3 essais) : **783 / 789 / 785 ms**. Mémoire PSS **143 Mo au début, 126 Mo après 10 min**, pas de fuite. CPU relevé chaque minute par `top` : Masari 0–10 %, service Google de reconnaissance 3–10 %. **148 redémarrages de la reconnaissance en 10 min** (`no-speech`, soit environ toutes les 4 s, au calme). Température 41,5 °C puis 42,0 °C. Batterie non mesurable : téléphone sur le secteur (70 % puis 75 %). |
 
+## Exigences du suivi de CLAUDE.md (testées à 02 h 35, v42, par injection sur le téléphone)
+| Exigence | Résultat | Preuve |
+|---|---|---|
+| La basmala ne fait jamais sauter vers une autre sourate | **OK, 5/5** | Basmala seule : position 67:1, rien marqué. Basmala puis 67:1 : 9 justes. Basmala puis « ن والقلم… » (68:1) : reste en 67:1, aucun saut, aucune faute. Basmala au milieu (après 67:2) puis 67:3 : continue, 0 faute. Isti'adha + basmala + 67:1 : 9 justes. |
+| Indice (mot suivant) après un silence | **OK** | Aucun indice pendant la récitation. **1 mot à 7,0 s** de silence (« 💡 تلميح: الذي »), **2 mots à 13,0 s** (« الذي خلق »). |
+| Répéter une aya revient à son début sans erreur | OK (texte exact, rapport E : 4 cas de reprise, 0 fausse alerte) | — |
+
 ## Ce que le chef devrait corriger en premier
 1. **Panneau d'erreurs** :
    - placer `#rec-out` au-dessus de la barre « متوقف عند خطأ », ou les fusionner en un seul bloc ;
