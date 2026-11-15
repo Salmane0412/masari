@@ -22,6 +22,10 @@ class DnsVpnService : VpnService() {
             "bigo.tv", "bigolive.tv", "bigo.sg", "tango.me", "tangome.com", "azarlive.com", "likee.video", "likee.com", "uplive.com", "hago.video", "chamet.app", "litmatch.cc",
             "omegle.com", "ome.tv", "chatroulette.com", "camsurf.com", "emerald.chat", "shagle.com", "chatrandom.com", "chatspin.com", "livu.me", "bazoocam.org", "coomeet.com", "flingster.com",
             "onlyfans.com", "fansly.com", "fancentro.com", "manyvids.com", "justfor.fans", "chaturbate.com", "stripchat.com", "bongacams.com", "livejasmin.com", "cam4.com", "myfreecams.com", "camsoda.com", "flirt4free.com",
+            "discord.com", "discord.gg", "discordapp.com", "discordapp.net", "discord.media", "discord.new", "discord.gift", "discordstatus.com",
+            "reddit.com", "redd.it", "redditmedia.com", "redditstatic.com", "reddituploads.com",
+            "twitter.com", "x.com", "t.co", "twimg.com", "twitter.map.fastly.net", "tiktok.com", "tiktokv.com", "tiktokcdn.com", "byteoversea.com",
+            "instagram.com", "cdninstagram.com", "snapchat.com", "sc-cdn.net", "facebook.com", "fb.com", "fb.watch",
             "t.me", "telegram.me", "telegram.dog", "telesco.pe", "web.telegram.org"
         )
         const val UPSTREAM2 = "1.0.0.3"   // même filtre famille de Cloudflare: secours si le premier ne répond pas
