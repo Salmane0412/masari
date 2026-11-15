@@ -54,8 +54,6 @@ class BlockerService : AccessibilityService() {
             // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer tant que l'écran courant est celui-là
             if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) settingsClass = e.className?.toString() ?: ""
             if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && settingsClass.contains("DeviceAdminAdd")) return
-            // تثبيت أو تحديث تطبيق (مثل تحديث مساري نفسه) ليس حذفًا ولا إيقافًا للحماية: نسمح به؛ شاشات الحذف (Uninstall) تبقى محجوبة
-            if (pkg != "com.android.settings" && settingsClass.contains("Install", true) && !settingsClass.contains("Uninstall", true)) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {
@@ -69,20 +67,28 @@ class BlockerService : AccessibilityService() {
             val root = rootInActiveWindow
             if (root != null && root.packageName?.toString() == pkg && mentions(root, 0, cfg.bannedNames.toList())) { Events.add(this, "banned"); block("banned"); return }
         }
-        if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            // تطبيق ظلّ في المقدمة دون حدث تبديل (استئناف من التطبيقات الأخيرة مثلًا): نعيد الفحص عند تغيّر المحتوى، فلا يفلت المتصفح بضع دقائق
+            if (pkg != packageName && pkg !in alwaysAllowed && pkg !in launchers && pkg !in cfg.allowed) {
+                val spent = cfg.budgets[pkg]?.let { it * 60L - Policy.usedSec(this, pkg) <= 0 } == true
+                if (pkg in cfg.banned) block("banned", pkg)
+                else if (spent) block("budget", pkg)
+                else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) block("until", pkg)
+            }
+            return
+        }
         val now = System.currentTimeMillis()
         if (pkg == packageName || pkg in alwaysAllowed || pkg in launchers) { if (pkg != fgPkg) { account(now); fgPkg = pkg }; return }
         if (pkg != fgPkg) { account(now); fgPkg = pkg }
 
         if (pkg in cfg.banned) { Events.add(this, "banned"); Partner.send(this, "محاولة فتح تطبيق محظور", label(pkg), "banned", 3, 60); block("banned"); return }
         if (pkg in cfg.allowed) return
-        // اليوم مفتوح (أنهيتَ المهام): تسقط حدود الوقت عن التطبيقات المحدودة (تيليغرام مثلًا)؛ المحظورة نهائيًا تبقى محظورة
-        val budget = if (Store.unlocked(this)) null else cfg.budgets[pkg]
+        val budget = cfg.budgets[pkg]
         if (budget != null) {
             val left = budget * 60L - Policy.usedSec(this, pkg)
             if (left <= 0) { block("budget", pkg); return }
             main.postDelayed({
-                if (fgPkg == pkg && !Store.unlocked(this)) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) }
+                if (fgPkg == pkg) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) }
             }, left * 1000 + 500)
             return
         }
