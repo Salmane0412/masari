@@ -239,14 +239,15 @@ function tjWord(w, g, off) {
   for (let k = 0; k < w.length; k++) { const c = cls[off + k] === undefined ? -1 : cls[off + k]; if (c !== cur) { flush(); cur = c; } buf += w[k]; }
   flush(); return out;
 }
-function wordsHtml(text, key, g, off, wc) {
+function wordsHtml(text, key, g, off, wc, wo) {
   let pos = off || 0, k = 0; const out = [];
+  const wqm = (g !== undefined && S.settings.wqOn !== false && typeof WQ !== 'undefined') ? (WQ[Q.ayas[g][0] + ':' + Q.ayas[g][1]] || null) : null;
   text.split(' ').forEach(w => {
     const p = pos; pos += w.length + 1; if (!w) return;
     const kk = k++, hid = (hash(key + ':' + kk) % 100) < sessState.level;
     const err = g !== undefined && errScore(g) > 0;
     const wi = (wc && normW(w)) ? ` data-wi="${wc.n++}"` : '';
-    out.push(`<span class="w${hid ? ' hid' : ''}${err ? ' err' : ''}"${g !== undefined ? ` data-g="${g}"` : ''}${wi} data-act="reveal">${g !== undefined ? tjWord(w, g, p) : esc(w)}</span>`);
+    out.push(`<span class="w${hid ? ' hid' : ''}${err ? ' err' : ''}"${g !== undefined ? ` data-g="${g}"` : ''}${wi} data-act="reveal">${g !== undefined ? tjWord(w, g, p) : esc(w)}</span>${wqm ? wqm.filter(x => x[0] === kk + (wo || 0)).map(x => `<span class="wq" aria-hidden="true">${x[1]}</span>`).join('') : ''}`);
   });
   return out.join(' ');
 }
@@ -267,7 +268,7 @@ function getItem(kind, id) {
         off = toks.slice(0, BISM_TOKENS).join(' ').length + 1;
         text = toks.slice(BISM_TOKENS).join(' ');
       }
-      html += `<span class="verse" data-v="${g}">${wordsHtml(text, g, g, off, wc)}<span class="n">﴿${v}﴾</span></span> `;
+      html += `<span class="verse" data-v="${g}">${wordsHtml(text, g, g, off, wc, off ? BISM_TOKENS : 0)}<span class="n">﴿${v}﴾</span></span> `;
     }
     return { title: u.label, sub: `الحزب ${u.hizb} · الربع ${u.rub} · ≈ ${fmt1(u.pages)} ص`, html, st, kind: 'q', id };
   }
@@ -401,6 +402,7 @@ views.settings = () => {
   <div class="two"><label class="field"><span>أجزاء الكتب للمراجعة يوميًا</span><input type="number" id="st-bcap" min="0" max="30" value="${s.bookCap}"></label><label class="field"><span>حجم خط المصحف</span><input type="number" id="st-font" min="20" max="56" value="${s.font}"></label></div>
   <div class="two"><label class="field"><span>مهلة كل سؤال في الاختبار (ثوانٍ)</span><input type="number" id="st-qsec" min="5" max="120" value="${s.quizSec || 20}"></label></div>
   <h2>المصحف وألوان التجويد</h2>
+  <label class="check"><input type="checkbox" id="st-wq" ${s.wqOn !== false ? 'checked' : ''}> إظهار علامات الوقف (ج، صلى، قلى، م، ∴، لا) في المصحف</label>
   <label class="check"><input type="checkbox" id="st-tj" ${s.tjOn !== false ? 'checked' : ''}> تلوين أحكام التجويد في المصحف</label>
   <p class="sub">فعّل أو عطّل كل حكم، وغيّر لونه كما تشاء. التغيير فوري.</p>
   <div class="tjlist">${tjRows}</div>
@@ -425,7 +427,7 @@ views.settings = () => {
   <p class="sub">كل شيء محفوظ على هذا الجهاز. صدّر نسخة احتياطية بانتظام، خصوصًا قبل تغيير الهاتف أو مسح المتصفح.</p>
   <div class="btns"><button class="btn" data-act="export">تصدير</button><label class="btn" style="display:inline-flex;align-items:center">استيراد<input type="file" id="imp" accept="application/json" hidden></label><button class="btn warn" data-act="reset">مسح كل شيء</button></div>
   <h2>المصادر</h2>
-  <p class="sub">نص القرآن: مشروع تنزيل (tanzil.net) برخصة Creative Commons Attribution 3.0، منقول دون تعديل. فهرس الأحزاب والأرباع والصفحات من بيانات تنزيل عبر مستودع quran-json. علامات التجويد: مشروع cpfair/quran-tajweed (مبنية على نص تنزيل).</p>`;
+  <p class="sub">نص القرآن وعلامات الوقف: مشروع تنزيل (tanzil.net) برخصة Creative Commons Attribution 3.0، منقول دون تعديل. فهرس الأحزاب والأرباع والصفحات من بيانات تنزيل عبر مستودع quran-json. علامات التجويد: مشروع cpfair/quran-tajweed (مبنية على نص تنزيل).</p>`;
 };
 
 views.session = (kind, id, mode) => {
@@ -1399,6 +1401,7 @@ document.addEventListener('change', e => {
   }
   if (e.target.dataset && e.target.dataset.tj !== undefined) { s.tjCol[e.target.dataset.tj] = v; save(); applyTj(); return; }
   if (e.target.dataset && e.target.dataset.tjon !== undefined) { if (e.target.checked) delete s.tjOff[e.target.dataset.tjon]; else s.tjOff[e.target.dataset.tjon] = 1; save(); applyTj(); return; }
+  if (id === 'st-wq') { s.wqOn = e.target.checked; save(); toast('تم الحفظ'); return; }
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }
   if (id === 'st-acap') { s.acap = +v; save(); toast('تم الحفظ'); return; }
