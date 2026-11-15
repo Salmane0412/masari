@@ -54,6 +54,8 @@ class BlockerService : AccessibilityService() {
             // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer tant que l'écran courant est celui-là
             if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) settingsClass = e.className?.toString() ?: ""
             if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && settingsClass.contains("DeviceAdminAdd")) return
+            // تثبيت أو تحديث تطبيق (مثل تحديث مساري نفسه) ليس حذفًا ولا إيقافًا للحماية: نسمح به؛ شاشات الحذف (Uninstall) تبقى محجوبة
+            if (pkg != "com.android.settings" && settingsClass.contains("Install", true) && !settingsClass.contains("Uninstall", true)) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {
