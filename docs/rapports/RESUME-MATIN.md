@@ -19,7 +19,7 @@ Base testée : `main` à `9bcb729`, fusionnée dans `testeur`. APK de la release
 4. Par effet de bord, **« النظر » n'est toujours pas rattrapé** sur ta vraie séance : « وهل » ne vaut plus « هل », ce qui bloque la règle du mot manquant.
 
 ## Ce qui demande ton action (voir `BLOQUE.md`)
-1. **Réactiver « خدمة الحجب »** dans Masari : mon test de fermeture forcée l'a coupée.
+1. ~~Réactiver « خدمة الحجب »~~ : fait. Vérifié ensuite : service activé et lié, `accessibility: true`.
 2. **Redémarrage** : me dire « je suis là » pour que je teste le blocage après redémarrage.
 3. Me dire quelle **app de test** je peux ouvrir pour vérifier qu'une app bloquée l'est vraiment (pas Telegram).
 4. **Réciter 67:1–2 avec une pause de waqf d'environ 2 s**, pour vérifier que la phrase n'est pas coupée.
@@ -28,4 +28,4 @@ Base testée : `main` à `9bcb729`, fusionnée dans `testeur`. APK de la release
 - `errors` = les 5 entrées d'après la remise à zéro.
 - Aucune écoute en cours.
 - Rotation automatique remise (`1`).
-- Accessibilité **coupée** (`null`) : c'est l'effet du test, à réactiver.
+- Accessibilité **réactivée par Salmane** : vérifiée ensuite. Le compteur natif `events.protect` est passé de 2 à 6 entre-temps, signe que le gardien a enregistré les coupures (le détail des moments n'est pas visible).
