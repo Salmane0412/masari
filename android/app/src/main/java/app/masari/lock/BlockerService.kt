@@ -74,12 +74,13 @@ class BlockerService : AccessibilityService() {
 
         if (pkg in cfg.banned) { Events.add(this, "banned"); Partner.send(this, "محاولة فتح تطبيق محظور", label(pkg), "banned", 3, 60); block("banned"); return }
         if (pkg in cfg.allowed) return
-        val budget = cfg.budgets[pkg]
+        // اليوم مفتوح (أنهيتَ المهام): تسقط حدود الوقت عن التطبيقات المحدودة (تيليغرام مثلًا)؛ المحظورة نهائيًا تبقى محظورة
+        val budget = if (Store.unlocked(this)) null else cfg.budgets[pkg]
         if (budget != null) {
             val left = budget * 60L - Policy.usedSec(this, pkg)
             if (left <= 0) { block("budget", pkg); return }
             main.postDelayed({
-                if (fgPkg == pkg) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) }
+                if (fgPkg == pkg && !Store.unlocked(this)) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) }
             }, left * 1000 + 500)
             return
         }
