@@ -452,14 +452,17 @@ views.session = (kind, id, mode) => {
 const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); // الألف الخنجرية تُكتب ألفًا كما يكتبها التعرّف الصوتي
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
 const foldW = w => w.replace(/[ؤئء]/g, 'ا').replace(/ذ/g, 'ز').replace(/ث/g, 'س').replace(/ظ/g, 'ض').replace(/ط/g, 'ت').replace(/ص/g, 'س').replace(/ق/g, 'ك').replace(/ح/g, 'ه').replace(/ع/g, 'ا');
-// الرسم المطوي: همزات وألف مقصورة وتاء مربوطة، وكتابة الواو العثمانية (حيوة=حياة)
-const gW = w => w.replace(/يا$/, 'ي').replace(/وة$/, 'اة').replace(/[ؤئء]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
+// الرسم المطوي: همزات وألف مقصورة وتاء مربوطة، وكتابة الواو العثمانية (حيوة=حياة)، وحذف الألفات الداخلية (ذالك=ذلك، هاذا=هذا)
+const gW = w => { w = w.replace(/يا$/, 'ي').replace(/وة$/, 'اة').replace(/[ؤئء]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه'); return w ? w[0] + w.slice(1).replace(/ا/g, '') : w; };
+// L أطول من S بحرف واحد: هذا الحرف بادئة (و ف ل ب ك س) في أول الكلمة، أو (ه ا و ي) في داخلها، وهي أحرف يُسقطها التعرّف كثيرًا
+const dropOK = (L, S) => { if (L.length - S.length !== 1 || S.length < 1) return false; for (let i = 0; i < L.length; i++) if (L.slice(0, i) + L.slice(i + 1) === S) return i === 0 ? 'وفلبكس'.includes(L[0]) : 'هاويى'.includes(L[i]); return false; };
 function wcost(e, h) {
   if (e === h) return 0;
   const ge = gW(e), gh = gW(h); if (ge === gh) return 0.4;
-  const fe = foldW(e), fh = foldW(h); if (fe === fh && Math.max(e.length, h.length) >= 4) return 0.4;   // التباس صوتي (ص/س، ق/ك…)
-  // كلمة قريبة: ٤ حروف فأكثر، وأول حرف وآخره متطابقان، وجذرا الكلمتين متقاربان بعد حذف «ال»
-  if (ge.length >= 4 && gh.length >= 4 && ge[0] === gh[0] && ge[ge.length - 1] === gh[gh.length - 1] && lev(ge, gh) <= (ge.length >= 6 ? 2 : 1)) {
+  if (Math.max(ge.length, gh.length) >= 4 && foldW(ge) === foldW(gh)) return 0.4;       // التباس صوتي (ص/س، ق/ك…)
+  if (dropOK(ge, gh) || dropOK(gh, ge)) return 0.4;                                      // حرف أسقطه التعرّف
+  // كلمة طويلة (٦ حروف فأكثر) شوّهها التعرّف: أول حرف وآخره متطابقان، وجذراهما متقاربان بعد حذف «ال»
+  if (ge.length >= 6 && gh.length >= 6 && ge[0] === gh[0] && ge[ge.length - 1] === gh[gh.length - 1] && lev(ge, gh) <= (ge.length >= 8 ? 2 : 1)) {
     if (ge.startsWith('ال') && gh.startsWith('ال') && lev(foldW(ge.slice(2)), foldW(gh.slice(2))) > (ge.length - 2 >= 5 ? 2 : 1)) return 1;
     return 0.4;
   }
