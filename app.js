@@ -332,7 +332,7 @@ views.today = () => {
 };
 
 views.map = () => {
-  let h = `<div class="hero-title">خريطة القرآن</div><div class="sub">٦٠ حزبًا، لكل حزب أربعة أرباع. المس ربعًا لفتحه أو تغيير حالته.</div><a class="btn pri block" href="#/mushaf" style="text-decoration:none;margin:8px 0">📖 المصحف: قراءة حرّة بالصفحات</a>${legend()}
+  let h = `<div class="hero-title">خريطة القرآن</div><div class="sub">٦٠ حزبًا، لكل حزب أربعة أرباع. المس ربعًا لفتحه أو تغيير حالته.</div><div class="mp-entry"><a class="btn pri" href="#/mushaf">📖 المصحف: قراءة حرّة بالصفحات</a></div>${legend()}
   <details><summary>تعديل نطاق</summary>
     <label class="field"><span>الحالة المطلوبة</span><select id="rg-status"><option value="mem">محفوظ (قيد المراجعة)</option><option value="rel">يُعاد حفظه</option><option value="prog">قيد الحفظ</option><option value="none">لم يبدأ</option></select></label>
     <div class="two"><label class="field"><span>من الحزب</span><input id="rg-from" type="number" min="1" max="60" value="1"></label><label class="field"><span>إلى الحزب</span><input id="rg-to" type="number" min="1" max="60" value="1"></label></div>
@@ -461,7 +461,7 @@ views.session = (kind, id, mode) => {
 const MP = { hl: -1, startG: -1, finder: null, idx: null };
 function mpOn() { return /^#\/mushaf/.test(location.hash); }
 function mpPage() { return Math.min(604, Math.max(1, +(location.hash.split('/')[2]) || (S.mushaf && S.mushaf.last) || 1)); }
-function mpRange() { const p = mpPage(); return { p, g0: pStart[p - 1], g1: pStart[p] - 1 }; }
+function mpRange() { const p = mpPage(), p1 = Math.min(604, p + (S.mushaf.vert ? 2 : 0)); return { p, p1, g0: pStart[p - 1], g1: pStart[p1] - 1 }; }
 const pageOfG = g => bs(pStart, g) + 1;
 function mpStats() {
   const n = Object.keys(S.mread).length; let pg = 0;
@@ -469,20 +469,23 @@ function mpStats() {
   return { n, pg, mem: Object.keys(S.mmem).length };
 }
 views.mushaf = a => {
-  const p = mpPage(); S.mushaf.last = p; const { g0, g1 } = mpRange(), st = mpStats();
+  const p = mpPage(); S.mushaf.last = p; const { g0, g1, p1 } = mpRange(), st = mpStats(), vert = !!S.mushaf.vert;
   const c0 = Q.ayas[g0][0], hz = (bs(qStart, g0) >> 2) + 1;
   const wc = { n: 0 };
   const done = (() => { let all = true; for (let g = g0; g <= g1; g++) if (!S.mread[g]) { all = false; break; } return all; })();
-  return `<div class="sess-h"><div class="tt"><b>المصحف</b><span class="sub">الصفحة ${toAr(p)} من ٦٠٤ · الحزب ${toAr(hz)} · سورة ${CH[c0].ar}${done ? ' · ✓ مقروءة' : ''}</span></div></div>
+  return `<div class="mp-row mp-top"><button class="btn mp-ar" data-act="mp-go" data-p="${p - 1}" ${p <= 1 ? 'disabled' : ''} aria-label="الصفحة السابقة">▶</button><div class="mp-mid"><input id="mp-page" class="mp-in" type="number" min="1" max="604" value="${p}" aria-label="رقم الصفحة"><span class="sub">/ ٦٠٤ · الحزب ${toAr(hz)} · ${CH[c0].ar}${done ? ' · ✓' : ''}</span></div><button class="btn mp-ar" data-act="mp-go" data-p="${p1 + 1}" ${p1 >= 604 ? 'disabled' : ''} aria-label="الصفحة التالية">◀</button></div>
+  <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div>
+  <article class="mushaf ar" id="mp-page-box" dir="rtl" style="font-size:${S.settings.font}px">${qHtml(g0, g1, wc)}</article>
+  ${vert && p1 < 604 ? `<button class="btn block" data-act="mp-go" data-p="${p1 + 1}">متابعة: الصفحات التالية ↓</button>` : ''}
+  <div id="fol-ctl" class="mp-row"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة</button><button class="btn" data-act="mp-markpage">${done ? '↺ ألغِ' : '✓ مقروءة'}</button></div>
+  <details class="mp-tools"><summary>بحث وأدوات</summary>
   <div class="note" id="mp-score">قرأتَ ${toAr(st.n)} آية من ${toAr(tot)} (${toAr(Math.round(st.n * 1000 / tot) / 10)}٪) · صفحات مكتملة ${toAr(st.pg)} من ٦٠٤ · آيات سُمّعت حفظًا ${toAr(st.mem)}</div>
-  <div class="btns mp-nav"><button class="btn" data-act="mp-go" data-p="${p + 1}" ${p >= 604 ? 'disabled' : ''}>← الصفحة التالية</button><input id="mp-page" class="mp-in" type="number" min="1" max="604" value="${p}" aria-label="رقم الصفحة"><button class="btn" data-act="mp-go" data-p="${p - 1}" ${p <= 1 ? 'disabled' : ''}>الصفحة السابقة →</button></div>
-  <div class="btns mp-nav"><select id="mp-surah" aria-label="السورة">${Q.chapters.map(c => `<option value="${c[0]}" ${c[0] === c0 ? 'selected' : ''}>${c[0]}. ${c[1]}</option>`).join('')}</select>
-  <input id="mp-q" class="mp-in wide" type="search" placeholder="ابحث بكلمة أو عبارة" aria-label="بحث"><button class="btn" data-act="mp-search">بحث</button><button class="btn" data-act="mp-find">🎙 ابحث بصوتي</button></div>
+  <div class="mp-row"><select id="mp-surah" aria-label="السورة">${Q.chapters.map(c => `<option value="${c[0]}" ${c[0] === c0 ? 'selected' : ''}>${c[0]}. ${c[1]}</option>`).join('')}</select></div>
+  <div class="mp-row"><input id="mp-q" class="mp-in wide" type="search" placeholder="ابحث بكلمة أو عبارة" aria-label="بحث"><button class="btn" data-act="mp-search">بحث</button><button class="btn" data-act="mp-find">🎙 بصوتي</button></div>
   <div id="mp-res"></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">أظهر الكل</button></div>
-  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-act="mp-markpage">${done ? '↺ ألغِ علامة القراءة' : '✓ علّمها مقروءة'}</button></div>
-  <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div>
-  <article class="mushaf ar" dir="rtl" style="font-size:${S.settings.font}px">${qHtml(g0, g1, wc)}</article>`;
+  <div class="mp-row"><span class="seg" role="group" aria-label="طريقة العرض"><button data-act="mp-mode" data-m="page" aria-pressed="${!vert}">صفحة بصفحة (اسحب)</button><button data-act="mp-mode" data-m="vert" aria-pressed="${vert}">تمرير عمودي</button></span></div>
+  </details>`;
 };
 function mpGo(p, hl) { p = Math.min(604, Math.max(1, +p || 1)); MP.hl = hl === undefined ? -1 : hl; go('#/mushaf/' + p); }
 function mpAfterRender() {
@@ -528,6 +531,10 @@ function mpRecord(gs, bad, lastG, complete) {
   fol.mpNote = learned.length ? `<br>✓ عُدَّ محفوظًا: ${learned.join(' · ')}` : '';
 }
 
+(function () { let x0 = null, y0 = 0;
+  document.addEventListener('touchstart', e => { x0 = (mpOn() && e.touches.length === 1 && !fol.on && !(e.target.closest && e.target.closest('input,select,textarea,details>*:not(summary)'))) ? e.touches[0].clientX : null; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => { if (x0 === null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = Math.abs(t.clientY - y0); x0 = null; if (Math.abs(dx) < 80 || dy > 60 || S.mushaf.vert) return; const { p, p1 } = mpRange(); mpGo(dx > 0 ? p1 + 1 : p - 1); }, { passive: true });
+})();
 /* ---------- متابعة التلاوة مباشرة (على طريقة ترتيل) ---------- */
 const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); // الألف الخنجرية تُكتب ألفًا كما يكتبها التعرّف الصوتي
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
@@ -1359,6 +1366,7 @@ document.addEventListener('click', e => {
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
     case 'mp-go': mpGo(d.p); break;
+    case 'mp-mode': S.mushaf.vert = d.m === 'vert'; save(); route(); break;
     case 'mp-search': mpSearch(($('#mp-q') || {}).value || ''); break;
     case 'mp-find': mpFind(); break;
     case 'mp-open': mpFindStop(); mpGo(pageOfG(+d.g), +d.g); break;
