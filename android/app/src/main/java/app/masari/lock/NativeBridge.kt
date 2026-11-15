@@ -121,9 +121,9 @@ class NativeBridge(private val act: MainActivity) {
                     "exact" -> if (Build.VERSION.SDK_INT >= 31) act.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + c.packageName)))
                     "battery" -> act.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + c.packageName)))
                     "vpn" -> act.startVpn()
-                    "admin" -> act.startActivity(Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                    "admin" -> { c.getSharedPreferences("masari", android.content.Context.MODE_PRIVATE).edit().putLong("adminOpenUntil", System.currentTimeMillis() + 120_000L).apply(); act.startActivity(Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
                         .putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, android.content.ComponentName(c, MasariAdmin::class.java))
-                        .putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يمنع حذف مساري إلا بعد إلغاء هذا التفعيل (وهو محميّ بالانتظار أو برمز الشريك)."))
+                        .putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يمنع حذف مساري إلا بعد إلغاء هذا التفعيل (وهو محميّ بالانتظار أو برمز الشريك).")) }
                     "dnd" -> act.startActivity(Intent(Settings.ACTION_ZEN_MODE_PRIORITY_SETTINGS))
                 }
             } catch (e: Exception) { }

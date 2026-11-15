@@ -50,6 +50,8 @@ class BlockerService : AccessibilityService() {
 
         if (pkg in protectedPkgs) {
             if (Store.disableAllowed(this) || Store.settingsPass(this)) return
+            // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer
+            if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && (e.className?.toString() ?: "").contains("DeviceAdminAdd")) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {
