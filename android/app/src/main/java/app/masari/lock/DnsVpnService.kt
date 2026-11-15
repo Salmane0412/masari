@@ -17,6 +17,13 @@ class DnsVpnService : VpnService() {
         @Volatile var running = false
         const val FAKE_DNS = "10.99.0.2"
         const val UPSTREAM = "1.1.1.3"
+        /** محجوبة دائمًا، مهما كان اليوم مفتوحًا، ولا تُعدَّل من الإعدادات: تطبيقات البثّ والمحادثة العشوائية والمحتوى الصريح، وروابط تيليغرام العامة */
+        val ALWAYS = listOf(
+            "bigo.tv", "bigolive.tv", "bigo.sg", "tango.me", "tangome.com", "azarlive.com", "likee.video", "likee.com", "uplive.com", "hago.video", "chamet.app", "litmatch.cc",
+            "omegle.com", "ome.tv", "chatroulette.com", "camsurf.com", "emerald.chat", "shagle.com", "chatrandom.com", "chatspin.com", "livu.me", "bazoocam.org", "coomeet.com", "flingster.com",
+            "onlyfans.com", "fansly.com", "fancentro.com", "manyvids.com", "justfor.fans", "chaturbate.com", "stripchat.com", "bongacams.com", "livejasmin.com", "cam4.com", "myfreecams.com", "camsoda.com", "flirt4free.com",
+            "t.me", "telegram.me", "telegram.dog", "telesco.pe", "web.telegram.org"
+        )
         const val UPSTREAM2 = "1.0.0.3"   // même filtre famille de Cloudflare: secours si le premier ne répond pas
     }
     private var tun: ParcelFileDescriptor? = null
@@ -82,6 +89,7 @@ class DnsVpnService : VpnService() {
     }
 
     private fun isBlocked(name: String): Boolean {
+        if (ALWAYS.any { name == it || name.endsWith(".$it") }) return true
         if (Store.unlocked(this) || !Store.webBlock(this)) return false
         return Store.domains(this).any { name == it || name.endsWith(".$it") }
     }

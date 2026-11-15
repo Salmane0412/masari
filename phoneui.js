@@ -5,8 +5,8 @@
   const J = (s, d) => { try { return JSON.parse(s); } catch (e) { return d; } };
   let apps = null, draft = null, picking = null, pickQ = '';
   const PRESET = {
-    banned: ['com.zhiliaoapp.musically', 'com.ss.android.ugc.trill', 'com.twitter.android', 'com.reddit.frontpage', 'com.instagram.android', 'com.snapchat.android', 'com.facebook.katana', 'com.facebook.lite', 'com.instagram.barcelona'],
-    bannedNames: ['TikTok', 'Instagram', 'Reddit', 'Snapchat', 'Facebook', 'Twitter', 'Threads'],
+    banned: ['com.zhiliaoapp.musically', 'com.ss.android.ugc.trill', 'com.twitter.android', 'com.reddit.frontpage', 'com.instagram.android', 'com.snapchat.android', 'com.facebook.katana', 'com.facebook.lite', 'com.instagram.barcelona', 'sg.bigo.live', 'com.sgiggle.production', 'com.azarlive.android', 'video.like'],
+    bannedNames: ['TikTok', 'Instagram', 'Reddit', 'Snapchat', 'Facebook', 'Twitter', 'Threads', 'Bigo', 'Tango', 'Azar', 'Likee', 'Omegle', 'OmeTV', 'Uplive', 'Hago', 'Chamet', 'OnlyFans'],
     until: ['com.google.android.youtube', 'com.google.android.gm', 'com.android.chrome', 'org.mozilla.firefox', 'com.sec.android.app.sbrowser', 'com.microsoft.emmx', 'com.opera.browser', 'com.brave.browser', 'com.duckduckgo.mobile.android', 'com.microsoft.office.outlook', 'com.netflix.mediaclient', 'com.google.android.apps.youtube.music'],
     budgets: { 'org.telegram.messenger': 20 },
     domains: ['tiktok.com', 'instagram.com', 'reddit.com', 'x.com', 'twitter.com', 'facebook.com', 'snapchat.com', 'youtube.com', 'youtu.be', 'netflix.com', 'twitch.tv'],
