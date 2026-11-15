@@ -1,4 +1,4 @@
-# Nuit — E2. Tolérance de `wcost` : des mots différents comptés justes (15/11/2026, ~02 h)
+# Nuit — E2. Tolérance de `wcost` : des mots différents comptés justes (15/11/2026, ~01 h 38)
 
 ## Constat (testé réellement sur le téléphone, v42)
 Le suivi accepte un mot entendu si `wcost(attendu, entendu) <= 0.4`. Pour les sourates 67 à 114, j'ai calculé ce seuil sur toutes les paires de formes de 3 lettres ou plus : **2 349 formes donnent 8 986 paires jugées « identiques »**. Parmi elles :

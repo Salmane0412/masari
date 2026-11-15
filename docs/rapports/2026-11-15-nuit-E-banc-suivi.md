@@ -1,4 +1,4 @@
-# Nuit — E. Banc d'essai du suivi : 30 cas, version en ligne v42 (15/11/2026, ~01 h 40)
+# Nuit — E. Banc d'essai du suivi : 30 cas, version en ligne v42 (15/11/2026, ~01 h 20)
 
 ## Méthode (testée réellement)
 - **28 cas Al-Husary** construits en coupant l'audio d'everyayah (sourate 67) aux limites de mots publiées par Quran.com :

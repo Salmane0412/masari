@@ -1,4 +1,4 @@
-# Nuit — E3. Arrêt « قف » : prototype mesuré (15/11/2026, ~02 h 10)
+# Nuit — E3. Arrêt « قف » : prototype mesuré (15/11/2026, ~01 h 40)
 
 ## Problème (rappel de la tournée, KO en v42)
 Sur une récitation juste, Google rend « رضيع البصر » au lieu de « فارجع البصر ». C'est le premier mot d'une nouvelle séance de reconnaissance, qui redémarre environ toutes les 4 s. Masari s'arrête alors en 67:3.

@@ -1,4 +1,4 @@
-# Nuit — D. Horodatage mot par mot d'Al-Husary, sourate 67 (15/11/2026, ~01 h 30)
+# Nuit — D. Horodatage mot par mot d'Al-Husary, sourate 67 (15/11/2026, ~01 h 05)
 
 ## Testé réellement
 - **Audio** : les 30 fichiers par aya d'Al-Husary sur everyayah (`Husary_64kbps`, 660 s au total), rangés dans `C:\masari-data\audio-husary-67\`.

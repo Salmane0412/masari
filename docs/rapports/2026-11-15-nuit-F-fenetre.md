@@ -1,4 +1,4 @@
-# Nuit — F. Modèle Coran local en flux simulé, fenêtre glissante de 8 s (15/11/2026, ~01 h 45)
+# Nuit — F. Modèle Coran local en flux simulé, fenêtre glissante de 8 s (15/11/2026, ~01 h 35)
 
 ## Testé réellement (sur le PC : i5-7200U, 2 cœurs / 4 fils, int8, 4 fils)
 - **Audio** : la récitation de Salmane du 14/11 (`recitation.wav`, 122 s), lue comme un flux.
