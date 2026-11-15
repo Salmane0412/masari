@@ -39,3 +39,25 @@ Sources lues le 15/11. Les descriptions de Tarteel viennent de ses propres pages
 - **Cas 1 à 5 et 7 à 13** : en texte, avec mon injecteur (`C:\masari-data\nuit\inject.py`) ou `follow-replay.pw.js`.
 - **Cas 10** : à mesurer sur tout le Coran avec `parfait_local.py`.
 - **Cas 6 et 14** : il faut de l'audio réel, c'est-à-dire ta voix, ou Al-Husary « Muallim », plus lent, contre Al-Afasy, plus rapide.
+
+## Premiers résultats mesurés (texte injecté dans `followEval` sur des copies locales de v42 et v43, 09 h 30)
+| Cas | Attendu | v42 | v43 |
+|---|---|---|---|
+| 1 Substitution corrigée (« أكثر أحسن ») | « corrigé » ou rien | faute « ايكم » (vue comme un ajout) | idem |
+| 2 Omission corrigée | rien | rien ✓ | rien ✓ |
+| 3 Omission du dernier mot (« قدير ») puis fin | faute | **rien** ✗ | **rien** ✗ |
+| 4 Passage vers 71:15 | faute, pas de saut | fautes « ما », « تريا » en 67:3 ✓ | idem ✓ |
+| 5 Waqf puis ibtida avec reprise de 2 mots | rien | rien ✓ | rien ✓ |
+| 7 Inversion de 67:4 et 67:3 | faute | **rien** ✗ | **rien** ✗ |
+| 9 Bégaiement « الذي الذي » | rien | rien ✓ | rien ✓ |
+| 11 Mot coupé « نيه بلوكم » | rien | rien ✓ | **faute « ليبلوكم »** ✗ (nouveau) |
+| 12 « وهل » pour « هل » | rien | rien ✓ | **faute « هل »** ✗ (nouveau) |
+| 12b « عملا العزيز » (sans « وهو ») | faute (vraie omission) | **rien** ✗ | faute « وهو » ✓ |
+
+**À corriger, par ordre d'importance** :
+1. Les nouvelles fausses alertes 11 et 12, de même nature que celles du rapport matin-3 : un « و » initial ou une graphie qui change suffisent à déclencher une faute.
+2. L'omission du dernier mot avant l'arrêt (3).
+3. L'inversion d'ayas (7).
+4. La substitution corrigée par le récitant (1), qui compte aujourd'hui comme une faute pleine.
+
+Détail : `C:\masari-data\matin\cas-matin.json`.
