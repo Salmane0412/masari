@@ -61,7 +61,7 @@ function seedUnits(t) {
   [30, 31, 37].forEach(c => unitsInRange(...chRange(c)).forEach(u => { if (U[u].s === 'none') U[u].pri = 1; })); // Rûm, Luqmân, Sâffât : à mémoriser en priorité
   return U;
 }
-function ensure() { S.errors = S.errors || {}; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
+function ensure() { S.errors = S.errors || {}; S.mread = S.mread || {}; S.mmem = S.mmem || {}; S.mushaf = S.mushaf || { last: 1 }; S.tests = S.tests || []; S.units.forEach(u => { if (u.pri === undefined) u.pri = 0; }); const s = S.settings; if (s.reciter === undefined) s.reciter = 'Alafasy_128kbps'; if (s.arep === undefined) s.arep = 1; if (s.tjOn === undefined) s.tjOn = true; s.tjCol = s.tjCol || {}; s.tjOff = s.tjOff || {};
   S.health = S.health || { sex: 'm', age: '', h: '', w: '', gw: '', act: 1.375, pace: 0.5, weights: [], done: {} }; S.focus = S.focus || {}; S.faidas = S.faidas || []; S.fcats = S.fcats || ['عقيدة وتوحيد', 'تفسير وعلوم القرآن', 'حديث وعلومه', 'فقه وأصوله', 'سيرة وتاريخ', 'لغة وأدب', 'تزكية وسلوك', 'فوائد منوعة']; if (S.health.seeded === 1 && S.health.gw === '100') { S.health.gw = ''; S.health.seeded = 2; } if (!S.prog || S.prog.v !== 2) { S.prog = window.PROG.blank('2026-11-08', '2027-02-08'); S.settings.start = '2026-11-08'; S.settings.end = '2027-02-07'; } if (!S.health.seeded) S.health.seeded = 1; S.lock = S.lock || { mode: 'self', secret: randB32() }; if (!S.settings.quizSec) S.settings.quizSec = 20;
   if (s.base === undefined) s.base = S.units.filter(u => u.s !== 'mem').length;
   if (!S.pv) { S.pv = 1; NEW_ORDER.forEach(c => { for (let i = 0; i < NQ; i++) if (S.units[i].s === 'none' && overlapsCh(i, c)) S.units[i].pri = 1; }); } }
@@ -251,25 +251,29 @@ function wordsHtml(text, key, g, off, wc, wo) {
   });
   return out.join(' ');
 }
+function qHtml(ga, gb, wc) {
+  let html = '', lastC = 0;
+  for (let g = ga; g <= gb; g++) {
+    const [c, v, tx] = Q.ayas[g];
+    let text = tx, off = 0;
+    if (c !== lastC && (v === 1 || g === ga)) {
+      html += `<span class="surah">سورة ${CH[c].ar}${v > 1 ? `<small>من الآية ${v}</small>` : ''}</span>`;
+      lastC = c;
+    }
+    if (v === 1 && c !== 1 && c !== 9) {
+      const toks = tx.split(' ');
+      html += `<span class="bism">${wordsHtml(toks.slice(0, BISM_TOKENS).join(' '), 'b' + c)}</span>`;
+      off = toks.slice(0, BISM_TOKENS).join(' ').length + 1;
+      text = toks.slice(BISM_TOKENS).join(' ');
+    }
+    html += `<span class="verse" data-v="${g}">${wordsHtml(text, g, g, off, wc, off ? BISM_TOKENS : 0)}<span class="n">﴿${v}﴾</span></span> `;
+  }
+  return html;
+}
 function getItem(kind, id) {
   if (kind === 'q') {
     const i = +id, u = UI[i], st = S.units[i], wc = { n: 0 };
-    let html = '', lastC = 0;
-    for (let g = u.a; g <= u.b; g++) {
-      const [c, v, tx] = Q.ayas[g];
-      let text = tx, off = 0;
-      if (c !== lastC && (v === 1 || g === u.a)) {
-        html += `<span class="surah">سورة ${CH[c].ar}${v > 1 ? `<small>من الآية ${v}</small>` : ''}</span>`;
-        lastC = c;
-      }
-      if (v === 1 && c !== 1 && c !== 9) {
-        const toks = tx.split(' ');
-        html += `<span class="bism">${wordsHtml(toks.slice(0, BISM_TOKENS).join(' '), 'b' + c)}</span>`;
-        off = toks.slice(0, BISM_TOKENS).join(' ').length + 1;
-        text = toks.slice(BISM_TOKENS).join(' ');
-      }
-      html += `<span class="verse" data-v="${g}">${wordsHtml(text, g, g, off, wc, off ? BISM_TOKENS : 0)}<span class="n">﴿${v}﴾</span></span> `;
-    }
+    const html = qHtml(u.a, u.b, wc);
     return { title: u.label, sub: `الحزب ${u.hizb} · الربع ${u.rub} · ≈ ${fmt1(u.pages)} ص`, html, st, kind: 'q', id };
   }
   const [bid, j] = id.split(':'); const b = S.books.find(x => x.id === bid), p = b.portions[+j];
@@ -328,7 +332,7 @@ views.today = () => {
 };
 
 views.map = () => {
-  let h = `<div class="hero-title">خريطة القرآن</div><div class="sub">٦٠ حزبًا، لكل حزب أربعة أرباع. المس ربعًا لفتحه أو تغيير حالته.</div>${legend()}
+  let h = `<div class="hero-title">خريطة القرآن</div><div class="sub">٦٠ حزبًا، لكل حزب أربعة أرباع. المس ربعًا لفتحه أو تغيير حالته.</div><a class="btn pri block" href="#/mushaf" style="text-decoration:none;margin:8px 0">📖 المصحف: قراءة حرّة بالصفحات</a>${legend()}
   <details><summary>تعديل نطاق</summary>
     <label class="field"><span>الحالة المطلوبة</span><select id="rg-status"><option value="mem">محفوظ (قيد المراجعة)</option><option value="rel">يُعاد حفظه</option><option value="prog">قيد الحفظ</option><option value="none">لم يبدأ</option></select></label>
     <div class="two"><label class="field"><span>من الحزب</span><input id="rg-from" type="number" min="1" max="60" value="1"></label><label class="field"><span>إلى الحزب</span><input id="rg-to" type="number" min="1" max="60" value="1"></label></div>
@@ -453,6 +457,77 @@ views.session = (kind, id, mode) => {
 };
 
 
+/* ---------- صفحة المصحف: قراءة حرّة بصفحات المصحف، بحث، وعدّاد قراءة ---------- */
+const MP = { hl: -1, startG: -1, finder: null, idx: null };
+function mpOn() { return /^#\/mushaf/.test(location.hash); }
+function mpPage() { return Math.min(604, Math.max(1, +(location.hash.split('/')[2]) || (S.mushaf && S.mushaf.last) || 1)); }
+function mpRange() { const p = mpPage(); return { p, g0: pStart[p - 1], g1: pStart[p] - 1 }; }
+const pageOfG = g => bs(pStart, g) + 1;
+function mpStats() {
+  const n = Object.keys(S.mread).length; let pg = 0;
+  for (let p = 0; p < 604; p++) { let all = true; for (let g = pStart[p]; g < pStart[p + 1]; g++) if (!S.mread[g]) { all = false; break; } if (all) pg++; }
+  return { n, pg, mem: Object.keys(S.mmem).length };
+}
+views.mushaf = a => {
+  const p = mpPage(); S.mushaf.last = p; const { g0, g1 } = mpRange(), st = mpStats();
+  const c0 = Q.ayas[g0][0], hz = (bs(qStart, g0) >> 2) + 1;
+  const wc = { n: 0 };
+  const done = (() => { let all = true; for (let g = g0; g <= g1; g++) if (!S.mread[g]) { all = false; break; } return all; })();
+  return `<div class="sess-h"><div class="tt"><b>المصحف</b><span class="sub">الصفحة ${toAr(p)} من ٦٠٤ · الحزب ${toAr(hz)} · سورة ${CH[c0].ar}${done ? ' · ✓ مقروءة' : ''}</span></div></div>
+  <div class="note" id="mp-score">قرأتَ ${toAr(st.n)} آية من ${toAr(tot)} (${toAr(Math.round(st.n * 1000 / tot) / 10)}٪) · صفحات مكتملة ${toAr(st.pg)} من ٦٠٤ · آيات سُمّعت حفظًا ${toAr(st.mem)}</div>
+  <div class="btns mp-nav"><button class="btn" data-act="mp-go" data-p="${p + 1}" ${p >= 604 ? 'disabled' : ''}>← الصفحة التالية</button><input id="mp-page" class="mp-in" type="number" min="1" max="604" value="${p}" aria-label="رقم الصفحة"><button class="btn" data-act="mp-go" data-p="${p - 1}" ${p <= 1 ? 'disabled' : ''}>الصفحة السابقة →</button></div>
+  <div class="btns mp-nav"><select id="mp-surah" aria-label="السورة">${Q.chapters.map(c => `<option value="${c[0]}" ${c[0] === c0 ? 'selected' : ''}>${c[0]}. ${c[1]}</option>`).join('')}</select>
+  <input id="mp-q" class="mp-in wide" type="search" placeholder="ابحث بكلمة أو عبارة" aria-label="بحث"><button class="btn" data-act="mp-search">بحث</button><button class="btn" data-act="mp-find">🎙 ابحث بصوتي</button></div>
+  <div id="mp-res"></div>
+  <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">أظهر الكل</button></div>
+  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-act="mp-markpage">${done ? '↺ ألغِ علامة القراءة' : '✓ علّمها مقروءة'}</button></div>
+  <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div>
+  <article class="mushaf ar" dir="rtl" style="font-size:${S.settings.font}px">${qHtml(g0, g1, wc)}</article>`;
+};
+function mpGo(p, hl) { p = Math.min(604, Math.max(1, +p || 1)); MP.hl = hl === undefined ? -1 : hl; go('#/mushaf/' + p); }
+function mpAfterRender() {
+  if (MP.hl >= 0) { const el = document.querySelector(`.verse[data-v="${MP.hl}"]`); if (el) { el.classList.add('hl'); setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80); } MP.hl = -1; }
+  if (MP.startG >= 0) { const g = MP.startG; MP.startG = -1; setTimeout(() => { followStart(); if (fol.on) { fol.from = Math.max(0, fol.owner.indexOf(g)); fol.keep = []; folStatus('🎙 اقرأ من ' + refOf(g)); } }, 400); }
+}
+function mpIndex() { if (!MP.idx) MP.idx = Q.ayas.map(a => normAr(a[2]).replace(/\s+/g, ' ')); return MP.idx; }
+function mpSearch(q) {
+  const n = normAr(q).replace(/[^ء-ي ]/g, '').replace(/\s+/g, ' ').trim(), o = $('#mp-res'); if (!o) return;
+  if (n.length < 2) { o.innerHTML = '<div class="note">اكتب كلمتين على الأقل من الحروف.</div>'; return; }
+  const ix = mpIndex(), hits = []; for (let g = 0; g < ix.length; g++) if ((' ' + ix[g] + ' ').includes(' ' + n) || ix[g].includes(n)) hits.push(g);
+  o.innerHTML = hits.length ? `<div class="note"><b>${toAr(hits.length)} آية</b>${hits.length > 60 ? ' (أول ٦٠)' : ''}</div>` + hits.slice(0, 60).map(g => `<button class="row" data-act="mp-open" data-g="${g}"><span class="main"><span class="t ar" dir="rtl">${esc(Q.ayas[g][2])}</span><span class="m">${refOf(g)} · ص ${toAr(pageOfG(g))}</span></span></button>`).join('') : '<div class="note">لا نتائج.</div>';
+}
+function mpFindStop() { if (MP.finder) { try { MP.finder.onend = null; MP.finder.stop(); } catch (e) { } MP.finder = null; } const b = document.querySelector('[data-act="mp-find"]'); if (b) b.textContent = '🎙 ابحث بصوتي'; }
+function mpFind() {
+  if (MP.finder) { mpFindStop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { toast('استعمل متصفح Chrome'); return; }
+  if (fol.on) followStop(); stopAudio();
+  const o = $('#mp-res'), b = document.querySelector('[data-act="mp-find"]'); if (b) b.textContent = '⏹ إيقاف البحث';
+  if (!window.QLOC) { toast('أداة البحث غير جاهزة'); return; } if (!MP.built) { QLOC.build(Q.ayas); MP.built = true; }
+  let base = [];
+  const start = () => {
+    const r = MP.finder = new SR(); r.lang = 'ar-SA'; r.continuous = true; r.interimResults = true;
+    r.onresult = e => {
+      let fin = '', cur = ''; for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? (fin += ' ' + e.results[i][0].transcript) : (cur += ' ' + e.results[i][0].transcript));
+      const words = cleanHeard(fin + ' ' + cur); if (words.length < 4) { o.innerHTML = `<div class="note">🎙 أستمع… (${toAr(words.length)} كلمات)</div>`; return; }
+      const f = QLOC.find(words); if (!f || f.pending) return;
+      if (f.ambiguous || f.conf < 0.04) { o.innerHTML = '<div class="note">🎙 أحتاج كلمات أكثر لتحديد الموضع…</div>'; return; }
+      const g = f.ayah0; o.innerHTML = `<div class="note"><b>أظنك تقرأ:</b> ${refOf(g)} (ص ${toAr(pageOfG(g))})<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="mp-from" data-g="${g}">اقرأ من هنا بمتابعة</button><button class="btn" data-act="mp-open" data-g="${g}">افتح الصفحة فقط</button></div></div>`;
+    };
+    r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') { toast('خطأ في الميكروفون'); mpFindStop(); } };
+    r.onend = () => { if (MP.finder) { try { start(); } catch (x) { } } };
+    try { r.start(); } catch (x) { MP.finder = null; }
+  };
+  o.innerHTML = '<div class="note">🎙 اقرأ بضع كلمات من أي آية…</div>'; start();
+}
+/* تسجيل ما قُرئ: آيات كاملة بلا خطأ تُعدّ مقروءة؛ وإن كان النص مخفيًّا (١٠٠٪) تُعدّ مُسمَّعة حفظًا، فإذا اكتمل ربعٌ كله مُسمَّعًا عُدّ محفوظًا إن لم يكن */
+function mpRecord(gs, bad, lastG, complete) {
+  const t = todayStr(); let newMem = 0; const touched = new Set();
+  gs.forEach(g => { if (bad[g]) return; if (g === lastG && !complete) return; S.mread[g] = 1; if (fol.hidden) { if (!S.mmem[g]) newMem++; S.mmem[g] = 1; touched.add(bs(qStart, g)); } });
+  const learned = [];
+  touched.forEach(i => { const u = UI[i], st = S.units[i]; if (!st || st.s === 'mem') return; for (let g = u.a; g <= u.b; g++) if (!S.mmem[g]) return; markLearned(st, t); try { G.credit(S.prog, i, t); } catch (e) { } learned.push(u.label); });
+  fol.mpNote = learned.length ? `<br>✓ عُدَّ محفوظًا: ${learned.join(' · ')}` : '';
+}
+
 /* ---------- متابعة التلاوة مباشرة (على طريقة ترتيل) ---------- */
 const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); // الألف الخنجرية تُكتب ألفًا كما يكتبها التعرّف الصوتي
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
@@ -473,9 +548,10 @@ function wcost(e, h) {
   }
   return 1;
 }
-function expectedOf(i) {
-  const u = UI[i], exp = [], owner = [];
-  for (let g = u.a; g <= u.b; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
+function expectedOf(i) { return expectedRange(UI[i].a, UI[i].b); }
+function expectedRange(ga, gb) {
+  const exp = [], owner = [];
+  for (let g = ga; g <= gb; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
   return { exp, owner };
 }
 function applyTheme() {
@@ -612,6 +688,7 @@ function followLocate(hw, r) {
     if (!fol.locBuilt) { QLOC.build(Q.ayas); fol.locBuilt = true; }
     const f = QLOC.find(words); if (!f || f.pending || f.ambiguous || f.conf < 0.04) return;
     fol.locDone = true;
+    if (fol.mp) { if (pageOfG(f.ayah0) === mpPage()) return; const o2 = $('#rec-out'); if (o2) o2.innerHTML = `<div class="note"><b>يبدو أنك تقرأ في صفحة أخرى:</b> ${refOf(f.ayah0)} (ص ${toAr(pageOfG(f.ayah0))}).<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="mp-from" data-g="${f.ayah0}">اقرأ من هناك بمتابعة</button></div></div>`; return; }
     const u = UI.findIndex(x => f.ayah0 >= x.a && f.ayah0 <= x.b); if (u < 0 || u === fol.unit) return;
     window.DIAG && DIAG.log('locate', 'unit=' + u + ' aya=' + f.ayah0);
     const o = $('#rec-out'); if (o) o.innerHTML = `<div class="note"><b>يبدو أنك تقرأ في موضع آخر:</b> ${refOf(f.ayah0)}.<div class="btns" style="margin-top:8px"><a class="btn pri" href="#/s/q/${u}/new" style="text-decoration:none">افتح هذا الموضع</a></div></div>`;
@@ -704,10 +781,10 @@ function followStart() { fol.excused = new Set();
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { folStatus('المتصفح لا يدعم التعرّف الصوتي. استعمل Chrome على الحاسوب أو أندرويد.'); toast('استعمل متصفح Chrome'); return; }
   if (fol.on) return followStop();
-  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
+  const [, , kind, id] = location.hash.split('/'), mp = mpOn() ? mpRange() : null; if (!mp && kind !== 'q') return;
   stopAudio();
-  fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; fol.locDone = false; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
-  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: +id, ...expectedOf(+id), st: [], p: 0, endIdx: null, noHint: false });
+  fol.mpNote = ''; fol.last = Date.now(); fol.t0 = Date.now(); fol.log = []; fol.hint = 0; fol.locDone = false; clearInterval(fol.hintTimer); fol.hintTimer = setInterval(followHint, 1500);
+  Object.assign(fol, { on: true, base: '', cur: '', from: 0, keep: [], paused: false, unit: mp ? -1 : +id, mp: !!mp, hidden: sessState.level >= 100, ...(mp ? expectedRange(mp.g0, mp.g1) : expectedOf(+id)), st: [], p: 0, endIdx: null, noHint: false });
   document.querySelectorAll('.w').forEach(el => el.classList.remove('f-ok', 'f-bad'));
   document.body.classList.add('following'); const btn = $('#fol-btn'); if (btn) btn.textContent = '⏹ إنهاء وتقييم';
   const startRec = fol.startRec = () => {
@@ -744,8 +821,9 @@ function followFinish0() {
   const gs = Object.keys(seen).map(Number); if (!gs.length) { $('#rec-out').innerHTML = '<div class="note">لم أسمع تلاوة. جرّب مرة أخرى في مكان هادئ.</div>'; return; }
   const lastG = fol.owner[Math.min(p, fol.exp.length - 1)], lines = []; let nb = 0, nok = 0;
   gs.forEach(g => { if (bad[g]) { nb++; noteError(g, 1); lines.push(`<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m ar" dir="rtl">${bad[g].map(k => esc(fol.exp[k])).join(' · ')}</span></span></div>`); } else if (g !== lastG || p >= fol.exp.length) { nok++; noteOk(g); } });
+  if (fol.mp && !fol.exam) mpRecord(gs, bad, lastG, p >= fol.exp.length);
   save();
-  $('#rec-out').innerHTML = `<div class="note">${nb ? `الآيات التي تحتاج مراجعة: ${nb}، والسليمة: ${nok}. الكلمات الناقصة أو المختلفة مبيَّنة أدناه وسُجّلت في مواضع التثبيت. (التعرّف تقريبي ولا يتحقق من أحكام التجويد.)` : 'لم تُرصد أخطاء في ما قرأتَ. ما شاء الله.'}</div>${nb ? `<div class="rows">${lines.join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>` : ''}`;
+  $('#rec-out').innerHTML = `<div class="note">${nb ? `الآيات التي تحتاج مراجعة: ${nb}، والسليمة: ${nok}. الكلمات الناقصة أو المختلفة مبيَّنة أدناه وسُجّلت في مواضع التثبيت. (التعرّف تقريبي ولا يتحقق من أحكام التجويد.)` : 'لم تُرصد أخطاء في ما قرأتَ. ما شاء الله.'}${fol.mpNote || ''}</div>${nb ? `<div class="rows">${lines.join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>` : ''}`;
 }
 /* ---------- استماع إلى قارئ ---------- */
 const RECITERS = [['Alafasy_128kbps', 'مشاري العفاسي'], ['Husary_128kbps', 'محمود خليل الحصري'], ['Husary_Muallim_128kbps', 'الحصري (المعلّم: مع التكرار)'], ['Minshawy_Murattal_128kbps', 'المنشاوي (مرتّل)'], ['Abdul_Basit_Murattal_192kbps', 'عبد الباسط (مرتّل)'], ['Abdurrahmaan_As-Sudais_192kbps', 'عبد الرحمن السديس'], ['Saood_ash-Shuraym_128kbps', 'سعود الشريم'], ['Hudhaify_128kbps', 'علي الحذيفي'], ['Maher_AlMuaiqly_64kbps', 'ماهر المعيقلي']];
@@ -763,9 +841,9 @@ function playNextAyah() {
 }
 function listenStart() {
   if (aud.on) return stopAudio();
-  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
+  const [, , kind, id] = location.hash.split('/'); if (!mpOn() && kind !== 'q') return;
   if (fol.on) followStop();
-  const u = UI[+id]; aud.list = []; for (let g = u.a; g <= u.b; g++) aud.list.push(g);
+  const u = mpOn() ? { a: mpRange().g0, b: mpRange().g1 } : UI[+id]; aud.list = []; for (let g = u.a; g <= u.b; g++) aud.list.push(g);
   Object.assign(aud, { on: true, k: 0, r: 0 }); clearTimeout(aud.cap); aud.cap = setTimeout(() => { if (aud.on) { stopAudio(); toast('توقّف الاستماع تلقائيًا'); say('توقّف الاستماع'); } }, (S.settings.acap || 15) * 60000); const b = $('#aud-btn'); if (b) b.textContent = '⏹ إيقاف'; playNextAyah();
 }
 
@@ -1005,7 +1083,7 @@ views.more = () => {
     ['العبادة', [['salat', '🕌', 'الصلاة والأذكار', 'المواقيت والأذان والسنن وأذكار الصباح والمساء والقبلة']]],
     ['التنظيم', [['tasks', '✓', 'المهام', 'اليوم والقادمة والمشاريع، بإدخال سريع'], ['fin', '€', 'المال والزكاة', 'الميزانية والمصاريف والأهداف والديون وحاسبة الزكاة']]],
     ['العادات والجسم', [['reco', '♡', 'التعافي', 'عدّاد، تسجيل يومي، وزر الرغبة'], ['gym', '🏋', 'التمارين', 'روتين وجلسة موجَّهة وأرقام قياسية'], ['health', '♥', 'الصحة والتغذية', 'السعرات والبروتين والوزن'], ['focus', '◔', 'وضع التركيز', 'جلسات بلا تشتيت']]],
-    ['التعلّم', [['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
+    ['التعلّم', [['mushaf', '📖', 'المصحف', 'قراءة حرّة بالصفحات، بحث بالكلمة أو بصوتك، وعدّاد ما قرأتَ'], ['tests', '✓', 'الاختبارات', 'QCM من محفوظك'], ['stats', '↗', 'التقدّم', 'الإحصاءات والتوقعات'], ['study', '📚', 'الدروس', 'ملخص وأسئلة من درسك، مراجعة بالتباعد'], ['career', '💼', 'المهنة والتقنية', 'نشرة أسبوعية وأدوات المحلل والذكاء الاصطناعي'], ['faidas', '✎', 'دفتر الفوائد', 'سجّل وصنّف واطبع']]],
     ['النظام', [['pin', '🔐', 'رمز الدخول', 'قفل مساري برمز سري على هذا الجهاز'], ['phone', '📱', 'الهاتف والحجب', 'القواعد والشريك والأذونات والتذكيرات'], ['code', '🔑', 'رمز اليوم', 'يُفتح بعد إنهاء الحفظ والاختبار'], ['ideas', '💡', 'صندوق الأفكار', 'اكتب فكرتك قبل أن تنساها + سجلّ التشخيص'], ['guide', '؟', 'الدليل', 'ما في مساري وما سيأتي'], ['settings', '⚙', 'الإعدادات', 'التواريخ والألوان والمزامنة']]],
   ];
   return `<div class="hero-title">أنا</div>` + G2.map(([h, items]) => `<h2>${h}</h2><div class="tiles">${items.map(([k, g, t, m]) => `<a class="tile t-${k}" href="#/${k}"><span class="tic">${window.ic ? ic(k, 22) : g}</span><b>${t}</b><span class="m">${m}</span></a>`).join('')}</div>`).join('');
@@ -1208,7 +1286,7 @@ views.plan = views.prog;   // صفحة واحدة للخطة: لا تكرار ب
 
 /* ---------- routeur ---------- */
 const TABS = [['today', '☀', 'اليوم'], ['plan', '▤', 'الخطة'], ['map', '▦', 'الحفظ'], ['library', '☰', 'العلم'], ['more', '☺', 'أنا']];
-const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', ideas: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
+const tabOf = n => ({ mushaf: 'map', salat: 'today', phone: 'more', pin: 'more', fin: 'more', ideas: 'more', tasks: 'more', lesson: 'library', books: 'library', book: 'library', library: 'library', faidas: 'more', study: 'library', course: 'library', career: 'more', print: 'more', code: 'more', quiz: 'more', tests: 'more', stats: 'more', health: 'more', prog: 'plan', reco: 'more', urge: 'more', guide: 'more', gym: 'more', gymsess: 'more', focus: 'more', lock: 'more', settings: 'more' }[n] || n);
 function route() {
   route.y = window.scrollY;
   const h = location.hash.replace(/^#\/?/, '') || 'today';
@@ -1225,9 +1303,10 @@ function route() {
   tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${window.ic ? ic(k) : g}</b>${l}</a>`).join('')}</div>`;
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }
   else if (name === 'book') view.innerHTML = views.book(a);
-  else view.innerHTML = (views[name] || views.today)();
+  else view.innerHTML = (views[name] || views.today)(a);
   if (route.last === h) window.scrollTo(0, route.y || 0); else window.scrollTo(0, 0);
   route.last = h;
+  if (name === 'mushaf') mpAfterRender(); else mpFindStop();
   if (name === 'library' || name === 'books') loadPacks();
   if (name === 'code') fillCode();
   document.body.classList.toggle('inquiz', name === 'quiz' && !!quiz && !quiz.done);
@@ -1282,6 +1361,12 @@ document.addEventListener('click', e => {
       applyRange([...Array((b - a + 1) * 4).keys()].map(k => (a - 1) * 4 + k), $('#rg-status').value); break;
     }
     case 'range-surah': applyRange(unitsInRange(...chRange(+$('#rg-surah').value)), $('#rg-status').value); break;
+    case 'mp-go': mpGo(d.p); break;
+    case 'mp-search': mpSearch(($('#mp-q') || {}).value || ''); break;
+    case 'mp-find': mpFind(); break;
+    case 'mp-open': mpFindStop(); mpGo(pageOfG(+d.g), +d.g); break;
+    case 'mp-from': { mpFindStop(); MP.startG = +d.g; mpGo(pageOfG(+d.g), +d.g); break; }
+    case 'mp-markpage': { const { g0, g1 } = mpRange(); let all = true; for (let g = g0; g <= g1; g++) if (!S.mread[g]) all = false; for (let g = g0; g <= g1; g++) { if (all) delete S.mread[g]; else S.mread[g] = 1; } save(); route(); break; }
     case 'follow': followStart(); break;
     case 'exam': examPanel(); break;
     case 'exam-go': EX.on = true; EX.i = 0; EX.res = []; EX.qs = examBuild(d.scope, +location.hash.split('/')[3]); examQuestion(); break;
@@ -1322,7 +1407,7 @@ document.addEventListener('click', e => {
     case 'tj-legend': openSheet(`<h3>مفتاح ألوان التجويد</h3><div class="tjlist">${TJ.rules.map((r, i) => tjOn(i) ? `<div class="tjrow"><span class="tjn"><i class="tj-${i}">${TJ_SAMPLE[i]}</i> ${TJ_AR[i]}</span></div>` : '').join('')}</div><button class="btn block" data-act="close">إغلاق</button>`); break;
     case 'tj-reset': S.settings.tjCol = {}; S.settings.tjOff = {}; save(); applyTj(); route(); toast('أُعيدت الألوان الافتراضية'); break;
     case 'reveal': if (el.classList.contains('hid') && el.dataset.g) sessState.rev[el.dataset.g] = (sessState.rev[el.dataset.g] || 0) + 1; el.classList.toggle('hid'); break;
-    case 'level': sessState.level = +d.l; { const keep = sessState.reps; const [, , a, b, c] = location.hash.split('/'); $('#view').innerHTML = views.session(a, b, c); sessState.reps = keep; } break;
+    case 'level': sessState.level = +d.l; if (mpOn()) { route(); break; } { const keep = sessState.reps; const [, , a, b, c] = location.hash.split('/'); $('#view').innerHTML = views.session(a, b, c); sessState.reps = keep; } break;
     case 'showall': document.querySelectorAll('.w.hid').forEach(w => w.classList.remove('hid')); break;
     case 'rep-plus': case 'rep-minus': {
       sessState.reps = Math.max(0, (sessState.reps || 0) + (act === 'rep-plus' ? 1 : -1)); $('#rep-n').textContent = sessState.reps;
@@ -1401,6 +1486,8 @@ document.addEventListener('change', e => {
   }
   if (e.target.dataset && e.target.dataset.tj !== undefined) { s.tjCol[e.target.dataset.tj] = v; save(); applyTj(); return; }
   if (e.target.dataset && e.target.dataset.tjon !== undefined) { if (e.target.checked) delete s.tjOff[e.target.dataset.tjon]; else s.tjOff[e.target.dataset.tjon] = 1; save(); applyTj(); return; }
+  if (id === 'mp-surah') { mpGo(pageOfG(first[+e.target.value])); return; }
+  if (id === 'mp-page') { mpGo(e.target.value); return; }
   if (id === 'st-wq') { s.wqOn = e.target.checked; save(); toast('تم الحفظ'); return; }
   if (id === 'st-tj') { s.tjOn = e.target.checked; save(); applyTj(); toast('تم الحفظ'); return; }
   if (id === 'st-reciter') { s.reciter = v; save(); toast('تم الحفظ'); return; }

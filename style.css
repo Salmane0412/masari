@@ -394,3 +394,9 @@ body.following #rec-out:not(:empty){bottom:calc(186px + env(safe-area-inset-bott
 @media (orientation:landscape) and (max-height:520px){body.following #rec-out:not(:empty){left:10px;right:auto;width:38%;bottom:calc(120px + env(safe-area-inset-bottom));max-height:55vh}}
 
 .wq{font-size:.85em;color:var(--gold);margin-inline-start:1px;user-select:none}
+
+.mp-nav{align-items:center;margin:0 0 8px}
+.mp-in{width:76px;padding:9px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;text-align:center}
+.mp-in.wide{flex:1;min-width:130px;width:auto;text-align:start}
+#mp-surah{padding:9px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;max-width:42%}
+.verse.hl{background:color-mix(in srgb,var(--gold) 22%,transparent);border-radius:6px}
