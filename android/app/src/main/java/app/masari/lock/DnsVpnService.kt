@@ -17,10 +17,11 @@ class DnsVpnService : VpnService() {
         @Volatile var running = false
         const val FAKE_DNS = "10.99.0.2"
         const val UPSTREAM = "1.1.1.3"
+        const val UPSTREAM2 = "1.0.0.3"   // même filtre famille de Cloudflare: secours si le premier ne répond pas
     }
     private var tun: ParcelFileDescriptor? = null
     private var thread: Thread? = null
-    private val pool = Executors.newFixedThreadPool(6)
+    private val pool = Executors.newFixedThreadPool(24)
 
     override fun onStartCommand(i: Intent?, f: Int, s: Int): Int {
         if (running) return START_STICKY
@@ -85,10 +86,12 @@ class DnsVpnService : VpnService() {
         return Store.domains(this).any { name == it || name.endsWith(".$it") }
     }
 
-    private fun forward(q: ByteArray): ByteArray? {
+    private fun forward(q: ByteArray): ByteArray? = ask(q, UPSTREAM) ?: ask(q, UPSTREAM2) ?: ask(q, UPSTREAM)
+
+    private fun ask(q: ByteArray, host: String): ByteArray? {
         val s = DatagramSocket(); return try {
-            protect(s); s.soTimeout = 4000
-            s.send(DatagramPacket(q, q.size, InetAddress.getByName(UPSTREAM), 53))
+            protect(s); s.soTimeout = 2500
+            s.send(DatagramPacket(q, q.size, InetAddress.getByName(host), 53))
             val b = ByteArray(4096); val d = DatagramPacket(b, b.size); s.receive(d); b.copyOf(d.length)
         } catch (e: Exception) { null } finally { s.close() }
     }
