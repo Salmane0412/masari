@@ -390,3 +390,5 @@ body.following #rec-out:not(:empty){bottom:calc(186px + env(safe-area-inset-bott
 
 :root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
 .themeseg{display:flex;gap:6px;flex-wrap:wrap}.themeseg button{flex:1 1 90px}
+.w.f-chk{background:color-mix(in srgb,#d98b2b 20%,transparent);border-radius:5px;text-decoration:underline dotted #d98b2b;text-underline-offset:6px}
+@media (orientation:landscape) and (max-height:520px){body.following #rec-out:not(:empty){left:10px;right:auto;width:38%;bottom:calc(120px + env(safe-area-inset-bottom));max-height:55vh}}

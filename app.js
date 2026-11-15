@@ -482,7 +482,7 @@ function applyTheme() {
   const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#0e1a24' : '#eef2f3');
 }
 applyTheme();
-function followEval(exp, heard, from, owner) {
+function followEval(exp, heard, from, owner, edges) {
   const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0;
   const run = (k, i) => { let r = 0; while (r < 5 && k + r < exp.length && i + r < heard.length && wcost(exp[k + r], heard[i + r]) <= 0.4) r++; return r; };
   for (let hi = 0; hi < heard.length; hi++) {
@@ -539,8 +539,10 @@ function followEval(exp, heard, from, owner) {
         ins = true;
         for (let d = Math.max(from || 0, p - 4); d < Math.min(exp.length, p + 4) && ins; d++) if (wcost(exp[d], h) <= 0.5) ins = false;
       }
-      if (ins) { st[p - 1] = 'bad'; miss = 0; }
-      else if (sub) { for (let j = 0; j < sub; j++) st[p + j] = 'bad'; p += sub; hi += sub - 1; miss = 0; }
+      // كلمة عند حافة جملة مسموعة (أول كلمة أو آخرها): التعرّف يشوّه الحواف كثيرًا، فنعلّمها «للتحقق» لا «خطأ»
+      const edge = !!(edges && (edges.has(hi) || (sub && edges.has(hi + sub - 1))));
+      if (ins) { st[p - 1] = edge ? 'chk' : 'bad'; miss = 0; }
+      else if (sub) { for (let j = 0; j < sub; j++) st[p + j] = edge ? 'chk' : 'bad'; p += sub; hi += sub - 1; miss = 0; }
       else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
     } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
@@ -550,10 +552,10 @@ function followEval(exp, heard, from, owner) {
   return { st, p, reps };
 }
 /* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
-function followEvalTwoPass(exp, committed, interim, from, owner) {
-  const a = followEval(exp, committed, from, owner);
+function followEvalTwoPass(exp, committed, interim, from, owner, edges) {
+  const a = followEval(exp, committed, from, owner, edges);
   if (!interim.length) return a;
-  const b = followEval(exp, committed.concat(interim), from, owner), st = a.st.slice();
+  const b = followEval(exp, committed.concat(interim), from, owner, edges), st = a.st.slice();
   if (b.reps > a.reps) return b; // تكرار يجري الآن
   for (let k = a.p; k < exp.length; k++) if (b.st[k] === 'ok') st[k] = 'ok';
   return { st, p: Math.max(a.p, b.p), reps: a.reps };
@@ -574,16 +576,17 @@ function stripIntro(ws) {
   return ws.slice(i);
 }
 const heardWords = () => {
-  const committed = fol.base.split('\n').flatMap(c => stripIntro(cleanHeard(c)));
-  return { committed, interim: stripIntro(cleanHeard(fol.cur)) };
+  const edges = new Set(); let n = 0;
+  const committed = fol.base.split('\n').flatMap(c => { const w = stripIntro(cleanHeard(c)); if (w.length) { edges.add(n); edges.add(n + w.length - 1); } n += w.length; return w; });
+  return { committed, interim: stripIntro(cleanHeard(fol.cur)), edges };
 };
 function followPaint() {
-  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from, fol.owner);
+  const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from, fol.owner, hw.edges);
   for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
   fol.st = r.st; fol.p = r.p;
   followLocate(hw, r);
   if (fol.on && fol.endIdx != null && !fol.paused && r.p >= fol.endIdx) { fol.endIdx = null; beep(660, 250); say('قِف'); followStop(); return; }
-  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { fol.excused = fol.excused || new Set(); // قاعدة: أول كلمة في جملة جديدة مشوَّهة وبعدها ٣ كلمات صحيحة → لا نوقف (تعرّف رديء لا خطأ قارئ)
+  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner, hw.edges); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { fol.excused = fol.excused || new Set(); // قاعدة: أول كلمة في جملة جديدة مشوَّهة وبعدها ٣ كلمات صحيحة → لا نوقف (تعرّف رديء لا خطأ قارئ)
       if (!fol.excused.has(kb)) { const chunks = (fol.base || '').split('\n').filter(Boolean); let first = false;
         if (chunks.length) { const before = chunks.slice(0, -1).flatMap(c => stripIntro(cleanHeard(c))); const pe = followEval(fol.exp, before, fol.from, fol.owner).p; first = kb <= pe; }
         if (first && [1, 2, 3].every(d => ca.st[kb + d] === 'ok')) fol.excused.add(kb); }
@@ -591,7 +594,7 @@ function followPaint() {
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
     const k = +el.dataset.wi, s = r.st[k];
-    el.classList.toggle('f-ok', s === 'ok'); el.classList.toggle('f-bad', s === 'bad'); el.classList.toggle('f-cur', fol.on && k === r.p);
+    el.classList.toggle('f-ok', s === 'ok'); el.classList.toggle('f-bad', s === 'bad'); el.classList.toggle('f-chk', s === 'chk'); el.classList.toggle('f-cur', fol.on && k === r.p);
     if (s) el.classList.remove('hid'); if (s === 'ok') ok++; if (s === 'bad') bad++;
   });
   const c = document.querySelector('.w.f-cur'); if (c) { const b = c.getBoundingClientRect(); if (b.top < 120 || b.bottom > innerHeight - 140) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
@@ -678,6 +681,7 @@ function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fo
 function followHalt(kb) {
   fol.paused = true; try { fol.rec && fol.rec.abort(); } catch (x) { } try { window.DIAG && DIAG.log('halt', 'expected=' + fol.exp[kb] + ' idx=' + kb + ' heard=' + (fol.base || '').split('\n').slice(-2).join(' | ')); } catch (x) { }
   beep(330, 350); say('قِف');
+  setTimeout(() => { const el = document.querySelector(`.w[data-wi="${kb}"]`); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 150);
   const g = fol.owner[kb], from = ayahStartIdx(kb); noteError(g, 1); save();
   try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (x) { }
   document.querySelectorAll('.w[data-wi]').forEach(el => { const k = +el.dataset.wi; el.classList.toggle('f-bad', k === kb); el.classList.toggle('f-cur', false); });

@@ -5,9 +5,9 @@ const { chromium } = require('playwright');
   await p.goto('http://localhost:8765/index.html'); await p.waitForTimeout(1500);
   const r = await p.evaluate(() => {
     const ex = expectedOf(224); Object.assign(fol, { exp: ex.exp, owner: ex.owner, p: 0, from: 0 });
-    const run = (name, chunks) => { const hw = chunks.flatMap(c => stripIntro(cleanHeard(c))); const r = followEval(ex.exp, hw, 0, ex.owner);
-      const bad = []; r.st.forEach((s, k) => { if (s === 'bad') bad.push(ex.exp[k] + '@' + ex.owner[k]); });
-      const ok = r.st.filter(s => s === 'ok').length; return { name, ok, bad, p: r.p, reps: r.reps, firstOk: r.st.indexOf('ok') }; };
+    const run = (name, chunks) => { const edges = new Set(); let n = 0; const hw = chunks.flatMap(c => { const w = stripIntro(cleanHeard(c)); if (w.length) { edges.add(n); edges.add(n + w.length - 1); } n += w.length; return w; }); const r = followEval(ex.exp, hw, 0, ex.owner, edges);
+      const bad = [], chk = []; r.st.forEach((s, k) => { if (s === 'bad') bad.push(ex.exp[k] + '@' + ex.owner[k]); if (s === 'chk') chk.push(ex.exp[k]); });
+      const ok = r.st.filter(s => s === 'ok').length; return { name, ok, bad, chk, p: r.p, reps: r.reps, firstOk: r.st.indexOf('ok') }; };
     const A = 'تبارك الذي بيده الملك وهو على كل شيء قدير', B = 'الذي خلق الموت والحياة ليبلوكم أيكم أحسن عملا وهو العزيز الغفور', C = 'الذي خلق سبع سماوات طباقا ما ترى في خلق الرحمن من تفاوت';
     return [
       run('A basmala+1-3 une phrase', ['بسم الله الرحمن الرحيم ' + A + ' ' + B + ' ' + C]),
@@ -27,6 +27,8 @@ const { chromium } = require('playwright');
       run('P mot oublie ليبلوكم', [A + ' الذي خلق الموت والحياة أيكم أحسن عملا وهو العزيز الغفور']),
       run('Q وهو->وهي', [A + ' ' + B.replace('وهو', 'وهي')]),
       run('R الرحمن->الرحيم', [A + ' ' + B + ' الذي خلق سبع سماوات طباقا ما ترى في خلق الرحيم من تفاوت']),
+      run('S mot ajoute en debut de phrase (jonction) -> a verifier', [A, 'إن الذي خلق الموت والحياة ليبلوكم أيكم أحسن عملا وهو العزيز الغفور']),
+      run('T mot ajoute au milieu de phrase -> faux', [A + ' الذي خلق الموت والعيش والحياة ليبلوكم أيكم أحسن عملا وهو العزيز الغفور']),
       run('I aya 2 non entendue (saut de reconnaissance)', [A + ' ' + C]),
       run('J ayas 2-4 non entendues puis 5', [A + ' ولقد زينا السماء الدنيا بمصابيح وجعلناها رجوما للشياطين'])
     ];
