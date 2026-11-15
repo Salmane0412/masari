@@ -444,7 +444,7 @@ views.session = (kind, id, mode) => {
     ? `<div class="actions"><button class="btn" data-act="grade" data-g="hard">صعب</button><button class="btn" data-act="grade" data-g="ok">متوسط</button><button class="btn pri" data-act="grade" data-g="easy">متقن</button></div>`
     : `<div class="actions"><button class="btn" data-act="grade" data-g="later">ليس بعد</button><button class="btn" data-act="grade" data-g="prog">قيد الحفظ</button><button class="btn pri" data-act="grade" data-g="learned">${done} ✓</button></div>`;
   const qtools = kind === 'q' ? `
-  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="voicetest">🔊 اختبار صوتي</button><button class="btn" data-act="exam">🎓 اختبار حفظ بصوت القارئ</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
+  <div id="fol-ctl" class="btns" style="margin:0 0 10px"><button class="btn" id="aud-btn" data-act="listen">▶ استماع</button><button class="btn" data-act="exam">🎓 اختبار حفظ بصوت القارئ</button><button class="btn pri" id="fol-btn" data-act="follow">🎙 تلاوة بمتابعة مباشرة</button><button class="btn" data-hz="start">🧭 حفظ متدرّج</button><button class="btn sm" data-act="tj-legend">مفتاح الألوان</button><button class="btn sm" data-act="fol-diag">📋 سجل التشخيص</button></div>
   <div id="fol-status" class="sub" role="status"></div><div id="rec-out"></div><div id="hz-panel"></div>` : '';
   return `<div class="sess-h"><button class="btn sm" data-act="back" aria-label="رجوع">→</button><div class="tt"><b class="${kind === 'q' ? 'ar' : ''}" style="font-size:${kind === 'q' ? 20 : 17}px">${esc(it.title)}</b><span class="sub">${it.sub}${st.weak ? ' · ضعيف' : ''}</span></div></div>
   <div class="tools"><span class="seg" role="group" aria-label="إخفاء الكلمات">${[0, 30, 60, 100].map(l => `<button data-act="level" data-l="${l}" aria-pressed="${sessState.level === l}">${l === 0 ? 'النص' : l + '%'}</button>`).join('')}</span><button class="btn sm" data-act="showall">إظهار الكل</button><span class="lbl">إخفاء الكلمات: المس الكلمة لإظهارها</span></div>
@@ -562,7 +562,7 @@ function applyTheme() {
 }
 applyTheme();
 function followEval(exp, heard, from, owner, edges) {
-  const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0;
+  const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0; const sims = [];
   const run = (k, i) => { let r = 0; while (r < 5 && k + r < exp.length && i + r < heard.length && wcost(exp[k + r], heard[i + r]) <= 0.4) r++; return r; };
   for (let hi = 0; hi < heard.length; hi++) {
     if (p >= exp.length) break;
@@ -577,7 +577,7 @@ function followEval(exp, heard, from, owner, edges) {
       }
       // إعادة جزء من وسط الآية (تكرار أو تداخل في نتائج التعرّف): نرجع إلى بداية الجزء المعاد دون عدّه خطأً
       if (rs < 0) for (let k = p - 1; k >= Math.max(from || 0, p - 12, 0); k--) { const rk = run(k, hi); if (exp[k].length >= 2 && rk >= 3 && rk > run(p, hi)) { rs = k; break; } }
-      if (rs >= 0 && rs < p) { for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
+      if (rs >= 0 && rs < p) { if (owner && p < exp.length && owner[rs] !== owner[p] && exp.slice(rs, rs + 3).join(' ') === exp.slice(p, p + 3).join(' ')) sims.push({ at: p, back: rs }); for (let k = rs; k < exp.length; k++) st[k] = undefined; p = rs; miss = 0; reps++; }
     }
     // لم تبدأ المطابقة بعد: نختار أطول تتابع متطابق في المقطع كله (يبدأ القارئ من أي موضع) بدل أول كلمة مشابهة
     if (!started) {
@@ -628,7 +628,7 @@ function followEval(exp, heard, from, owner, edges) {
   // كلمة ساقطة: لم تُسمع وكلمتان قبلها وكلمتان بعدها صحيحة في الآية نفسها، وليست أول الآية → خطأ (سقط)
   if (owner) for (let k = Math.max(from || 0, 2); k + 2 < exp.length; k++)
     if (st[k] !== 'ok' && st[k] !== 'bad' && owner[k - 1] === owner[k] && st[k - 2] === 'ok' && st[k - 1] === 'ok' && st[k + 1] === 'ok' && st[k + 2] === 'ok') st[k] = 'bad';
-  return { st, p, reps };
+  return { st, p, reps, sims };
 }
 /* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
 function followEvalTwoPass(exp, committed, interim, from, owner, edges) {
@@ -637,7 +637,7 @@ function followEvalTwoPass(exp, committed, interim, from, owner, edges) {
   const b = followEval(exp, committed.concat(interim), from, owner, edges), st = a.st.slice();
   if (b.reps > a.reps) return b; // تكرار يجري الآن
   for (let k = a.p; k < exp.length; k++) if (b.st[k] === 'ok') st[k] = 'ok';
-  return { st, p: Math.max(a.p, b.p), reps: a.reps };
+  return { st, p: Math.max(a.p, b.p), reps: a.reps, sims: a.sims };
 }
 const fol = { on: false, rec: null, base: '', cur: '', fin: 0, from: 0, keep: [], paused: false, stopOnErr: true, exp: [], owner: [], st: [], p: 0, unit: -1 };
 const cleanHeard = t => normAr(t).split(/\s+/).map(w => w.replace(/[^ء-ي]/g, '')).filter(Boolean);
@@ -661,10 +661,11 @@ const heardWords = () => {
 };
 function followPaint() {
   const hw = heardWords(), r = followEvalTwoPass(fol.exp, hw.committed, hw.interim, fol.from, fol.owner, hw.edges);
+  fol.sims = r.sims || [];
   for (let k = 0; k < fol.from; k++) r.st[k] = fol.keep[k];
   fol.st = r.st; fol.p = r.p;
   followLocate(hw, r);
-  if (fol.on && fol.endIdx != null && !fol.paused && r.p >= fol.endIdx) { fol.endIdx = null; beep(660, 250); say('قِف'); followStop(); return; }
+  if (fol.on && fol.endIdx != null && !fol.paused && r.p >= fol.endIdx) { fol.endIdx = null; beep(660, 250); say(fol.exam ? 'قِف، حَسْبُك' : 'قِف'); followStop(); return; }
   if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner, hw.edges); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { fol.excused = fol.excused || new Set(); // قاعدة: أول كلمة في جملة جديدة مشوَّهة وبعدها ٣ كلمات صحيحة → لا نوقف (تعرّف رديء لا خطأ قارئ)
       if (!fol.excused.has(kb)) { const chunks = (fol.base || '').split('\n').filter(Boolean); let first = false;
         if (chunks.length) { const before = chunks.slice(0, -1).flatMap(c => stripIntro(cleanHeard(c))); const pe = followEval(fol.exp, before, fol.from, fol.owner).p; first = kb <= pe; }
@@ -698,15 +699,15 @@ function followLocate(hw, r) {
 const EX = { on: false, qs: [], i: 0, res: [] };
 function examPanel() {
   const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return; const u = UI[+id], o = $('#rec-out'); if (!o) return;
-  o.innerHTML = `<div class="note"><b>اختبار الحفظ</b><br>يقرأ القارئ أول الآية وتُكمل أنت نفس الآية، في مواضع عشوائية، عشرة أسئلة.<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="exam-go" data-scope="hizb">كل الحزب ${toAr(u.hizb)}</button><button class="btn" data-act="exam-go" data-scope="unit">هذا المقطع فقط</button></div></div>`;
+  o.innerHTML = `<div class="note"><b>اختبار الحفظ</b><br>يتلو الشيخ الحصري ثلاث أو أربع كلمات من آية عشوائية، فتُكمل أنت الآية، وحين تنتهي يقول لك «قِف، حَسْبُك». عشرة أسئلة.<div class="btns" style="margin-top:8px"><button class="btn pri" data-act="exam-go" data-scope="hizb">كل الحزب ${toAr(u.hizb)}</button><button class="btn" data-act="exam-go" data-scope="unit">هذا المقطع فقط</button></div></div>`;
 }
 function examBuild(scope, id) {
   const u = UI[id], f = (u.hizb - 1) * 4, lo = scope === 'hizb' ? UI[f].a : u.a, hi = scope === 'hizb' ? UI[Math.min(NQ - 1, f + 3)].b : u.b, c = [];
-  for (let g = lo; g <= hi; g++) { const n = wordsOf(g).length - ((Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ? BISM_TOKENS : 0); if (n >= 4) c.push({ g, n }); }
-  return c.sort(() => Math.random() - 0.5).slice(0, 10).map(x => ({ g: x.g, k: Math.min(x.n - 1, Math.max(2, Math.round(x.n * (0.35 + 0.1 * rnd(4)))) ) , n: x.n }));
+  for (let g = lo; g <= hi; g++) { const n = wordsOf(g).length - ((Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ? BISM_TOKENS : 0); if (n >= 6) c.push({ g, n }); }
+  return c.sort(() => Math.random() - 0.5).slice(0, 10).map(x => ({ g: x.g, k: Math.min(x.n - 2, 3 + rnd(2)), n: x.n }));
 }
 function playCue(g, frac, done) {
-  let fin = false; const a = aud.a = new Audio(audioUrl(g));
+  let fin = false; const a = aud.a = new Audio(`https://everyayah.com/data/Husary_128kbps/${String(Q.ayas[g][0]).padStart(3, '0')}${String(Q.ayas[g][1]).padStart(3, '0')}.mp3`);
   const end = () => { if (fin) return; fin = true; try { a.pause(); } catch (x) { } done(); };
   a.onloadedmetadata = () => { if (isFinite(a.duration)) setTimeout(end, Math.max(900, a.duration * 1000 * frac)); };
   a.onerror = end; a.onended = end; a.play().catch(end); setTimeout(end, 20000);
@@ -746,16 +747,6 @@ function say(t, done) {
   if (!('speechSynthesis' in window)) { if (done) done(); return; }
   speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = 0.9; const v = speechSynthesis.getVoices().find(x => /^ar/i.test(x.lang)); if (v) u.voice = v;
   let fired = false; const fin = () => { if (!fired) { fired = true; if (done) done(); } }; u.onend = fin; u.onerror = fin; setTimeout(fin, 6000); speechSynthesis.speak(u);
-}
-function voiceTest() {
-  const [, , kind, id] = location.hash.split('/'); if (kind !== 'q') return;
-  if (fol.on) followStop(); stopAudio(); const u = UI[+id], g = u.a + rnd(u.b - u.a + 1);
-  document.querySelectorAll('.w').forEach(e => e.classList.add('hid'));
-  // لا يعرف القارئ رقم الآية: نذكر أول كلمتين منها، ونُظهرهما ونُظهر أول كلمات الآية في الصفحة
-  let aw = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) aw = aw.slice(BISM_TOKENS);
-  const start = aw.slice(0, 2).join(' ');
-  const firstEl = document.querySelector(`.w[data-g="${g}"]`); if (firstEl) { firstEl.classList.remove('hid'); firstEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  say(`اقرأ من الآية التي تبدأ بـ ${start}`, () => { followStart(); fol.from = fol.owner.indexOf(g); fol.keep = []; folStatus(`🎙 اقرأ من: «${start}» (${refOf(g)}) — النص مخفي`); });
 }
 function ayahStartIdx(k) { const g = fol.owner[k]; let i = k; while (i > 0 && fol.owner[i - 1] === g) i--; return i; }
 function followHalt(kb) {
@@ -823,7 +814,13 @@ function followFinish0() {
   gs.forEach(g => { if (bad[g]) { nb++; noteError(g, 1); lines.push(`<div class="row"><span class="main"><span class="t ar">${refOf(g)}</span><span class="m ar" dir="rtl">${bad[g].map(k => esc(fol.exp[k])).join(' · ')}</span></span></div>`); } else if (g !== lastG || p >= fol.exp.length) { nok++; noteOk(g); } });
   if (fol.mp && !fol.exam) mpRecord(gs, bad, lastG, p >= fol.exp.length);
   save();
-  $('#rec-out').innerHTML = `<div class="note">${nb ? `الآيات التي تحتاج مراجعة: ${nb}، والسليمة: ${nok}. الكلمات الناقصة أو المختلفة مبيَّنة أدناه وسُجّلت في مواضع التثبيت. (التعرّف تقريبي ولا يتحقق من أحكام التجويد.)` : 'لم تُرصد أخطاء في ما قرأتَ. ما شاء الله.'}${fol.mpNote || ''}</div>${nb ? `<div class="rows">${lines.join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>` : ''}`;
+  $('#rec-out').innerHTML = `<div class="note">${nb ? `الآيات التي تحتاج مراجعة: ${nb}، والسليمة: ${nok}. الكلمات الناقصة أو المختلفة مبيَّنة أدناه وسُجّلت في مواضع التثبيت. (التعرّف تقريبي ولا يتحقق من أحكام التجويد.)` : 'لم تُرصد أخطاء في ما قرأتَ. ما شاء الله.'}${fol.mpNote || ''}${simNote()}</div>${nb ? `<div class="rows">${lines.join('')}</div><div class="btns" style="margin-top:10px"><button class="btn pri" data-act="quiz-start" data-scope="weak" data-n="10">اختبار في مواضع ضعفي</button></div>` : ''}`;
+}
+/* آيتان متشابهتان في البداية: عودتك إلى الأولى قد تكون تكرارًا مقصودًا أو خلطًا بين المتشابهين؛ لا يمكن للتطبيق الجزم، فنُنبّه */
+function simNote() {
+  const s = (fol.sims || []).filter((x, i, a) => a.findIndex(y => fol.owner[y.at] === fol.owner[x.at]) === i); if (!s.length) return '';
+  try { window.DIAG && DIAG.log('similar-restart', s.map(x => fol.owner[x.back] + '->' + fol.owner[x.at]).join(',')); } catch (e) { }
+  return `<br>⚠ تشابه: عدتَ إلى بداية آية تشبه ${s.map(x => refOf(fol.owner[x.at])).join('، ')}. إن لم تكن تقصد التكرار فتحقّق أنك لم تخلط بين الآيتين.`;
 }
 /* ---------- استماع إلى قارئ ---------- */
 const RECITERS = [['Alafasy_128kbps', 'مشاري العفاسي'], ['Husary_128kbps', 'محمود خليل الحصري'], ['Husary_Muallim_128kbps', 'الحصري (المعلّم: مع التكرار)'], ['Minshawy_Murattal_128kbps', 'المنشاوي (مرتّل)'], ['Abdul_Basit_Murattal_192kbps', 'عبد الباسط (مرتّل)'], ['Abdurrahmaan_As-Sudais_192kbps', 'عبد الرحمن السديس'], ['Saood_ash-Shuraym_128kbps', 'سعود الشريم'], ['Hudhaify_128kbps', 'علي الحذيفي'], ['Maher_AlMuaiqly_64kbps', 'ماهر المعيقلي']];
@@ -1373,7 +1370,6 @@ document.addEventListener('click', e => {
     case 'exam-next': case 'exam-retry': examQuestion(); break;
     case 'theme': { const v = d.v || 'auto'; try { localStorage.setItem('masari.theme', v); } catch (e) { } applyTheme(); route(); break; }
     case 'exam-stop': examSummary(); if (fol.on) followStop(); break;
-    case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;
     case 'fol-diag': { const rep = { unit: fol.unit, expected: fol.exp, heard: fol.log || [], base: fol.base, state: fol.st, pos: fol.p, ua: navigator.userAgent, native: !!window.__nativeApp }; const txt = JSON.stringify(rep); download('masari-diagnostic.json', txt, 'application/json'); try { navigator.clipboard && navigator.clipboard.writeText(txt); } catch (e) { } break; }
     case 'fol-skip': followResume(+d.from); break;
