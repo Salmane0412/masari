@@ -11,6 +11,6 @@
 | Tâche | Pourquoi c'est bloqué | Ce que Salmane doit faire |
 |---|---|---|
 | ~~Réactiver la protection~~ (fait par Salmane ; vérifié : service activé et lié, `accessibility: true`) | Le test de fermeture forcée (rapport matin-2) a coupé le service d'accessibilité, et Android ne le rétablit pas. | Dans Masari, rouvrir « خدمة الحجب » et appuyer sur « تفعيل ». |
-| Blocage après redémarrage | Ton code de déverrouillage est nécessaire après le redémarrage. | Me dire « je suis là » : je lance le redémarrage par adb et je mesure. |
+| ~~Blocage après redémarrage~~ (testé le 15/11 à 09 h 23 : OK, rapport matin-2) | Ton code de déverrouillage est nécessaire après le redémarrage. | Me dire « je suis là » : je lance le redémarrage par adb et je mesure. |
 | Blocage effectif d'une app | La seule règle active vise Telegram, que je ne dois pas ouvrir. | Me dire quelle app je peux ouvrir pour vérifier qu'elle est bloquée, ou l'ouvrir toi-même devant moi. |
 | Pause de waqf et coupure de phrase (rapport matin-5) | L'audio joué par le haut-parleur du PC n'est pas transcrit par Google ; il faut une vraie voix près du téléphone. | Réciter 67:1–67:2 devant le téléphone, avec une pause d'environ 2 s au waqf ; je lance l'écoute et je mesure. |

@@ -30,3 +30,19 @@ APK du `9bcb729` (gardien du service d'accessibilité), site `masari-v43`.
 
 ## Ce qui demande Salmane
 **Le service d'accessibilité est maintenant coupé** à cause de ce test. Il faut le **réactiver** dans Masari (« خدمة الحجب » → تفعيل), comme ce matin.
+
+## Redémarrage du téléphone (testé à 09 h 23, avec Salmane présent pour déverrouiller)
+| Moment | Service activé (`enabled_accessibility_services`) | Service lié (`dumpsys accessibility`) | Écran |
+|---|---|---|---|
+| 09:23:52, avant `adb reboot` | oui | oui | déverrouillé |
+| 09:24:27, fin du démarrage (`sys.boot_completed = 1`) | **oui** | non (pas encore) | écran de verrouillage |
+| 09:24:40 et mesures suivantes jusqu'à 09:25:27 | **oui** | **oui** | déverrouillé |
+
+- **Le blocage tient après un redémarrage** : le service reste activé, et Android le relie de lui-même environ 13 s après la fin du démarrage, juste après le déverrouillage. Il n'a pas fallu ouvrir Masari : le processus de Masari démarre seul.
+- Les alarmes de Masari sont reprogrammées au démarrage (52 entrées dans `dumpsys alarm`).
+- Aucune fausse alerte « 🛡 الحماية متوقفة » : le gardien voit bien le service actif.
+- Pendant les 13 s entre la fin du démarrage et le déverrouillage, le service n'est pas encore lié. C'est sans effet pratique, puisque l'écran est verrouillé.
+
+**Conclusion du point 6 de la tournée** :
+- redémarrage : **OK** ;
+- fermeture forcée : **KO** (voir plus haut). Le service est retiré et rien ne le rétablit ni n'alerte avant la prochaine alarme.
