@@ -16,6 +16,7 @@ import android.view.accessibility.AccessibilityNodeInfo
  */
 class BlockerService : AccessibilityService() {
     private var lastBlock = 0L
+    private var settingsClass = ""
     private val main = Handler(Looper.getMainLooper())
     private var fgPkg = ""; private var fgSince = 0L
     private val protectedPkgs = setOf(
@@ -50,8 +51,9 @@ class BlockerService : AccessibilityService() {
 
         if (pkg in protectedPkgs) {
             if (Store.disableAllowed(this) || Store.settingsPass(this)) return
-            // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer
-            if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && (e.className?.toString() ?: "").contains("DeviceAdminAdd")) return
+            // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer tant que l'écran courant est celui-là
+            if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) settingsClass = e.className?.toString() ?: ""
+            if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && settingsClass.contains("DeviceAdminAdd")) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {
