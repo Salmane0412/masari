@@ -393,7 +393,9 @@ views.stats = () => {
 views.settings = () => {
   const s = S.settings;
   const tjRows = TJ.rules.map((r, i) => `<div class="tjrow"><input type="checkbox" data-tjon="${i}" ${tjOn(i) ? 'checked' : ''} aria-label="تفعيل"><span class="tjn"><i class="tj-${i}">${TJ_SAMPLE[i]}</i> ${TJ_AR[i]}</span><input type="color" data-tj="${i}" value="${tjColor(i)}"></div>`).join('');
+  const th = (() => { try { return localStorage.getItem('masari.theme') || 'auto'; } catch (e) { return 'auto'; } })();
   return `<div class="hero-title">الإعدادات</div>
+  <div class="field"><span>المظهر</span><div class="themeseg" role="group" aria-label="المظهر">${[['auto', 'تلقائي (حسب الهاتف)'], ['dark', '🌙 داكن'], ['light', '☀️ فاتح']].map(([v, l]) => `<button class="btn${th === v ? ' pri' : ''}" data-act="theme" data-v="${v}" aria-pressed="${th === v}">${l}</button>`).join('')}</div></div>
   <div class="two"><label class="field"><span>البداية</span><input type="date" id="st-start" value="${s.start}"></label><label class="field"><span>نهاية الهدف</span><input type="date" id="st-end" value="${s.end}"></label></div>
   <div class="two"><label class="field"><span>أقصى مراجعات يوميًا</span><input type="number" id="st-cap" min="1" max="60" value="${s.reviewCap}"></label><label class="field"><span>عدد التكرار في الجلسة</span><input type="number" id="st-rep" min="1" max="100" value="${s.rep}"></label></div>
   <div class="two"><label class="field"><span>أجزاء الكتب للمراجعة يوميًا</span><input type="number" id="st-bcap" min="0" max="30" value="${s.bookCap}"></label><label class="field"><span>حجم خط المصحف</span><input type="number" id="st-font" min="20" max="56" value="${s.font}"></label></div>
@@ -473,6 +475,13 @@ function expectedOf(i) {
   for (let g = u.a; g <= u.b; g++) { let ws = wordsOf(g); if (Q.ayas[g][1] === 1 && Q.ayas[g][0] !== 1 && Q.ayas[g][0] !== 9) ws = ws.slice(BISM_TOKENS); ws.forEach(w => { const n = normW(w); if (n) { exp.push(n); owner.push(g); } }); }
   return { exp, owner };
 }
+function applyTheme() {
+  let v = 'auto'; try { v = localStorage.getItem('masari.theme') || 'auto'; } catch (e) { }
+  const r = document.documentElement; if (v === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', v);
+  const dark = v === 'dark' || (v === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#0e1a24' : '#eef2f3');
+}
+applyTheme();
 function followEval(exp, heard, from, owner) {
   const st = new Array(exp.length); let p = from || 0, miss = 0, started = false, reps = 0;
   const run = (k, i) => { let r = 0; while (r < 5 && k + r < exp.length && i + r < heard.length && wcost(exp[k + r], heard[i + r]) <= 0.4) r++; return r; };
@@ -1266,6 +1275,7 @@ document.addEventListener('click', e => {
     case 'exam': examPanel(); break;
     case 'exam-go': EX.on = true; EX.i = 0; EX.res = []; EX.qs = examBuild(d.scope, +location.hash.split('/')[3]); examQuestion(); break;
     case 'exam-next': case 'exam-retry': examQuestion(); break;
+    case 'theme': { const v = d.v || 'auto'; try { localStorage.setItem('masari.theme', v); } catch (e) { } applyTheme(); route(); break; }
     case 'exam-stop': examSummary(); if (fol.on) followStop(); break;
     case 'voicetest': voiceTest(); break;
     case 'fol-resume': followResume(+d.from); break;

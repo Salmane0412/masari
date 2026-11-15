@@ -7,13 +7,19 @@
   --ui:"Cairo",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
 }
 @media (prefers-color-scheme:dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#0e1a24; --surface:#14252f; --ink:#e6eff0; --mute:#8aa1a9; --line:#24394a;
     --accent:#59c3ac; --accent-ink:#06211c; --gold:#e0bd62;
     --mem:#47c2a5; --rel:#e8a24a; --prog:#7f9df0; --none:#2b4050;
     --shadow:none;
   }
 }
+:root[data-theme="dark"]{
+    --bg:#0e1a24; --surface:#14252f; --ink:#e6eff0; --mute:#8aa1a9; --line:#24394a;
+    --accent:#59c3ac; --accent-ink:#06211c; --gold:#e0bd62;
+    --mem:#47c2a5; --rel:#e8a24a; --prog:#7f9df0; --none:#2b4050;
+    --shadow:none;
+  }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--ui);}
@@ -222,7 +228,8 @@ details.more summary{min-height:44px;display:flex;align-items:center;cursor:poin
 
 /* ===== 2026-11: تحديث التصميم + المال + المهام ===== */
 :root{--bg:#f2f5f4;--surface:#fff;--sunk:#e9efed;--ink:#13232a;--mute:#5d6f75;--line:#dde5e3;--accent:#0b7a68;--pos:#16855c;--neg:#c2412d;--r:16px;--shadow:0 1px 2px rgba(19,35,42,.06),0 4px 14px rgba(19,35,42,.05)}
-@media (prefers-color-scheme:dark){:root{--bg:#0b141b;--surface:#121f28;--sunk:#0f1a22;--ink:#e7f0f1;--mute:#8ea4ab;--line:#1f303c;--accent:#4fc3a8;--accent-ink:#04201a;--pos:#4cc58c;--neg:#ef7a64;--shadow:none}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b141b;--surface:#121f28;--sunk:#0f1a22;--ink:#e7f0f1;--mute:#8ea4ab;--line:#1f303c;--accent:#4fc3a8;--accent-ink:#04201a;--pos:#4cc58c;--neg:#ef7a64;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0b141b;--surface:#121f28;--sunk:#0f1a22;--ink:#e7f0f1;--mute:#8ea4ab;--line:#1f303c;--accent:#4fc3a8;--accent-ink:#04201a;--pos:#4cc58c;--neg:#ef7a64;--shadow:none}
 body{background:var(--bg)}
 #top{position:sticky;top:0;z-index:4;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 h2{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:6px}
@@ -380,3 +387,6 @@ body.following #rec-out:not(:empty){bottom:calc(186px + env(safe-area-inset-bott
 .pchks .pchk{width:auto;height:auto;flex:1 1 140px;border:0;border-radius:0;background:none;color:var(--ink);font-weight:600;min-height:44px;gap:8px;text-align:right}
 .pchks .pchk span{line-height:1.35}
 .pchks .pchk input{flex:none;width:24px;height:24px}
+
+:root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+.themeseg{display:flex;gap:6px;flex-wrap:wrap}.themeseg button{flex:1 1 90px}
