@@ -417,8 +417,9 @@ views.settings = () => {
   <label class="field"><span>المستودع الخاص (المالك/الاسم)</span><input type="text" id="gh-repo" dir="ltr" value="${esc(gh.repo)}" placeholder="Salmane0412/masari-data" autocapitalize="off" autocomplete="off"></label>
   <label class="field"><span>رمز الوصول (fine-grained، صلاحية Contents: قراءة وكتابة)</span><input type="password" id="gh-token" dir="ltr" value="${esc(gh.token)}" autocomplete="off"></label>
   <label class="field"><span>رمز الربط (انسخه من جهاز مضبوط والصقه هنا: يملأ الحقلين دفعة واحدة)</span><input type="text" id="gh-code" dir="ltr" placeholder="masari-link:…" autocomplete="off"></label>
-  <div class="btns"><button class="btn" data-act="gh-copycode">نسخ رمز الربط</button><button class="btn" data-act="gh-usecode">استعمال الرمز الملصوق</button></div>
+  <div class="btns"><button class="btn" data-act="gh-copycode">نسخ رمز الربط</button><button class="btn" data-act="gh-qr">📷 رمز QR لربط جهاز آخر</button><button class="btn" data-act="gh-usecode">استعمال الرمز الملصوق</button></div>
   <div class="btns"><button class="btn pri" data-act="gh-conn">حفظ واختبار</button><button class="btn" data-act="gh-push">إرسال الآن</button><button class="btn" data-act="gh-pull">استرجاع</button></div>
+  <div id="gh-qr" style="display:flex;justify-content:center;margin:10px 0"></div>
   <p class="sub" id="gh-status" role="status">${esc(gh.msg || (ghReady() ? 'جاهز.' : 'غير مضبوط.'))}</p>
   <h2>البيانات</h2>
   <p class="sub">كل شيء محفوظ على هذا الجهاز. صدّر نسخة احتياطية بانتظام، خصوصًا قبل تغيير الهاتف أو مسح المتصفح.</p>
@@ -1209,6 +1210,10 @@ const tabOf = n => ({ salat: 'today', phone: 'more', pin: 'more', fin: 'more', i
 function route() {
   route.y = window.scrollY;
   const h = location.hash.replace(/^#\/?/, '') || 'today';
+  if (h.startsWith('link/')) { // ربط عبر QR: يملأ المستودع والرمز ثم يمسح الرابط من السجل
+    try { const o = JSON.parse(b64d(decodeURIComponent(h.slice(5)).replace(/^masari-link:/, ''))); if (o.r && o.t) { gh.repo = o.r; gh.token = o.t; ghSave(); toast('تم ربط هذا الجهاز'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); } } catch (e) { toast('رابط ربط غير صالح'); }
+    history.replaceState(null, '', location.pathname + '#/settings'); return route();
+  }
   const [name, a, b, c] = h.split('/');
   closeSheet();
   const top = $('#top'), view = $('#view'), tabs = $('#tabs');
@@ -1365,6 +1370,15 @@ document.addEventListener('click', e => {
     case 'fa-read': readAloud(); break;
     case 'gh-copycode': if (!ghReady()) { toast('اضبط المستودع والرمز أولًا'); break; }
       { const code = 'masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })); (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('نُسخ رمز الربط'), () => { const el = $('#gh-code'); if (el) { el.value = code; el.select(); } toast('انسخ الرمز من الحقل'); }); } break;
+    case 'gh-qr': { if (!ghReady()) { toast('اضبط المستودع والرمز أولًا'); break; }
+      const box = $('#gh-qr'); if (!box) break; box.innerHTML = '<span class="sub">جارٍ التحضير…</span>';
+      const url = location.origin + location.pathname + '#/link/' + encodeURIComponent('masari-link:' + b64e(JSON.stringify({ r: gh.repo, t: gh.token })));
+      (window.QRCode ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js')).then(() => {
+        box.innerHTML = ''; const holder = document.createElement('div'); holder.style.cssText = 'background:#fff;padding:12px;border-radius:12px'; box.appendChild(holder);
+        new QRCode(holder, { text: url, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.L });
+        const note = document.createElement('p'); note.className = 'sub'; note.textContent = 'امسحه بكاميرا الجهاز الآخر. يختفي بعد دقيقتين. لا تُرسله ولا تلتقط له صورة: فيه رمز الوصول.'; box.appendChild(note);
+        setTimeout(() => { if ($('#gh-qr') === box) box.innerHTML = ''; }, 120000);
+      }).catch(() => { box.innerHTML = ''; toast('تعذّر تحميل مولّد QR: تحقق من الاتصال'); }); break; }
     case 'gh-usecode': try { const v = $('#gh-code').value.trim().replace(/^masari-link:/, ''); const o = JSON.parse(b64d(v)); if (!o.r || !o.t) throw 0; gh.repo = o.r; gh.token = o.t; ghSave(); ghStatus('جارٍ الاختبار…'); ghRemote().then(r => r.data ? ghPull(false) : ghPush(true)).catch(e => ghStatus('فشل: ' + e.message)); route(); } catch (e) { toast('رمز غير صالح'); } break;
     case 'pin-set': { const p1 = $('#pin-1').value.trim(), p2 = $('#pin-2').value.trim(); if (!/^\d{4,8}$/.test(p1)) return toast('من 4 إلى 8 أرقام'); if (p1 !== p2) return toast('الرمزان مختلفان'); PIN.setPin(p1, 1).then(() => { const c = PIN.get(); c.len = p1.length; localStorage.setItem('masari.pin', JSON.stringify(c)); route(); toast('فُعّل رمز الدخول'); }); break; }
     case 'pin-skip': localStorage.setItem('masari.pinskip', '1'); route(); break;
