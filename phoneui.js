@@ -63,6 +63,7 @@
     <div class="card rule"><b>✅ مسموحة دائمًا</b><span class="sub">الاتصال والرسائل والخرائط وتطبيقات المصادقة مسموحة تلقائيًا. أضف البنك والنادي…</span>${chips('allowed', d.allowed || [])}</div>
     <div class="card rule"><b>💬 إشعارات واتساب</b><label class="check"><input type="checkbox" id="ph-wa" ${d.waFilter ? 'checked' : ''}> أسكت إشعارات واتساب إلا من هؤلاء (المكالمات تمرّ دائمًا)</label>
       <label class="field"><span>الأسماء كما تظهر في واتساب (مفصولة بفاصلة)</span><input type="text" id="ph-waallow" value="${esc((d.waAllow || []).join('، '))}"></label>
+      ${(() => { const seen = J(N().waSeen(), []).filter(n => !(d.waAllow || []).includes(n)); return seen.length ? `<span class="sub">أسماء ظهرت في إشعاراتك مؤخرًا، المس اسمًا لإضافته:</span><div class="chips">${seen.slice(0, 24).map(n => `<button class="chip" data-ph="waadd" data-n="${esc(n)}">+ ${esc(n)}</button>`).join('')}</div>` : '<span class="sub">ستظهر هنا أسماء من يراسلك في واتساب بعد وصول أول إشعارات (فعّل «قراءة الإشعارات» أعلاه).</span>'; })()}
       <button class="btn sm" data-ph="open" data-k="dnd">أو استعمل «عدم الإزعاج» في أندرويد مع جهات الاتصال المهمة</button></div>
     <div class="card rule"><b>🌐 حجب المواقع</b><label class="check"><input type="checkbox" id="ph-web" ${d.webBlock ? 'checked' : ''}> احجب هذه المواقع حتى إنهاء مهام اليوم (والإباحية دائمًا)</label>
       <textarea id="ph-domains" dir="ltr" rows="3" style="min-height:80px">${esc((d.domains || []).join('\n'))}</textarea></div>
@@ -126,6 +127,7 @@
       }
       case 'cancel': N().cancelPending(); rer(); toast('أُلغي التعديل المنتظر'); break;
       case 'pair': { const o = J(N().partnerPair(!!b.dataset.force), {}); if (o.error) return toast('الشريك مربوط مسبقًا'); rer(); $('#ph-pair').innerHTML = pairHtml(o); $('#ph-pair').scrollIntoView({ behavior: 'smooth' }); break; }
+      case 'waadd': { const i = $('#ph-waallow'); if (i) { const cur = i.value.split(/[,،]/).map(x => x.trim()).filter(Boolean); if (!cur.includes(b.dataset.n)) cur.push(b.dataset.n); i.value = cur.join('، '); b.remove(); toast('أُضيف؛ اضغط حفظ لتطبيقه'); } break; }
       case 'test': N().partnerTest(); toast('أُرسل التنبيه التجريبي'); break;
     }
   });

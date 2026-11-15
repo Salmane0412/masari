@@ -59,6 +59,8 @@ class NativeBridge(private val act: MainActivity) {
         return o.toString()
     }
 
+    @JavascriptInterface fun waSeen(): String = JSONArray(safe(emptyList<String>()) { Store.waSeen(c) }).toString()
+
     @JavascriptInterface fun apps(): String {
         val pm = c.packageManager
         val i = Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_LAUNCHER)

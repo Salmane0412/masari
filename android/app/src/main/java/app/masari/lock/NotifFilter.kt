@@ -11,6 +11,7 @@ class NotifFilter : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn == null || sbn.packageName !in WA) return
         val cfg = Policy.current(this)
+        try { val ex0 = sbn.notification?.extras; val nm = ((ex0?.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE) ?: ex0?.getCharSequence(Notification.EXTRA_TITLE)) ?: "").toString(); if (nm.isNotBlank() && !nm.equals("WhatsApp", true) && !Regex("\\d+ (new )?(messages?|رسائل|messages)", RegexOption.IGNORE_CASE).containsMatchIn(nm)) Store.addWaSeen(this, nm) } catch (e: Exception) { }
         if (!cfg.waFilter) return
         val n = sbn.notification ?: return
         if (n.category == Notification.CATEGORY_CALL) return
