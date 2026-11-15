@@ -23,6 +23,13 @@ Ces idées sont classées par **valeur pour le hifz** (V, de 1 à 5) puis par **
 | 14 | **Exporter la séance** (audio + transcription) pour la montrer à un enseignant | 2 | 2 | Utile pour la relation enseignant-élève. L'audio doit rester local et n'être partagé que sur choix explicite. |
 | 15 | **Tajwid du mot cliqué** (règle et couleur expliquées), à partir du mini-livre des makhârij | 2 | 4 | C'est déjà prévu dans la feuille de route. QUL fournit la morphologie (avec un compte). |
 
+### Ajouts de fin de nuit (tirés des mesures des rapports B, J et E4)
+| # | Idée | V | C | Pourquoi (observé) |
+|---|---|---|---|---|
+| 16 | **Mode hors ligne honnête** : détecter l'absence de réseau et dire « suivi vocal, écoute et examen indisponibles hors ligne » ; mettre en cache les fichiers audio de l'unité du jour | 4 | 1 | Hors ligne, l'examen continue sans le son du récitateur, l'écoute affiche un message trompeur, et Google n'a pas de pack arabe hors ligne sur ce téléphone (`error 12`). |
+| 17 | **Synthèse vocale native** (TextToSpeech d'Android via `MasariNative`) pour toutes les consignes parlées | 3 | 2 | `speechSynthesis` est absent de la WebView : le test vocal est muet dans l'app. |
+| 18 | **Choix du récitateur** pour l'écoute et l'examen (Al-Husary pour apprendre, Al-Afasy…) | 2 | 1 | L'écoute et l'examen jouent Al-Afasy, alors que le plan d'horodatage vise Al-Husary. Les segments mot à mot de Quran.com existent pour les deux (à vérifier pour Al-Afasy). |
+
 ## Projets ouverts à étudier, sans copier de code avant vérification de la licence
 - [Real-Time Quran recitation tracker](https://github.com/yayaiu6/Real-Time-Quran-recitation-tracker-System) : suivi dans une fenêtre locale et appariement par distance de Levenshtein. Il mentionne un modèle Conformer-CTC sous licence MIT. Sa précision de plus de 98 % est annoncée par l'auteur, pas mesurée par moi.
 - [quran-align](https://github.com/cpfair/quran-align) : horodatage mot à mot de l'audio de type everyayah.
