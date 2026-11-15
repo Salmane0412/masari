@@ -37,6 +37,14 @@ C'est exactement le genre de confusion qu'on fait en hifz (وهو/وهي, الذ
 | C : graphie repliée (ا ى ء ة) identique = juste ; sinon mots de 3 lettres repliées ou moins exacts | 3/7 | **0** | 1 (« رجوما ») |
 | D : C + même première et dernière lettre exigées pour les mots proches | **7/7** | 1 (« والحيوٰة » uthmani contre « والحياة ») | 3 (« ليبلوكم » déformé par Google, « رجوما », « والحيوة ») |
 
+### Variante E (essayée à 02 h 30)
+E reprend D, et le repli ignore en plus les voyelles longues **au milieu** du mot (و et ي, sans toucher la première ni la dernière lettre). Elle vise « رجما » (Google) contre « رجوما », et « حياة » contre « حيوة ».
+- Substitutions proches : **5/7**. Ratés : « الرحمن → الرحيم » et « حسير → كبير ».
+- Fausses alertes sur texte exact : **0**.
+- Vraies séances Google : séance « النظر » **0** ; séance « والعيش » : l'ajout est signalé (juste) et il reste **1** fausse alerte, « ليبلوكم », qui vient de « نيه بلوكم » rendu par Google.
+
+**D attrape plus, E alerte moins.** Le banc large (rapport E4) a été fait avec D.
+
 ## Proposition au chef
 - Partir de **D**, en ajoutant au repli de graphie les écritures uthmani en wâw : حيوة/حياة, صلوة/صلاة, زكوة/زكاة.
 - Re-mesurer ensuite avec ce même script : il suffit d'ajouter la variante dans `VARIANTES`.
