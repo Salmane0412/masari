@@ -46,6 +46,24 @@ Le cas 14 a été renoté à la main : l'index attendu était faux, car le suivi
    - il ajoute des queues : « …من فطور **مرجع البصر** ».
    Le modèle local seul ne peut donc **pas** remplacer Google pour le suivi en direct. En seconde passe, il faut le combiner : ne garder un écart que s'il est confirmé par Google, ou par 2 fenêtres.
 
+## Prototype mesuré : règle « mot manquant » (hors app, `app.js` non modifié)
+**Règle** : un mot ni « juste » ni « faux » dans le résultat de `followEval` est signalé s'il remplit deux conditions :
+- ses 2 voisins de chaque côté sont « justes » ;
+- il n'est pas le premier mot de son aya.
+
+Elle est calculée dans la WebView du téléphone, sur la sortie de la vraie fonction `followEval` en v42. Script : `C:\masari-data\nuit\scripts\proto_manque.py`.
+
+| Entrée | Mots manquants attendus | Détectés | Fausses alertes |
+|---|---|---|---|
+| Texte idéal (28 cas) | 6 | **6** | **0** |
+| Modèle local (28 cas + 2 voix) | 6 | 6 | 6 |
+| Vraie transcription Google, séance « والعيش » (14/11) | 0 | – | **0** |
+| Vraie transcription Google, séance « النظر » (14/11) | (substitution perdue par Google) | **« 67:3 البصر » signalé** | **0** |
+
+Résultat : la règle rattrape la substitution réelle de Salmane que Google avait fait disparaître. Elle ne donne aucune fausse alerte sur les 2 vraies séances Google, ni sur le texte exact. Sans l'exclusion du premier mot d'aya, il y avait 2 fausses alertes sur Google, sur des mots en début d'aya perdus entre deux phrases.
+
+**C'est la correction la plus rentable trouvée cette nuit.** Elle reste à valider sur plus de séances réelles.
+
 ## Pas testé
 - La chaîne avec la reconnaissance **Google** sur ces 30 cas : il aurait fallu jouer l'audio au haut-parleur toute la nuit. À faire de jour, ou avec un câble audio.
 - D'autres sourates, d'autres voix que Salmane et Al-Husary.
