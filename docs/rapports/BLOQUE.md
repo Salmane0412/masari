@@ -1,0 +1,7 @@
+# Tâches bloquées : elles ont besoin de Salmane (nuit du 15/11/2026)
+
+| Tâche | Pourquoi c'est bloqué | Ce que Salmane doit faire |
+|---|---|---|
+| Tournée, point 6 : le blocage tient-il après un redémarrage et après une fermeture forcée ? | Sur le téléphone, l'état natif lu par `MasariNative.status()` renvoie `accessibility:false`, et `settings get secure enabled_accessibility_services` = `null`. Le service de blocage n'a jamais été activé sur ce téléphone, il n'y a donc rien à tester. Un redémarrage demanderait de plus le code de déverrouillage, que je ne dois pas saisir. | Activer « خدمة الحجب » dans Masari (Paramètres → Accessibilité → Masari ; si le bouton est gris : Applications → Masari → ⋮ → « Autoriser les paramètres restreints »), puis me laisser redémarrer le téléphone une fois, quand tu es là pour le déverrouiller. |
+| D : comparer l'horodatage aux segments QUL | Les téléchargements de QUL demandent un compte. | Rien d'urgent : les segments publics de Quran.com, sans compte, ont servi de référence à la place (rapport D). Crée un compte QUL seulement si tu veux aussi d'autres récitateurs ou la morphologie. |
+| Tournée, point 7 : batterie sur 10 min de suivi | Le téléphone est sur le secteur toute la nuit (`AC powered: true`), la batterie monte au lieu de descendre. | Rien à faire maintenant. Pour mesurer la consommation, il faudra une séance sans chargeur, de jour. |
