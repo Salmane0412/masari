@@ -21,7 +21,7 @@ Ce test est hors de la file A–H. Il correspond à la priorité n° 1 de la feu
 ## Conclusion
 - Sur de vraies phrases bruitées, `locate.js` retrouve le bon endroit **dans 21 cas sur 24 où il répond (88 %)**. Ses erreurs viennent des formules partagées entre sourates.
 - Il faut donc l'utiliser comme le prévoit le plan de CLAUDE.md : **d'abord près de la dernière position**, et la recherche large seulement si plusieurs phrases de suite ne collent plus.
-- Il faut aussi **attendre 2 phrases concordantes** avant de sauter vers une autre sourate. Avec cette règle, les 2 erreurs ci-dessus n'auraient pas fait sauter le suivi : la phrase suivante pointait vers 67.
+- Il faut aussi **attendre 2 phrases concordantes** avant de sauter vers une autre sourate. Avec cette règle, les 2 erreurs ci-dessus n'auraient pas fait sauter le suivi : elles se suivent, mais pointent vers 2 endroits différents (16:92 puis 65:12), et les phrases suivantes reviennent en 67.
 
 ## Pas testé
 - L'intégration dans l'interface (`locate.js` n'est pas branché).
