@@ -94,8 +94,25 @@ object Alarms {
     }
 }
 
+/** Gardien du gardien : si le service de blocage a été actif puis disparaît (coupé ou tué), on prévient tout de suite. */
+object Watchdog {
+    fun check(c: Context) {
+        try {
+            val p = c.getSharedPreferences("masari", Context.MODE_PRIVATE)
+            if (!p.getBoolean("accSeen", false)) return
+            val on = (android.provider.Settings.Secure.getString(c.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "").contains(c.packageName + "/")
+            if (on) { p.edit().remove("accOffSince").apply(); return }
+            if (p.getLong("accOffSince", 0L) == 0L) p.edit().putLong("accOffSince", System.currentTimeMillis()).apply()
+            Alarms.notify(c, Alarms.CH_REM, 78, "🛡 الحماية متوقفة", "خدمة الحجب لم تعد مفعّلة. افتح مساري وأعد تفعيلها.")
+            Events.add(c, "protect")
+            Partner.send(c, "توقّف خدمة الحماية", "خدمة الحجب في مساري لم تعد مفعّلة على الهاتف.", "acc-off", 4, 60)
+        } catch (e: Exception) { }
+    }
+}
+
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, i: Intent) {
+        Watchdog.check(c)
         Policy.checkPending(c)
         when (i.getStringExtra("kind")) {
             "salat" -> Alarms.notify(c, Alarms.CH_SALAT, 1, i.getStringExtra("title") ?: "", i.getStringExtra("text") ?: "")
@@ -107,5 +124,5 @@ class AlarmReceiver : BroadcastReceiver() {
 }
 
 class BootReceiver : BroadcastReceiver() {
-    override fun onReceive(c: Context, i: Intent) { Alarms.scheduleAll(c) }
+    override fun onReceive(c: Context, i: Intent) { Alarms.scheduleAll(c); Watchdog.check(c) }
 }

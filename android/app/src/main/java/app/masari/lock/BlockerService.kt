@@ -33,6 +33,7 @@ class BlockerService : AccessibilityService() {
         super.onServiceConnected()
         val i = Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_HOME)
         launchers = packageManager.queryIntentActivities(i, 0).map { it.activityInfo.packageName }.toSet()
+        getSharedPreferences("masari", MODE_PRIVATE).edit().putBoolean("accSeen", true).remove("accOffSince").apply()
         Alarms.scheduleAll(this)
     }
 
