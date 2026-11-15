@@ -62,6 +62,15 @@ Elle est calculée dans la WebView du téléphone, sur la sortie de la vraie fon
 
 Résultat : la règle rattrape la substitution réelle de Salmane que Google avait fait disparaître. Elle ne donne aucune fausse alerte sur les 2 vraies séances Google, ni sur le texte exact. Sans l'exclusion du premier mot d'aya, il y avait 2 fausses alertes sur Google, sur des mots en début d'aya perdus entre deux phrases.
 
+**Code proposé au chef** (non appliqué), à placer juste avant `return { st, p, reps };` dans `followEval` (`app.js:535` à `a1122ad`). C'est exactement la règle mesurée ci-dessus :
+```js
+// كلمة ساقطة: لم تُسمع وما قبلها وما بعدها (كلمتان من كل جهة) صحيح، وليست أول الآية → خطأ (سقط)
+if (owner) for (let k = Math.max(from || 0, 2); k + 2 < exp.length; k++)
+  if (st[k] !== 'ok' && st[k] !== 'bad' && owner[k - 1] === owner[k]
+      && st[k - 2] === 'ok' && st[k - 1] === 'ok' && st[k + 1] === 'ok' && st[k + 2] === 'ok') st[k] = 'bad';
+```
+Il faudra ensuite rejouer `tests/follow-replay.pw.js` et `C:\masari-data\nuit\scripts\proto_manque.py`.
+
 **C'est la correction la plus rentable trouvée cette nuit.** Elle reste à valider sur plus de séances réelles.
 
 ## Pas testé
