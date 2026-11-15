@@ -4,6 +4,11 @@
 - APK de la release `apk` publiée le 14/11 à 19 h 42 UTC, après le commit `91c28e0` (configChanges). Téléchargé dans `C:\masari-data\apk-2026-11-15\`, installé par `adb install -r` : Success.
 - App fermée puis rouverte : cache **`masari-v42`**, `MasariNative.version() = "2.3"`.
 
+## Nouvel APK publié à 00 h 49 (testé à 01 h 49)
+La release `apk` a été reconstruite à 23 h 49 UTC depuis `main` (`a1122ad`), sans changement dans `android/` depuis `91c28e0`. Le fichier change de 8 octets, et son empreinte SHA-256 est différente. Il a été installé (`adb install -r`) : versionName 2.3, versionCode 6, `masari-v42`, données intactes (`masari.v1` de 19 621 caractères, identique).
+
+Re-test sur cet APK : rotation pendant le suivi OK (pas de rechargement, p = 9 conservé). Les 6 cas de suivi de la tournée donnent des **résultats identiques** : « والعيش » signalé, « النظر » perdu par Google non signalé, arrêt « قف » toujours déclenché à tort sur « رضيع ». Démarrage à froid : 1 585 ms (premier lancement après installation).
+
 ## Méthode
 - **Débogage de la WebView** (CDP) par `adb forward`.
 - **Phrases reconnues injectées** par le crochet natif `window.__nsr_ev('result', texte, true)`. C'est exactement le chemin qu'emprunte `SpeechBridge`, mais sans micro : l'audio n'a pas été joué pendant la nuit.

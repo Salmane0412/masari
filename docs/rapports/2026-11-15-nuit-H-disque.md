@@ -16,5 +16,7 @@ C: fait 121 Go, avec **2,6 Go libres** (98 % occupé), mesuré par `df`. **Rien 
 | `AppData\Local\Temp` | 0,7 Go | Fichiers temporaires (dont ce scratchpad de session) | Nettoyage de disque de Windows. |
 | `AppData\Local\pip` | 0,36 Go | Cache pip | `pip cache purge`. |
 | `C:\masari-data` | 120 Mo | Données de test | Garder. |
+| `Program Files` / `Program Files (x86)` | 12 Go / 3,3 Go | Logiciels installés | Désinstaller ce qui ne sert plus, depuis Paramètres → Applications. |
+| `AppData\Local\Claude-Data` | 1,8 Go | Données de l'application Claude | Ne pas toucher. |
 
 **Total facilement récupérable** : environ 4,2 Go (émulateur), plus 3,2 Go (hibernation) et 1,5 à 3,4 Go (anciens modèles whisper, si tu confirmes qu'ils ne servent plus).
