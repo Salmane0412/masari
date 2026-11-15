@@ -27,6 +27,10 @@
         <activity android:name=".WhyActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".LockActivity" android:exported="false"
             android:launchMode="singleTask" android:excludeFromRecents="true" />
+        <receiver android:name=".MasariAdmin" android:exported="true" android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
+            <intent-filter><action android:name="android.app.action.DEVICE_ADMIN_ENABLED" /></intent-filter>
+        </receiver>
         <receiver android:name=".AlarmReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>

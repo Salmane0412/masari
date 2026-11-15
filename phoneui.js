@@ -33,6 +33,7 @@
     const d = draft, use = st.usage || {}, ev = st.events || {};
     const checks = [
       ['accessibility', 'خدمة الحجب (إمكانية الوصول)', st.accessibility, 'أساس الحجب كله'],
+      ['admin', 'حماية من الحذف (مدير الجهاز)', st.admin, 'يمنع حذف مساري قبل إلغاء التفعيل'],
       ['notifperm', 'الإشعارات', st.notifPerm, 'للأذان والتذكيرات'],
       ['exact', 'المنبّهات الدقيقة', st.exactAlarm, 'ليأتي الأذان في وقته بالضبط'],
       ['battery', 'استثناء من توفير البطارية', st.battery, 'حتى لا يوقف أندرويد مساري'],
