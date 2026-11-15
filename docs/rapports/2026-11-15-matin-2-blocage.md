@@ -25,11 +25,10 @@ APK du `9bcb729` (gardien du service d'accessibilité), site `masari-v43`.
   3. noter l'heure de coupure dès la réouverture, pour que le rapport au partenaire indique la durée réelle sans protection.
 
 ## Pas testé
-- **Le redémarrage du téléphone** : j'attends que Salmane me dise qu'il est là (voir `BLOQUE.md`).
 - Le blocage effectif d'une application : il faudrait ouvrir une app bloquée. La seule règle active vise Telegram, que je ne dois pas ouvrir. Ajouter une app de test serait un durcissement, et son retrait prendrait 24 h.
 
-## Ce qui demande Salmane
-**Le service d'accessibilité est maintenant coupé** à cause de ce test. Il faut le **réactiver** dans Masari (« خدمة الحجب » → تفعيل), comme ce matin.
+## Après le test
+Le service coupé par la fermeture forcée a été **réactivé par Salmane**. C'est vérifié : il est activé, lié, et `accessibility: true`.
 
 ## Redémarrage du téléphone (testé à 09 h 23, avec Salmane présent pour déverrouiller)
 | Moment | Service activé (`enabled_accessibility_services`) | Service lié (`dumpsys accessibility`) | Écran |
