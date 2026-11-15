@@ -452,17 +452,17 @@ views.session = (kind, id, mode) => {
 const normW = t => normAr(t.replace(/\u0670/g, 'ا')).replace(/[^ء-ي]/g, ''); // الألف الخنجرية تُكتب ألفًا كما يكتبها التعرّف الصوتي
 function lev(a, b) { const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
 const foldW = w => w.replace(/[ؤئء]/g, 'ا').replace(/ذ/g, 'ز').replace(/ث/g, 'س').replace(/ظ/g, 'ض').replace(/ط/g, 'ت').replace(/ص/g, 'س').replace(/ق/g, 'ك').replace(/ح/g, 'ه').replace(/ع/g, 'ا');
+// الرسم المطوي: همزات وألف مقصورة وتاء مربوطة، وكتابة الواو العثمانية (حيوة=حياة)
+const gW = w => w.replace(/يا$/, 'ي').replace(/وة$/, 'اة').replace(/[ؤئء]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
 function wcost(e, h) {
-  const c = wcost0(e, h);
-  // كلمتان تبدآن بـ «ال»: الاشتراك في الألف واللام لا يكفي (البصر ≠ النظر)؛ تُقارَن الجذور بعد حذفها
-  if (c === 0.4 && e.length >= 4 && h.length >= 4 && e.startsWith('ال') && h.startsWith('ال')) { const se = e.slice(2), sh = h.slice(2); if (lev(foldW(se), foldW(sh)) > (se.length >= 5 ? 2 : 1)) return 1; }
-  return c;
-}
-function wcost0(e, h) {
-  if (e === h) return 0; const d = lev(e, h);
-  if (d <= (e.length >= 5 ? 2 : 1) && Math.max(e.length, h.length) >= 3) return 0.4;
-  const fe = foldW(e), fh = foldW(h); if (fe === fh) return 0.4;
-  if (Math.max(e.length, h.length) >= 4 && lev(fe, fh) <= (fe.length >= 6 ? 2 : 1)) return 0.4;
+  if (e === h) return 0;
+  const ge = gW(e), gh = gW(h); if (ge === gh) return 0.4;
+  const fe = foldW(e), fh = foldW(h); if (fe === fh && Math.max(e.length, h.length) >= 4) return 0.4;   // التباس صوتي (ص/س، ق/ك…)
+  // كلمة قريبة: ٤ حروف فأكثر، وأول حرف وآخره متطابقان، وجذرا الكلمتين متقاربان بعد حذف «ال»
+  if (ge.length >= 4 && gh.length >= 4 && ge[0] === gh[0] && ge[ge.length - 1] === gh[gh.length - 1] && lev(ge, gh) <= (ge.length >= 6 ? 2 : 1)) {
+    if (ge.startsWith('ال') && gh.startsWith('ال') && lev(foldW(ge.slice(2)), foldW(gh.slice(2))) > (ge.length - 2 >= 5 ? 2 : 1)) return 1;
+    return 0.4;
+  }
   return 1;
 }
 function expectedOf(i) {
@@ -502,7 +502,7 @@ function followEval(exp, heard, from, owner) {
     for (let d = 0; d < 3 && p + d < exp.length; d++) {
       if (wcost(exp[p + d], h) <= 0.4) { f = d; break; }
       if (p + d + 1 < exp.length && wcost(exp[p + d] + exp[p + d + 1], h) <= 0.4) { f = d; join = 1; break; } // كلمتان مدمجتان في كلمة مسموعة
-      if (hi + 1 < heard.length && wcost(exp[p + d], h + heard[hi + 1]) <= 0.4) { f = d; two = 1; break; } // كلمة مقسومة إلى كلمتين
+      if (hi + 1 < heard.length && wcost(exp[p + d], h + heard[hi + 1]) <= 0.4 && !(p + d + 1 < exp.length && wcost(exp[p + d + 1], heard[hi + 1]) <= 0.4)) { f = d; two = 1; break; } // كلمة مقسومة إلى كلمتين
     }
     if (f >= 0) {
       started = true; // كلمة فاتت التعرّف: لا تُحسب خطأً (التعرّف يُسقط كلمات كثيرة)؛ الخطأ الحقيقي = كلمات مسموعة لا تطابق شيئًا
@@ -532,6 +532,9 @@ function followEval(exp, heard, from, owner) {
       else { miss++; if (miss >= 3) { st[p] = 'bad'; p++; miss = 0; } }
     } // قبل أول كلمة مطابقة (بسملة، استعاذة…) لا خطأ
   }
+  // كلمة ساقطة: لم تُسمع وكلمتان قبلها وكلمتان بعدها صحيحة في الآية نفسها، وليست أول الآية → خطأ (سقط)
+  if (owner) for (let k = Math.max(from || 0, 2); k + 2 < exp.length; k++)
+    if (st[k] !== 'ok' && st[k] !== 'bad' && owner[k - 1] === owner[k] && st[k - 2] === 'ok' && st[k - 1] === 'ok' && st[k + 1] === 'ok' && st[k + 2] === 'ok') st[k] = 'bad';
   return { st, p, reps };
 }
 /* المؤكَّد (نتائج نهائية) يحدّد الأخطاء؛ المؤقّت يُظهر التقدّم فقط ولا يُخطّئ أحدًا */
@@ -568,7 +571,11 @@ function followPaint() {
   fol.st = r.st; fol.p = r.p;
   followLocate(hw, r);
   if (fol.on && fol.endIdx != null && !fol.paused && r.p >= fol.endIdx) { fol.endIdx = null; beep(660, 250); say('قِف'); followStop(); return; }
-  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { followHalt(kb); return; } }
+  if (fol.on && fol.stopOnErr && !fol.paused) { const ca = followEval(fol.exp, hw.committed, fol.from, fol.owner); let kb = -1; for (let k = fol.from; k < fol.exp.length; k++) if (ca.st[k] === 'bad') { kb = k; break; } if (kb >= 0) { fol.excused = fol.excused || new Set(); // قاعدة: أول كلمة في جملة جديدة مشوَّهة وبعدها ٣ كلمات صحيحة → لا نوقف (تعرّف رديء لا خطأ قارئ)
+      if (!fol.excused.has(kb)) { const chunks = (fol.base || '').split('\n').filter(Boolean); let first = false;
+        if (chunks.length) { const before = chunks.slice(0, -1).flatMap(c => stripIntro(cleanHeard(c))); const pe = followEval(fol.exp, before, fol.from, fol.owner).p; first = kb <= pe; }
+        if (first && [1, 2, 3].every(d => ca.st[kb + d] === 'ok')) fol.excused.add(kb); }
+      if (!fol.excused.has(kb)) { followHalt(kb); return; } } }
   let ok = 0, bad = 0;
   document.querySelectorAll('.w[data-wi]').forEach(el => {
     const k = +el.dataset.wi, s = r.st[k];
@@ -674,7 +681,7 @@ function followResume(from) {
 }
 function folStatus(m) { const el = $('#fol-status'); if (el) el.textContent = m; }
 const SR_ERR = { 'not-allowed': 'لم يُسمح بالميكروفون: اسمح له من إعدادات الموقع في المتصفح ثم أعد المحاولة.', 'service-not-allowed': 'خدمة التعرّف الصوتي غير مسموحة في هذا المتصفح.', 'audio-capture': 'لم يُعثر على ميكروفون.', 'network': 'التعرّف الصوتي يحتاج اتصالًا بالإنترنت.', 'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.' };
-function followStart() {
+function followStart() { fol.excused = new Set();
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { folStatus('المتصفح لا يدعم التعرّف الصوتي. استعمل Chrome على الحاسوب أو أندرويد.'); toast('استعمل متصفح Chrome'); return; }
   if (fol.on) return followStop();
