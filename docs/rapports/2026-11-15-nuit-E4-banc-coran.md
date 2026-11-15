@@ -1,4 +1,4 @@
-# Nuit — E4. Banc de la logique sur tout le Coran : 18 032 erreurs simulées (15/11/2026, ~02 h 30)
+# Nuit — E4. Banc de la logique sur tout le Coran : 18 032 erreurs simulées (15/11/2026, ~02 h 15)
 
 ## Méthode (testée réellement, sur le téléphone, v42)
 - **Portée** : les **240 unités** (rub') du Coran, avec `expectedOf` et `followEval` de la page en ligne. Une phrase par aya, comme Google.

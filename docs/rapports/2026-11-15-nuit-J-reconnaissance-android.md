@@ -1,4 +1,4 @@
-# Nuit — J. Reconnaissance vocale Android : ce que disent les journaux (15/11/2026, ~03 h)
+# Nuit — J. Reconnaissance vocale Android : ce que disent les journaux (15/11/2026, ~02 h 30)
 
 Ce test est hors de la file A–H, mais il touche directement la priorité n° 1, le suivi de récitation.
 

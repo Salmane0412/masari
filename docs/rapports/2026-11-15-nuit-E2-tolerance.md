@@ -37,7 +37,7 @@ C'est exactement le genre de confusion qu'on fait en hifz (وهو/وهي, الذ
 | C : graphie repliée (ا ى ء ة) identique = juste ; sinon mots de 3 lettres repliées ou moins exacts | 3/7 | **0** | 1 (« رجوما ») |
 | D : C + même première et dernière lettre exigées pour les mots proches | **7/7** | 1 (« والحيوٰة » uthmani contre « والحياة ») | 3 (« ليبلوكم » déformé par Google, « رجوما », « والحيوة ») |
 
-### Variante E (essayée à 02 h 30)
+### Variante E (essayée vers 02 h 20)
 E reprend D, et le repli ignore en plus les voyelles longues **au milieu** du mot (و et ي, sans toucher la première ni la dernière lettre). Elle vise « رجما » (Google) contre « رجوما », et « حياة » contre « حيوة ».
 - Substitutions proches : **5/7**. Ratés : « الرحمن → الرحيم » et « حسير → كبير ».
 - Fausses alertes sur texte exact : **0**.

@@ -1,4 +1,4 @@
-# Nuit — I. `locate.js` (localisation dans tout le Coran) sur de vraies phrases (15/11/2026, ~02 h 40)
+# Nuit — I. `locate.js` (localisation dans tout le Coran) sur de vraies phrases (15/11/2026, ~02 h 20)
 
 Ce test est hors de la file A–H. Il correspond à la priorité n° 1 de la feuille de route : la localisation libre.
 
