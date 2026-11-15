@@ -1,4 +1,4 @@
-# Résumé de la nuit du 14 au 15/11/2026 (Testeur, seul)
+# Résumé de la nuit du 14 au 15/11/2026 (Testeur, seul) — version finale, 06 h 40
 
 Base testée :
 - **`main` à `a1122ad`** ;
@@ -51,3 +51,13 @@ Les tests du dépôt passent sur `main` : 7/7 unitaires et 16/16 cas de `follow-
 - Créé puis supprimé des données de test (tâche, opération, comptes, prière cochée, santé). Les données Masari ont été **restaurées depuis une sauvegarde** prise avant, et l'égalité a été vérifiée octet par octet. La sauvegarde est dans `C:\masari-data\nuit\sauvegarde\`.
 - **Aucun son** joué la nuit : synthèse vocale et lecteurs coupés dans la page, vidéo YouTube en muet.
 - Captures prises uniquement quand Masari était au premier plan. Telegram n'a pas été ouvert.
+- **Dernier état vérifié à 02 h 33** : `masari.v1` identique à la sauvegarde (19 621 caractères), aucune écoute en cours, rotation automatique remise (`1`), « écran allumé en charge » à `7`. Après 02 h 35, je n'ai plus rien fait sur le téléphone. À 06 h 39, il n'était plus branché (`adb devices` vide) : cet état n'a donc pas pu être revérifié.
+
+## Surveillance de la nuit
+De 01 h 52 à 06 h 39, je vérifiais toutes les 5 min s'il y avait un nouveau commit sur `main` ou un nouvel APK. **Rien n'est arrivé** : `main` est resté à `a1122ad`, et la release `apk` à son build de 23 h 49 UTC, déjà installé et re-testé à 01 h 49.
+
+## Si tu n'as que 2 minutes
+1. Corrige la ligne `3000L` → `3000` de `SpeechBridge.kt:69` (rapport J).
+2. Ajoute la règle « mot manquant », dont le code est prêt dans le rapport E.
+3. Remonte le panneau d'erreurs au-dessus des barres (tournée).
+4. Réponds aux 2 questions de `BLOQUE.md` : activer le service de blocage, et remettre à zéro ou non les compteurs 67:2/67:3.
