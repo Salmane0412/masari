@@ -18,6 +18,7 @@ Tous les rapports sont sur la branche `testeur`, dans `docs/rapports/`. Rien n'a
 | F. Fenêtre glissante de 8 s | `2026-11-15-nuit-F-fenetre.md` | 92 % de mots justes, mais pas de temps réel sur ce PC (6,4 s de calcul pour un pas de 2 s). |
 | G. Idées | `IDEES-nuit.md` | 15 idées classées par valeur et par coût, avec leurs sources. |
 | I. (en plus) `locate.js` sur de vraies phrases | `2026-11-15-nuit-I-localisation.md` | 21 bonnes réponses sur 24. 2 sauts vers d'autres sourates sur des formules partagées : il faut attendre 2 phrases concordantes. |
+| J. (en plus) Reconnaissance Android | `2026-11-15-nuit-J-reconnaissance-android.md` | Le réglage de silence est ignoré (`3000L` envoyé en Long au lieu d'Int). Aucun pack arabe hors ligne : le suivi exige le réseau. Séances de 5,2 s, redémarrage en 20 ms. |
 | H. Disque | `2026-11-15-nuit-H-disque.md` | 2,6 Go libres. 4,2 Go d'émulateur inutile ; rien n'a été supprimé. |
 
 Les tests du dépôt passent sur `main` : 7/7 unitaires et 16/16 cas de `follow-replay.pw.js`.
@@ -41,6 +42,7 @@ Les tests du dépôt passent sur `main` : 7/7 unitaires et 16/16 cas de `follow-
 3. La tolérance `wcost` (variante D, plus le repli de graphie حيوة/حياة) puis l'arrêt « قف » (règle B).
 4. Le test vocal : synthèse vocale native via `MasariNative`, et annonce de mots jusqu'à ce que le début soit unique.
 5. `onShowCustomView` dans `MainActivity`, pour le plein écran YouTube.
+6. **Correction d'une ligne** : `SpeechBridge.kt:69`, mettre `3000` (Int) au lieu de `3000L` (rapport J). Dire aussi clairement « hors ligne : suivi vocal, écoute et examen indisponibles » (rapports B et J).
 
 ## Ce que j'ai fait sur ton téléphone cette nuit (tout est réversible et a été remis en place)
 - Installé l'APK de la release (`adb install -r`, mise à jour de la même app).
