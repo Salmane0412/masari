@@ -76,6 +76,18 @@ class LockActivity : Activity() {
         if (reason == "budget") {
             root.addView(label("⏱ انتهى وقتك اليوم لهذا التطبيق", 24f))
             root.addView(label("استعمله على الحاسوب في وقته، أو اطلب من شريكك رمزًا ليمنحك 15 دقيقة.", 17f))
+            val pk0 = intent.getStringExtra("pkg") ?: ""
+            val left = Store.extraLeft(this); val w = Store.extraWaitMs(this)
+            if (pk0.isNotEmpty() && left > 0) {
+                val txt = if (w > 0) "٥ دقائق إضافية بعد ${w / 60000 + 1} دقيقة (متبقٍّ اليوم: $left)" else "＋٥ دقائق (متبقٍّ اليوم: $left؛ التالية بعد ساعات أطول)"
+                root.addView(button(txt) {
+                    val w2 = Store.extraWaitMs(this)
+                    if (w2 > 0 || Store.extraLeft(this) <= 0) { Toast.makeText(this, "لم يحن الوقت بعد: ${w2 / 60000 + 1} دقيقة.", Toast.LENGTH_LONG).show(); return@button }
+                    Policy.addUsage(this, pk0, -5 * 60L); Store.recordExtra(this); Events.add(this, "extra_self")
+                    Partner.send(this, "٥ دقائق إضافية", "أخذ ٥ دقائق إضافية بنفسه.", "extra_self")
+                    Toast.makeText(this, "٥ دقائق إضافية. الانتظار القادم أطول.", Toast.LENGTH_LONG).show(); finish()
+                })
+            } else if (pk0.isNotEmpty()) root.addView(label("استنفدتَ الدقائق الإضافية لهذا اليوم. الصبر.", 16f))
         } else {
             root.addView(label("📖 هذا التطبيق مقفل", 26f))
             root.addView(label("أنهِ مهام اليوم في مساري فيُفتح تلقائيًا، أو أدخل رمز اليوم أو رمز شريكك.", 17f))

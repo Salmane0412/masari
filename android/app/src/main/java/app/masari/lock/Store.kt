@@ -36,6 +36,14 @@ object Store {
     // Passage de 10 minutes vers les réglages protégés, accordé par le code du partenaire
     fun settingsPass(c: Context): Boolean = p(c).getLong("settingsPass", 0L) > System.currentTimeMillis()
     fun setSettingsPass(c: Context) { p(c).edit().putLong("settingsPass", System.currentTimeMillis() + 10 * 60_000L).apply() }
+    // وقت إضافي ذاتي (٥ دقائق) لتطبيق ذي ميزانية: الأول فورًا، ثم الانتظار يتضاعف ساعة بعد ساعة، وبحدّ ٣ في اليوم
+    fun extraCount(c: Context): Int = if (p(c).getString("exDay", "") == today()) p(c).getInt("exN", 0) else 0
+    fun extraWaitMs(c: Context): Long {
+        val n = extraCount(c); if (n == 0) return 0L
+        return maxOf(0L, p(c).getLong("exAt", 0L) + n * 3600_000L - System.currentTimeMillis())
+    }
+    fun extraLeft(c: Context): Int = 3 - extraCount(c)
+    fun recordExtra(c: Context) { p(c).edit().putString("exDay", today()).putInt("exN", extraCount(c) + 1).putLong("exAt", System.currentTimeMillis()).apply() }
     fun dayDoneToday(c: Context): Boolean = p(c).getString("dayDone", "") == today()
     fun setDayDone(c: Context) { p(c).edit().putString("dayDone", today()).putString("unlocked", today()).apply() }
     fun unlocked(c: Context): Boolean = p(c).getString("unlocked", "") == today() || emergencyActive(c)
