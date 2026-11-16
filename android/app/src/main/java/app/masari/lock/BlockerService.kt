@@ -26,7 +26,9 @@ class BlockerService : AccessibilityService() {
         "com.android.systemui", "android", "com.google.android.inputmethod.latin", "com.samsung.android.honeyboard",
         "com.touchtype.swiftkey", "com.android.dialer", "com.google.android.dialer", "com.samsung.android.dialer",
         "com.android.phone", "com.android.incallui", "com.google.android.apps.messaging", "com.samsung.android.messaging",
-        "com.android.mms", "com.google.android.apps.maps", "com.google.android.apps.authenticator2", "com.azure.authenticator"
+        "com.android.mms", "com.google.android.apps.maps", "com.google.android.apps.authenticator2", "com.azure.authenticator",
+        // الدفع: لا يُحجب أبدًا (المحفظة والبطاقات وخدمات جوجل اللازمة لها)
+        "com.google.android.apps.walletnfcrel", "com.google.android.apps.nbu.paisa.user", "com.google.android.gms", "com.samsung.android.spay", "com.samsung.android.spayfw"
     )
     private var launchers: Set<String> = emptySet()
 
