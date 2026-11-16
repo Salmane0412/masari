@@ -120,7 +120,7 @@ class NativeBridge(private val act: MainActivity) {
         if (guarded && !(Store.setupWindow(c) || Store.disableAllowed(c))) {
             if (code.isNullOrBlank()) return "need-code"
             if (!Codes.verifyPartner(c, code)) return "bad-code"
-            Store.setSettingsPass(c); Partner.send(c, "فتح الإعدادات", "استُعمل رمزك لفتح إعدادات الهاتف 3 دقائق.", "pass", 3)
+            Store.setSettingsPass(c); Partner.send(c, "فتح الإعدادات", "استُعمل رمزك لفتح إعدادات الهاتف 10 دقائق.", "pass", 3)
         }
         act.runOnUiThread {
             try {

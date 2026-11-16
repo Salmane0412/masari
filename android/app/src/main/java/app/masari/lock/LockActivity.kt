@@ -47,6 +47,19 @@ class LockActivity : Activity() {
                 root.addView(label("طلبك قيد الانتظار: بقي حوالي $h ساعة. استفد من الوقت في حفظك.", 18f))
                 root.addView(button("إلغاء الطلب") { Store.setDisableReq(this, 0L); goHome() })
             }
+            val pin = EditText(this)
+            pin.inputType = InputType.TYPE_CLASS_NUMBER; pin.hint = "رمز الشريك (6 أرقام)"; pin.textSize = 24f
+            pin.setTextColor(Color.WHITE); pin.setHintTextColor(Color.GRAY); pin.gravity = Gravity.CENTER
+            root.addView(label("أو أدخل رمز شريكك لفتح الإعدادات 10 دقائق:", 16f)); root.addView(pin)
+            root.addView(button("فتح الإعدادات برمز الشريك") {
+                val wait = Store.lockedUntil(this) - System.currentTimeMillis()
+                if (wait > 0) { Toast.makeText(this, "محاولات كثيرة. انتظر ${wait / 60000 + 1} دقيقة.", Toast.LENGTH_LONG).show(); return@button }
+                if (Codes.verifyPartner(this, pin.text.toString())) {
+                    Store.clearFails(this); Store.setSettingsPass(this); Events.add(this, "partner_settings")
+                    Partner.send(this, "فتح الإعدادات", "استُعمل رمزك لفتح إعدادات الهاتف 10 دقائق.", "pass", 3)
+                    Toast.makeText(this, "فُتحت الإعدادات 10 دقائق. افتحها الآن.", Toast.LENGTH_LONG).show(); goHome()
+                } else { Store.recordFail(this); pin.setText(""); Toast.makeText(this, "رمز الشريك غير صحيح", Toast.LENGTH_SHORT).show() }
+            })
             root.addView(button("✍️ اكتب الرسالة الطويلة لإلغاء الحماية الآن") {
                 startActivity(Intent(this, WhyActivity::class.java).putExtra(WhyActivity.KIND, WhyActivity.PROTECT)); finish() })
             root.addView(button("رجوع") { goHome() })

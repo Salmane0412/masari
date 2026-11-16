@@ -28,6 +28,7 @@ class BlockerService : AccessibilityService() {
         "com.android.phone", "com.android.incallui", "com.google.android.apps.messaging", "com.samsung.android.messaging",
         "com.android.mms", "com.google.android.apps.maps", "com.google.android.apps.authenticator2", "com.azure.authenticator",
         // الدفع: لا يُحجب أبدًا (المحفظة والبطاقات وخدمات جوجل اللازمة لها)
+        "com.google.android.permissioncontroller", "com.android.permissioncontroller", "com.android.nfc", "com.android.emergency",
         "com.google.android.apps.walletnfcrel", "com.google.android.apps.nbu.paisa.user", "com.google.android.gms", "com.samsung.android.spay", "com.samsung.android.spayfw"
     )
     private var launchers: Set<String> = emptySet()
@@ -73,9 +74,9 @@ class BlockerService : AccessibilityService() {
             // تطبيق ظلّ في المقدمة دون حدث تبديل (استئناف من التطبيقات الأخيرة مثلًا): نعيد الفحص عند تغيّر المحتوى، فلا يفلت المتصفح بضع دقائق
             if (pkg != packageName && pkg !in alwaysAllowed && pkg !in launchers && pkg !in cfg.allowed) {
                 val spent = cfg.budgets[pkg]?.let { it * 60L - Policy.usedSec(this, pkg) <= 0 } == true
-                if (pkg in cfg.banned) block("banned", pkg)
-                else if (spent) block("budget", pkg)
-                else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) block("until", pkg)
+                val why = if (pkg in cfg.banned) "banned" else if (spent) "budget" else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) "until" else null
+                // لا نحجب إلا إن كانت نافذة هذا التطبيق هي النشطة فعلًا (لا فقاعة أو نافذة خلفية)
+                if (why != null && rootInActiveWindow?.packageName?.toString() == pkg) block(why, pkg)
             }
             return
         }
