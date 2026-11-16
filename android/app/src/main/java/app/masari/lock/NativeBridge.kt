@@ -59,6 +59,8 @@ class NativeBridge(private val act: MainActivity) {
         return o.toString()
     }
 
+    @JavascriptInterface fun waSeen(): String = JSONArray(safe(emptyList<String>()) { Store.waSeen(c) }).toString()
+
     @JavascriptInterface fun apps(): String {
         val pm = c.packageManager
         val i = Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_LAUNCHER)
@@ -106,7 +108,15 @@ class NativeBridge(private val act: MainActivity) {
 
     /** Ouvre un réglage. Les écrans protégés (ils permettraient d'enlever la protection) demandent la fenêtre libre ou le code du partenaire. */
     @JavascriptInterface fun open(what: String, code: String?): String {
-        val guarded = what in setOf("accessibility", "notif", "exact", "battery", "dnd")
+        // التفعيل حرّ دائمًا (لا رمز لتشغيل الحماية)؛ الرمز أو الانتظار لا يُطلبان إلا حين تكون الميزة مفعّلة الآن، أي لاحتمال إيقافها
+        val active = when (what) {
+            "accessibility" -> safe(true) { accOn() }
+            "notif" -> safe(true) { notifOn() }
+            "exact" -> safe(true) { Build.VERSION.SDK_INT < 31 || c.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() }
+            "battery" -> safe(true) { c.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(c.packageName) }
+            else -> true
+        }
+        val guarded = active && what in setOf("accessibility", "notif", "exact", "battery", "dnd")
         if (guarded && !(Store.setupWindow(c) || Store.disableAllowed(c))) {
             if (code.isNullOrBlank()) return "need-code"
             if (!Codes.verifyPartner(c, code)) return "bad-code"
@@ -121,9 +131,9 @@ class NativeBridge(private val act: MainActivity) {
                     "exact" -> if (Build.VERSION.SDK_INT >= 31) act.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + c.packageName)))
                     "battery" -> act.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + c.packageName)))
                     "vpn" -> act.startVpn()
-                    "admin" -> act.startActivity(Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                    "admin" -> { c.getSharedPreferences("masari", android.content.Context.MODE_PRIVATE).edit().putLong("adminOpenUntil", System.currentTimeMillis() + 120_000L).apply(); act.startActivity(Intent(android.app.admin.DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
                         .putExtra(android.app.admin.DevicePolicyManager.EXTRA_DEVICE_ADMIN, android.content.ComponentName(c, MasariAdmin::class.java))
-                        .putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يمنع حذف مساري إلا بعد إلغاء هذا التفعيل (وهو محميّ بالانتظار أو برمز الشريك)."))
+                        .putExtra(android.app.admin.DevicePolicyManager.EXTRA_ADD_EXPLANATION, "يمنع حذف مساري إلا بعد إلغاء هذا التفعيل (وهو محميّ بالانتظار أو برمز الشريك).")) }
                     "dnd" -> act.startActivity(Intent(Settings.ACTION_ZEN_MODE_PRIORITY_SETTINGS))
                 }
             } catch (e: Exception) { }

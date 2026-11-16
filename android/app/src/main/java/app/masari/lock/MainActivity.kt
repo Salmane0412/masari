@@ -65,6 +65,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        try { Watchdog.check(this); Alarms.scheduleAll(this) } catch (e: Exception) { }
         Store.markFirstRun(this)
         Policy.checkPending(this)
         Alarms.scheduleAll(this)

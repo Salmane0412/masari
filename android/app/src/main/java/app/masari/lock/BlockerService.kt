@@ -16,6 +16,7 @@ import android.view.accessibility.AccessibilityNodeInfo
  */
 class BlockerService : AccessibilityService() {
     private var lastBlock = 0L
+    private var settingsClass = ""
     private val main = Handler(Looper.getMainLooper())
     private var fgPkg = ""; private var fgSince = 0L
     private val protectedPkgs = setOf(
@@ -50,6 +51,9 @@ class BlockerService : AccessibilityService() {
 
         if (pkg in protectedPkgs) {
             if (Store.disableAllowed(this) || Store.settingsPass(this)) return
+            // activation de l'administrateur lancée par Masari lui-même (fenêtre de 2 min) : c'est un renforcement, on laisse passer tant que l'écran courant est celui-là
+            if (e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) settingsClass = e.className?.toString() ?: ""
+            if (getSharedPreferences("masari", MODE_PRIVATE).getLong("adminOpenUntil", 0L) > System.currentTimeMillis() && settingsClass.contains("DeviceAdminAdd")) return
             val root = rootInActiveWindow ?: return
             if (root.packageName?.toString() != pkg) return
             if (mentions(root, 0, listOf("مساري", "Masari"))) {
@@ -63,7 +67,16 @@ class BlockerService : AccessibilityService() {
             val root = rootInActiveWindow
             if (root != null && root.packageName?.toString() == pkg && mentions(root, 0, cfg.bannedNames.toList())) { Events.add(this, "banned"); block("banned"); return }
         }
-        if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        if (e.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            // تطبيق ظلّ في المقدمة دون حدث تبديل (استئناف من التطبيقات الأخيرة مثلًا): نعيد الفحص عند تغيّر المحتوى، فلا يفلت المتصفح بضع دقائق
+            if (pkg != packageName && pkg !in alwaysAllowed && pkg !in launchers && pkg !in cfg.allowed) {
+                val spent = cfg.budgets[pkg]?.let { it * 60L - Policy.usedSec(this, pkg) <= 0 } == true
+                if (pkg in cfg.banned) block("banned", pkg)
+                else if (spent) block("budget", pkg)
+                else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) block("until", pkg)
+            }
+            return
+        }
         val now = System.currentTimeMillis()
         if (pkg == packageName || pkg in alwaysAllowed || pkg in launchers) { if (pkg != fgPkg) { account(now); fgPkg = pkg }; return }
         if (pkg != fgPkg) { account(now); fgPkg = pkg }

@@ -1,5 +1,5 @@
 :root{
-  --bg:#eef2f3; --surface:#ffffff; --ink:#14232b; --mute:#5b6e76; --line:#d3dde0;
+  --bg:#eef2f3; --surface:#ffffff; --ink:#14232b; --mute:#47595f; --line:#d3dde0;
   --accent:#0d7a69; --accent-ink:#ffffff; --gold:#a97c12;
   --mem:#2a9d84; --rel:#d98b2b; --prog:#5b7fd6; --none:#cdd7da;
   --shadow:0 1px 2px rgba(20,35,43,.08);
@@ -390,3 +390,27 @@ body.following #rec-out:not(:empty){bottom:calc(186px + env(safe-area-inset-bott
 
 :root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
 .themeseg{display:flex;gap:6px;flex-wrap:wrap}.themeseg button{flex:1 1 90px}
+.w.f-chk{background:color-mix(in srgb,#d98b2b 20%,transparent);border-radius:5px;text-decoration:underline dotted #d98b2b;text-underline-offset:6px}
+@media (orientation:landscape) and (max-height:520px){body.following #rec-out:not(:empty){left:10px;right:auto;width:38%;bottom:calc(120px + env(safe-area-inset-bottom));max-height:55vh}}
+
+.wq{font-size:.85em;color:var(--gold);margin-inline-start:1px;user-select:none}
+
+.mp-nav{align-items:center;margin:0 0 8px}
+.mp-in{width:76px;padding:9px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;text-align:center}
+.mp-in.wide{flex:1;min-width:130px;width:auto;text-align:start}
+#mp-surah{padding:9px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;max-width:42%}
+.verse.hl{background:color-mix(in srgb,var(--gold) 22%,transparent);border-radius:6px}
+.mp-entry{display:block;clear:both;margin:12px 0}.mp-entry .btn{display:flex;align-items:center;justify-content:center;width:100%;text-decoration:none;box-sizing:border-box}
+
+.mp-row{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.mp-row>.btn{flex:1;min-height:44px;padding:8px 6px;font-size:14px}
+.mp-row .seg{flex:1;display:flex}.mp-row .seg button{flex:1}
+.mp-top{margin-top:4px}
+.mp-top .mp-ar{flex:0 0 52px;font-size:26px;line-height:1;padding:0}
+.mp-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}
+.mp-mid .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.mp-mid .mp-in{width:64px}
+.mp-tools{margin:6px 0 14px}.mp-tools summary{cursor:pointer;font-weight:600;padding:8px 0}
+.mp-row select{flex:1;max-width:none}
+#mp-surah{max-width:100%}
+.mp-nav{display:none}

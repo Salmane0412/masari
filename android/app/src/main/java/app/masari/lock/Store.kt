@@ -19,6 +19,13 @@ object Store {
     fun setAllowed(c: Context, s: Set<String>) { p(c).edit().putStringSet("allowed", HashSet(s)).apply() }
     fun webBlock(c: Context): Boolean = p(c).getBoolean("webBlock", false)
     fun setWebBlock(c: Context, v: Boolean) { p(c).edit().putBoolean("webBlock", v).apply() }
+    /** أسماء ظهرت في إشعارات واتساب مؤخرًا (للاختيار منها بدل الكتابة)؛ الأحدث أولًا */
+    fun waSeen(c: Context): List<String> = (p(c).getString("waSeen", "") ?: "").split("\n").filter { it.isNotBlank() }
+    fun addWaSeen(c: Context, name: String) {
+        val n = name.trim(); if (n.isEmpty() || n.length > 60) return
+        val l = ArrayList<String>(); l.add(n); l.addAll(waSeen(c).filter { it != n })
+        p(c).edit().putString("waSeen", l.take(40).joinToString("\n")).apply()
+    }
     fun domains(c: Context): Set<String> = (p(c).getString("domains", "") ?: "").split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
     fun setDomains(c: Context, t: String) { p(c).edit().putString("domains", t).apply() }
     // v2 : deux clés séparées — celle du jour (calculée par le site Masari) et celle du partenaire (Google Authenticator)
