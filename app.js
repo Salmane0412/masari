@@ -1302,7 +1302,8 @@ function route() {
   closeSheet();
   const top = $('#top'), view = $('#view'), tabs = $('#tabs');
   const inSess = name === 's';
-  top.innerHTML = `<span class="brand"><img class="logo" src="icon-192.png" alt="" width="28" height="28"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
+  const mainTab = ['today','plan','map','library','more'].includes(name) || h === '';
+  top.innerHTML = (!inSess && !mainTab ? `<button class="btn sm" data-act="back" aria-label="رجوع" style="margin-inline-end:10px">→</button>` : '') + `<span class="brand"><img class="logo" src="icon-192.png" alt="" width="28" height="28"><span class="ar">مساري</span></span><span class="date">${fmtD(todayStr(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>`;
   if (!inSess) { if (fol.on) followStop(); stopAudio(); }
   tabs.innerHTML = `<div class="in">${TABS.map(([k, g, l]) => `<a href="#/${k}" ${tabOf(name) === k ? 'aria-current="page"' : ''}><b>${window.ic ? ic(k) : g}</b>${l}</a>`).join('')}</div>`;
   if (inSess) { sessState.key = `${a}:${b}`; if (sessState.lastKey !== sessState.key) { sessState.reps = 0; sessState.level = 0; sessState.rev = {}; sessState.lastKey = sessState.key; } view.innerHTML = views.session(a, b, c); }

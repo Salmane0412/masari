@@ -47,7 +47,7 @@
       <div class="chips scroll">${['', ...T.projects].map(p => `<button class="chip${proj === p ? ' on' : ''}" data-tk="proj" data-p="${esc(p)}">${p ? esc(p) : 'الكل'}</button>`).join('')}<button class="chip" data-tk="proj-add">+ مشروع</button></div>
       ${body}
       <details class="more"><summary>استيراد أو تصدير</summary><div class="sub">استورد قائمة مهام بصيغة JSON (يعدّها لك Claude من رسالتك)، أو صدّر مهامك.</div>
-      <div class="btns" style="margin:8px 0"><label class="btn" style="display:inline-flex;align-items:center">استيراد ملف<input type="file" id="tk-imp" accept=".json,application/json" hidden></label><button class="btn" data-tk="export">تصدير</button><button class="btn" data-tk="ics">المهام المؤرّخة إلى التقويم (.ics)</button></div></details>`;
+      <div class="btns" style="margin:8px 0"><label class="btn" style="display:inline-flex;align-items:center">استيراد ملف<input type="file" id="tk-imp" accept=".json,application/json" hidden></label><button class="btn" data-tk="export">تصدير</button><button class="btn" data-tk="reset">مسح كل المهام</button><button class="btn" data-tk="ics">المهام المؤرّخة إلى التقويم (.ics)</button></div></details>`;
   };
 
   function sheet(it) {
@@ -104,6 +104,9 @@
       case 'subadd': { const v = $('#tk-sub').value.trim(); if (!v) return; it.sub.push({ t: v, d: false }); save(); sheet(it); rerender(); setTimeout(() => { const i = $('#tk-sub'); if (i) i.focus(); }, 30); break; }
       case 'purge': { const n = K.purgeDone(T, addDays(t, -30)); save(); rerender(); toast(n ? `حُذفت ${n}` : 'لا شيء أقدم من 30 يومًا'); break; }
       case 'ics': { const L = T.items.filter(x => !x.done && x.due && x.due >= t); if (!L.length) return toast('لا مهام مؤرّخة قادمة'); download('masari-taches.ics', ics(L), 'text/calendar'); toast('افتح الملف ليُضاف إلى تقويمك'); break; }
+      case 'reset': { if (!T.items.length) return toast('لا مهام'); if (!confirm('ستُمسح كل المهام (' + T.items.length + '). سيُنزَّل أولًا ملف نسخة احتياطية. متأكد؟')) return;
+        download(`masari-taches-sauvegarde-${t}.json`, JSON.stringify({ projects: T.projects, items: T.items }, null, 1), 'application/json');
+        T.items = []; save(); rerender(); toast('مُسحت كل المهام (النسخة الاحتياطية نُزّلت)'); break; }
       case 'export': download(`masari-taches-${t}.json`, JSON.stringify({ projects: T.projects, items: T.items }, null, 1), 'application/json'); break;
     }
   });
