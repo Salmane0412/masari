@@ -104,6 +104,7 @@ class NativeBridge(private val act: MainActivity) {
     @JavascriptInterface fun partnerTest() { Partner.send(c, "تجربة", "إن وصلتك هذه الرسالة فالتنبيهات تعمل بإذن الله.", "test", 3) }
 
     @JavascriptInterface fun setPrayer(json: String) { Alarms.setPrayer(c, json) }
+    @JavascriptInterface fun setWake(json: String) { Alarms.setWake(c, json) }
     @JavascriptInterface fun setReminders(json: String) { Alarms.setReminders(c, json) }
 
     /** Ouvre un réglage. Les écrans protégés (ils permettraient d'enlever la protection) demandent la fenêtre libre ou le code du partenaire. */

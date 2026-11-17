@@ -32,6 +32,9 @@ object Alarms {
     }
 
     fun setPrayer(c: Context, json: String) { p(c).edit().putString("prayer", json).apply(); scheduleAll(c) }
+    /** Réveil: {on, h, m, name, tasks[], phrases[]}. Prochaine occurrence (aujourd'hui sinon demain). */
+    fun setWake(c: Context, json: String) { p(c).edit().putString("wake", json).apply(); scheduleAll(c) }
+
     fun setReminders(c: Context, json: String) { p(c).edit().putString("reminders", json).apply(); scheduleAll(c) }
 
     private fun pi(c: Context, code: Int, extras: Map<String, String>): PendingIntent {
@@ -54,6 +57,7 @@ object Alarms {
         channels(c)
         val am = c.getSystemService(AlarmManager::class.java)
         for (code in 100..140) am.cancel(pi(c, code, emptyMap()))
+        am.cancel(pi(c, 310, emptyMap()))
         for (code in 200..260) am.cancel(pi(c, code, emptyMap()))
         // 1) الصلوات: اليوم وغدًا
         try {
@@ -77,6 +81,15 @@ object Alarms {
         try {
             val a = JSONArray(p(c).getString("reminders", "[]")!!)
             for (i in 0 until minOf(a.length(), 60)) { val r = a.getJSONObject(i); at(c, r.getLong("at"), 200 + i, mapOf("kind" to "remind", "title" to r.optString("title"), "text" to r.optString("text"))) }
+        } catch (e: Exception) { }
+        // réveil
+        try {
+            val w = JSONObject(p(c).getString("wake", "{}")!!)
+            if (w.optInt("on", 0) == 1) {
+                val min = w.getInt("h") * 60 + w.getInt("m")
+                val t0 = ms(LocalDate.now(), min)
+                at(c, if (t0 > System.currentTimeMillis()) t0 else ms(LocalDate.now().plusDays(1), min), 310, mapOf("kind" to "wake"))
+            }
         } catch (e: Exception) { }
         // 3) تقرير المساء للشريك 22:00، و4) إعادة الجدولة بعد منتصف الليل
         val today = LocalDate.now()
@@ -117,6 +130,7 @@ class AlarmReceiver : BroadcastReceiver() {
         when (i.getStringExtra("kind")) {
             "salat" -> Alarms.notify(c, Alarms.CH_SALAT, 1, i.getStringExtra("title") ?: "", i.getStringExtra("text") ?: "")
             "pre", "remind" -> Alarms.notify(c, Alarms.CH_REM, (System.currentTimeMillis() % 100000).toInt() + 10, i.getStringExtra("title") ?: "", i.getStringExtra("text") ?: "")
+            "wake" -> { c.startActivity(Intent(c, WakeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); Alarms.scheduleAll(c) }
             "report" -> { Partner.report(c); Alarms.scheduleAll(c) }
             "resched" -> Alarms.scheduleAll(c)
         }
