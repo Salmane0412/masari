@@ -84,6 +84,7 @@ class WakeActivity : Activity(), TextToSpeech.OnInitListener {
 
     private fun done() {
         ring?.stop(); ring = null
+        try { getSystemService(android.app.NotificationManager::class.java).cancel(310) } catch (e: Exception) { }
         Events.add(this, "wake_ok")
         tts = TextToSpeech(this, this)
         findViewById<View>(android.R.id.content).let { (it as? android.view.ViewGroup)?.removeAllViews() }

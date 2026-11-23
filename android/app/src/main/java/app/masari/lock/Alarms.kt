@@ -98,6 +98,18 @@ object Alarms {
         at(c, ms(today.plusDays(1), 5), 301, mapOf("kind" to "resched"))
     }
 
+    /** Réveil : notification plein écran (seul moyen fiable de lancer une activité depuis l'arrière-plan) + tentative directe. */
+    fun fireWake(c: Context) {
+        channels(c)
+        val it = Intent(c, WakeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val pi = PendingIntent.getActivity(c, 7, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(c, CH_SALAT) else Notification.Builder(c)
+        b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("مساري: استيقظ").setContentText("المس لإيقاف المنبّه")
+            .setCategory(Notification.CATEGORY_ALARM).setOngoing(true).setContentIntent(pi).setFullScreenIntent(pi, true)
+        try { c.getSystemService(NotificationManager::class.java).notify(310, b.build()) } catch (e: SecurityException) { }
+        try { c.startActivity(it) } catch (e: Exception) { }
+    }
+
     fun notify(c: Context, ch: String, id: Int, title: String, text: String) {
         channels(c)
         val open = PendingIntent.getActivity(c, 0, Intent(c, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
@@ -130,7 +142,7 @@ class AlarmReceiver : BroadcastReceiver() {
         when (i.getStringExtra("kind")) {
             "salat" -> Alarms.notify(c, Alarms.CH_SALAT, 1, i.getStringExtra("title") ?: "", i.getStringExtra("text") ?: "")
             "pre", "remind" -> Alarms.notify(c, Alarms.CH_REM, (System.currentTimeMillis() % 100000).toInt() + 10, i.getStringExtra("title") ?: "", i.getStringExtra("text") ?: "")
-            "wake" -> { c.startActivity(Intent(c, WakeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); Alarms.scheduleAll(c) }
+            "wake" -> { Alarms.fireWake(c); Alarms.scheduleAll(c) }
             "report" -> { Partner.report(c); Alarms.scheduleAll(c) }
             "resched" -> Alarms.scheduleAll(c)
         }

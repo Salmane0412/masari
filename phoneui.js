@@ -67,6 +67,10 @@
       <button class="btn sm" data-ph="open" data-k="dnd">أو استعمل «عدم الإزعاج» في أندرويد مع جهات الاتصال المهمة</button></div>
     <div class="card rule"><b>🌐 حجب المواقع</b><label class="check"><input type="checkbox" id="ph-web" ${d.webBlock ? 'checked' : ''}> احجب هذه المواقع حتى إنهاء مهام اليوم (والإباحية دائمًا)</label>
       <textarea id="ph-domains" dir="ltr" rows="3" style="min-height:80px">${esc((d.domains || []).join('\n'))}</textarea></div>
+    <div class="card rule"><b>⏰ منبّه الاستيقاظ</b><span class="sub">يرنّ حتى تكتب العبارة بيدك (اللصق ممنوع)، ثم يقرأ لك مهام اليوم.</span>
+      <label class="check"><input type="checkbox" id="ph-wk-on" ${wk().on ? 'checked' : ''}> مفعّل</label>
+      <label class="field"><span>الوقت</span><input type="time" id="ph-wk-t" value="${esc(wk().t)}"></label>
+      <label class="field"><span>عبارات الكتابة (سطر لكل عبارة، اتركه فارغًا للافتراضي)</span><textarea id="ph-wk-p" rows="3" style="min-height:70px">${esc((wk().phrases || []).join('\n'))}</textarea></label></div>
     <label class="field"><span>رمز الشريك (فقط لتطبيق التخفيف فورًا)</span><input type="text" inputmode="numeric" id="ph-code" dir="ltr" placeholder="اختياري"></label>
     <button class="btn pri block" data-ph="save">حفظ القواعد</button>
 
@@ -98,6 +102,7 @@
     const v = id => ($('#' + id) || {}).value || '';
     draft.bannedNames = v('ph-bnames').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.blockAll = !!($('#ph-all') || {}).checked; draft.waFilter = !!($('#ph-wa') || {}).checked; draft.webBlock = !!($('#ph-web') || {}).checked;
+    try { localStorage.setItem('masari.wake', JSON.stringify({ on: !!($('#ph-wk-on') || {}).checked, t: v('ph-wk-t') || '06:30', phrases: v('ph-wk-p').split(/\n/).map(x => x.trim()).filter(Boolean) })); pushWake(); } catch (e) { }
     draft.waAllow = v('ph-waallow').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.domains = v('ph-domains').split(/\s+/).map(s => s.trim().toLowerCase()).filter(s => s.includes('.'));
     document.querySelectorAll('[data-phb]').forEach(i => { draft.budgets[i.dataset.phb] = Math.max(0, +i.value || 0); });
@@ -139,6 +144,14 @@
   }
   window.addEventListener('message', e => { if (e.source === window && e.data && e.data.masariGuard) extSync(); });
   window.addEventListener('hashchange', () => setTimeout(extSync, 400));
+  function wk() { try { return Object.assign({ on: false, t: '06:30', phrases: [] }, JSON.parse(localStorage.getItem('masari.wake') || '{}')); } catch (e) { return { on: false, t: '06:30', phrases: [] }; } }
+  function pushWake() {
+    if (!N() || !N().setWake) return;
+    const w = wk(); const [h, m] = (w.t || '06:30').split(':').map(Number);
+    const now = new Date(); const wd = (now.getHours() * 60 + now.getMinutes() >= h * 60 + m) ? addDays(todayStr(), 1) : todayStr();
+    const tasks = ((S.tasks && S.tasks.items) || []).filter(x => !x.done && x.due === wd).map(x => x.t || '').filter(Boolean).slice(0, 8);
+    N().setWake(JSON.stringify({ on: !!w.on, h, m, name: 'Salman', tasks, phrases: w.phrases || [] }));
+  }
   async function sync() {
     if (!N() || !S) return;
     try {
@@ -151,6 +164,7 @@
         (S.settings.times || []).forEach((tm, k) => { const t = parseD(day); const [h, m] = tm.split(':').map(Number); t.setHours(h, m, 0, 0); if (t > now) R.push({ at: t.getTime(), title: k === 0 ? 'مساري: وقت الحفظ' : 'مساري: وقت المراجعة', text: k === 0 ? 'افتح ورد اليوم الجديد' : 'راجع ما حفظت قبل أن يتفلّت' }); });
       }
       ((S.tasks && S.tasks.items) || []).filter(x => !x.done && x.due && x.time).forEach(x => { const t = parseD(x.due); const [h, m] = x.time.split(':').map(Number); t.setHours(h, m, 0, 0); if (t > now && t - now < 3 * 864e5) R.push({ at: t.getTime() - 15 * 60000, title: 'مهمة بعد 15 دقيقة', text: x.t }); });
+      pushWake();
       R.sort((a, b) => a.at - b.at); N().setReminders(JSON.stringify(R.slice(0, 50)));
     } catch (e) { }
   }
