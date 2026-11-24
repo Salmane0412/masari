@@ -895,12 +895,32 @@ function qSurah(g) {
   const opts = shuffle([{ t: 'سورة ' + CH[c].ar, ok: true }, ...sample(others, 3).map(x => ({ t: 'سورة ' + CH[x].ar }))]);
   return { type: 'surah', g, prompt: clip(W, 16), ask: 'من أي سورة هذه الآية؟', opts, ref: refOf(g), full: Q.ayas[g][2] };
 }
+let _mut = null;
+const mutKey = (W, n) => W.slice(0, n).map(normAr).join(' ');
+function mutIdx() {
+  if (_mut) return _mut; _mut = {};
+  for (let g = 0; g < Q.ayas.length; g++) { const W = wordsOf(g); if (W.length < 6) continue; (_mut[mutKey(W, 3)] = _mut[mutKey(W, 3)] || []).push(g); }
+  return _mut;
+}
+function qMut(g) {
+  const W = wordsOf(g); if (W.length < 6) return null;
+  const tail = x => wordsOf(x).slice(3).join(' '), nt = x => normAr(tail(x));
+  const seen = new Set([nt(g)]), sims = [];
+  (mutIdx()[mutKey(W, 3)] || []).forEach(k => { if (k !== g && !seen.has(nt(k))) { seen.add(nt(k)); sims.push(k); } });
+  if (sims.length < 2) return null;
+  let dis = sample(sims, 3);
+  if (dis.length < 3) { const c = Q.ayas[g][0]; dis = dis.concat(sample(chapterAyas(c).filter(k => k !== g && !seen.has(nt(k)) && wordsOf(k).length > 6), 3 - dis.length)); }
+  if (dis.length < 3) return null;
+  const clipT = x => { const t = wordsOf(x).slice(3); return t.slice(0, 7).join(' ') + (t.length > 7 ? ' …' : ''); };
+  const opts = shuffle([{ t: clipT(g), ok: true }, ...dis.map(k => ({ t: clipT(k) }))]);
+  return { type: 'mut', g, prompt: W.slice(0, 3).join(' ') + ' …', ask: 'آية متشابهة: أكمل بما بعد البداية', opts, ref: refOf(g), full: Q.ayas[g][2] };
+}
 function buildQuiz(scope, h, n) {
   const pool = shuffle(poolFor(scope, h)); if (pool.length < 3) return null;
   const qs = []; let tries = 0;
   while (qs.length < n && tries < n * 10) {
     const g = pool[tries % pool.length]; tries++; const r = Math.random();
-    const q = (r < .4 ? qCloze(g) : r < .8 ? qNext(g) : qSurah(g)) || qCloze(g) || qNext(g) || qSurah(g);
+    const q = (r < .25 ? qMut(g) : null) || (r < .4 ? qCloze(g) : r < .8 ? qNext(g) : qSurah(g)) || qCloze(g) || qNext(g) || qSurah(g);
     if (q) qs.push(q);
   }
   return qs.length ? qs : null;

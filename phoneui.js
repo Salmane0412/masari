@@ -102,7 +102,7 @@
     const v = id => ($('#' + id) || {}).value || '';
     draft.bannedNames = v('ph-bnames').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.blockAll = !!($('#ph-all') || {}).checked; draft.waFilter = !!($('#ph-wa') || {}).checked; draft.webBlock = !!($('#ph-web') || {}).checked;
-    try { localStorage.setItem('masari.wake', JSON.stringify({ on: !!($('#ph-wk-on') || {}).checked, t: v('ph-wk-t') || '06:30', phrases: v('ph-wk-p').split(/\n/).map(x => x.trim()).filter(Boolean) })); pushWake(); } catch (e) { }
+    try { localStorage.setItem('masari.wake', JSON.stringify({ on: !!($('#ph-wk-on') || {}).checked, t: v('ph-wk-t') || '05:00', phrases: v('ph-wk-p').split(/\n/).map(x => x.trim()).filter(Boolean) })); pushWake(); } catch (e) { }
     draft.waAllow = v('ph-waallow').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.domains = v('ph-domains').split(/\s+/).map(s => s.trim().toLowerCase()).filter(s => s.includes('.'));
     document.querySelectorAll('[data-phb]').forEach(i => { draft.budgets[i.dataset.phb] = Math.max(0, +i.value || 0); });
@@ -144,10 +144,10 @@
   }
   window.addEventListener('message', e => { if (e.source === window && e.data && e.data.masariGuard) extSync(); });
   window.addEventListener('hashchange', () => setTimeout(extSync, 400));
-  function wk() { try { return Object.assign({ on: false, t: '06:30', phrases: [] }, JSON.parse(localStorage.getItem('masari.wake') || '{}')); } catch (e) { return { on: false, t: '06:30', phrases: [] }; } }
+  function wk() { try { return Object.assign({ on: false, t: '05:00', phrases: [] }, JSON.parse(localStorage.getItem('masari.wake') || '{}')); } catch (e) { return { on: false, t: '05:00', phrases: [] }; } }
   function pushWake() {
     if (!N() || !N().setWake) return;
-    const w = wk(); const [h, m] = (w.t || '06:30').split(':').map(Number);
+    const w = wk(); const [h, m] = (w.t || '05:00').split(':').map(Number);
     const now = new Date(); const wd = (now.getHours() * 60 + now.getMinutes() >= h * 60 + m) ? addDays(todayStr(), 1) : todayStr();
     const tasks = ((S.tasks && S.tasks.items) || []).filter(x => !x.done && x.due === wd).map(x => x.t || '').filter(Boolean).slice(0, 8);
     N().setWake(JSON.stringify({ on: !!w.on, h, m, name: 'Salman', tasks, phrases: w.phrases || [] }));
