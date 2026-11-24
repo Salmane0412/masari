@@ -32,14 +32,25 @@ class BlockerService : AccessibilityService() {
         "com.google.android.apps.walletnfcrel", "com.google.android.apps.nbu.paisa.user", "com.google.android.gms", "com.samsung.android.spay", "com.samsung.android.spayfw"
     )
     private var launchers: Set<String> = emptySet()
+    private var budgetCheck: Runnable? = null
+    private val screenOff = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: android.content.Context, i: Intent) {
+            // écran éteint : on arrête de compter le temps d'usage (sinon la nuit entière serait comptée)
+            account(System.currentTimeMillis()); fgPkg = ""; fgSince = 0L
+            budgetCheck?.let { main.removeCallbacks(it) }
+        }
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         val i = Intent(Intent.ACTION_MAIN); i.addCategory(Intent.CATEGORY_HOME)
         launchers = packageManager.queryIntentActivities(i, 0).map { it.activityInfo.packageName }.toSet()
         getSharedPreferences("masari", MODE_PRIVATE).edit().putBoolean("accSeen", true).remove("accOffSince").apply()
+        try { registerReceiver(screenOff, android.content.IntentFilter(Intent.ACTION_SCREEN_OFF)) } catch (e: Exception) { }
         Alarms.scheduleAll(this)
     }
+
+    override fun onDestroy() { try { unregisterReceiver(screenOff) } catch (e: Exception) { }; super.onDestroy() }
 
     private fun account(now: Long) {
         if (fgPkg.isNotEmpty() && fgSince > 0) Policy.addUsage(this, fgPkg, (now - fgSince) / 1000)
@@ -50,6 +61,7 @@ class BlockerService : AccessibilityService() {
         if (e == null) return
         val pkg = e.packageName?.toString() ?: return
         VpnGuard.check(this)
+        Store.clockCheck(this)
         val cfg = Policy.current(this)
 
         if (pkg in protectedPkgs) {
@@ -90,9 +102,9 @@ class BlockerService : AccessibilityService() {
         if (budget != null) {
             val left = budget * 60L - Policy.usedSec(this, pkg)
             if (left <= 0) { block("budget", pkg); return }
-            main.postDelayed({
-                if (fgPkg == pkg) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) }
-            }, left * 1000 + 500)
+            budgetCheck?.let { main.removeCallbacks(it) }   // un seul minuteur à la fois (avant : un par événement)
+            val r = Runnable { if (fgPkg == pkg) { account(System.currentTimeMillis()); if (budget * 60L - Policy.usedSec(this, pkg) <= 0) block("budget", pkg) } }
+            budgetCheck = r; main.postDelayed(r, left * 1000 + 500)
             return
         }
         if (Store.unlocked(this)) return

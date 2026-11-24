@@ -97,6 +97,13 @@ object Policy {
         o.put(pkg, o.optLong(pkg, 0L) + sec)
         p(c).edit().putString(ukey(), o.toString()).apply()
     }
+    /** Horloge touchée : tout ce qui a un budget est considéré comme épuisé pour la date courante. */
+    fun exhaustBudgets(c: Context) {
+        val cfg = current(c); if (cfg.budgets.isEmpty()) return
+        val o = usageToday(c)
+        for ((k, m) in cfg.budgets) o.put(k, maxOf(o.optLong(k, 0L), m * 60L))
+        p(c).edit().putString(ukey(), o.toString()).apply()
+    }
     fun usageToday(c: Context): JSONObject = try { JSONObject(p(c).getString(ukey(), "{}")!!) } catch (e: Exception) { JSONObject() }
 }
 

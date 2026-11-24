@@ -915,12 +915,34 @@ function qMut(g) {
   const opts = shuffle([{ t: clipT(g), ok: true }, ...dis.map(k => ({ t: clipT(k) }))]);
   return { type: 'mut', g, prompt: W.slice(0, 3).join(' ') + ' …', ask: 'آية متشابهة: أكمل بما بعد البداية', opts, ref: refOf(g), full: Q.ayas[g][2] };
 }
+function qPrev(g) {
+  const [c, v] = Q.ayas[g]; if (v <= 1) return null;
+  const W = wordsOf(g); if (W.length < 3) return null;
+  const prv = g - 1, same = chapterAyas(c).filter(k => k !== g && k !== prv);
+  const lw = x => normAr(wordsOf(x).slice(-1)[0] || ''), sim = same.filter(k => lw(k) === lw(prv));
+  let dis = sample(sim, 2); dis = dis.concat(sample(same.filter(k => !dis.includes(k)), 3 - dis.length));
+  if (dis.length < 3) return null;
+  const opts = shuffle([{ t: clip(wordsOf(prv), 9), ok: true }, ...dis.map(k => ({ t: clip(wordsOf(k), 9) }))]);
+  return { type: 'prev', g, prompt: clip(W, 14, true), ask: 'ما الآية السابقة؟', opts, ref: refOf(prv), full: Q.ayas[prv][2] };
+}
+function qOrder(g) {
+  const [c, v] = Q.ayas[g]; if (v + 2 > CH[c].n) return null;
+  const ids = [g, g + 1, g + 2], tx = ids.map(x => clip(wordsOf(x), 6));
+  if (new Set(tx.map(normAr)).size < 3) return null;
+  const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+  const sh = shuffle([0, 1, 2]);  // ترتيب العرض
+  const shown = sh.map((i, k) => `${'ABC'[k]}) ${tx[i]}`).join('\n');
+  // نعيد تسمية الخيارات بحسب ترتيب العرض
+  const pos = i => 'ABC'[sh.indexOf(i)];
+  const opts2 = shuffle([{ t: [0, 1, 2].map(pos).join(' ثم '), ok: true }, ...sample(perms.slice(1), 3).map(p => ({ t: p.map(pos).join(' ثم ') }))]);
+  return { type: 'order', g, prompt: shown, ask: 'رتّب هذه الآيات كما وردت في المصحف', opts: opts2, ref: refOf(g), full: ids.map(x => Q.ayas[x][2]).join(' ۝ ') };
+}
 function buildQuiz(scope, h, n) {
   const pool = shuffle(poolFor(scope, h)); if (pool.length < 3) return null;
   const qs = []; let tries = 0;
   while (qs.length < n && tries < n * 10) {
     const g = pool[tries % pool.length]; tries++; const r = Math.random();
-    const q = (r < .25 ? qMut(g) : null) || (r < .4 ? qCloze(g) : r < .8 ? qNext(g) : qSurah(g)) || qCloze(g) || qNext(g) || qSurah(g);
+    const q = (r < .15 ? qMut(g) : r < .25 ? qPrev(g) : r < .32 ? qOrder(g) : null) || (r < .4 ? qCloze(g) : r < .8 ? qNext(g) : qSurah(g)) || qCloze(g) || qNext(g) || qSurah(g);
     if (q) qs.push(q);
   }
   return qs.length ? qs : null;
@@ -982,7 +1004,7 @@ views.quiz = () => {
   <div class="bar"><i style="width:${100 * quiz.i / quiz.qs.length}%"></i></div>
   ${ans === undefined ? `<div class="tbar"><i style="animation-duration:${S.settings.quizSec || 20}s"></i></div>` : ''}
   <div class="sub" style="margin:10px 0 6px">${q.ask}</div>
-  <div class="mushaf ar" dir="rtl" style="font-size:${S.settings.font}px;padding:12px 14px">${esc(q.prompt)}</div>
+  <div class="mushaf ar" dir="rtl" style="font-size:${S.settings.font}px;padding:12px 14px;white-space:pre-line">${esc(q.prompt)}</div>
   <div class="opts">${q.opts.map((o, k) => `<button class="opt ar${ans !== undefined ? (o.ok ? ' right' : k === ans ? ' wrong' : '') : ''}" data-act="quiz-pick" data-k="${k}" ${ans !== undefined ? 'disabled' : ''} style="font-size:${Math.max(20, S.settings.font - 6)}px">${esc(o.t)}</button>`).join('')}</div>
   ${ans !== undefined ? `<div class="note">${ans >= 0 && q.opts[ans].ok ? 'أحسنت، إجابة صحيحة.' : (ans < 0 ? 'انتهى الوقت أو غادرتَ الصفحة، وهذا يُحسب خطأ. الجواب: ' : 'الجواب: ') + esc(q.opts.find(o => o.ok).t)} · ${q.ref}<div class="ar" dir="rtl" style="margin-top:6px;font-size:${Math.max(20, S.settings.font - 6)}px;line-height:2">${esc(q.full)}</div></div><button class="btn pri block" data-act="quiz-next">${quiz.i + 1 >= quiz.qs.length ? 'عرض النتيجة' : 'السؤال التالي'}</button>` : ''}`;
 };

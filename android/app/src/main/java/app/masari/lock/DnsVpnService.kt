@@ -94,6 +94,7 @@ class DnsVpnService : VpnService() {
 
     private fun isBlocked(name: String): Boolean {
         if (ALWAYS.any { name == it || name.endsWith(".$it") }) return true
+        if (name == "use-application-dns.net") return true   // signal Firefox : désactiver DNS-over-HTTPS (qui contournerait le filtre)
         if (Store.unlocked(this) || !Store.webBlock(this)) return false
         return Store.domains(this).any { name == it || name.endsWith(".$it") }
     }

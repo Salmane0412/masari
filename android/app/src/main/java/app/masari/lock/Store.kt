@@ -26,7 +26,15 @@ object Store {
         val l = ArrayList<String>(); l.add(n); l.addAll(waSeen(c).filter { it != n })
         p(c).edit().putString("waSeen", l.take(40).joinToString("\n")).apply()
     }
-    fun domains(c: Context): Set<String> = (p(c).getString("domains", "") ?: "").split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
+    @Volatile private var domRaw: String? = null
+    @Volatile private var domSet: Set<String> = emptySet()
+    /** Résultat mis en cache : cette fonction est appelée à chaque requête DNS. */
+    fun domains(c: Context): Set<String> {
+        val raw = p(c).getString("domains", "") ?: ""
+        if (raw == domRaw) return domSet
+        val set = raw.split(Regex("[\\s,]+")).map { it.trim().lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet()
+        domSet = set; domRaw = raw; return set
+    }
     fun setDomains(c: Context, t: String) { p(c).edit().putString("domains", t).apply() }
     // v2 : deux clés séparées — celle du jour (calculée par le site Masari) et celle du partenaire (Google Authenticator)
     fun selfSecret(c: Context): String = p(c).getString("selfSecret", null) ?: (if (mode(c) == "self") secret(c) else "")
@@ -82,4 +90,24 @@ object Store {
         e.apply()
     }
     fun clearFails(c: Context) { p(c).edit().putInt("fails", 0).putLong("lockedUntil", 0L).apply() }
+
+    /**
+     * Garde-fou contre le changement de l'heure du téléphone (qui permettrait de sauter l'attente de 24 h
+     * ou de remettre à zéro les budgets de temps). On compare l'horloge murale à l'horloge monotone (elapsedRealtime),
+     * que l'utilisateur ne peut pas modifier. Un écart de plus de 10 min = horloge touchée :
+     * budgets du jour épuisés, attente de 24 h relancée, partenaire prévenu. Ne s'assouplit jamais.
+     */
+    fun clockCheck(c: Context) {
+        val wall = System.currentTimeMillis(); val el = android.os.SystemClock.elapsedRealtime()
+        val aw = p(c).getLong("cwWall", 0L); val ae = p(c).getLong("cwEl", 0L)
+        if (aw == 0L || el < ae) { p(c).edit().putLong("cwWall", wall).putLong("cwEl", el).apply(); return }   // premier passage ou redémarrage
+        val drift = (wall - aw) - (el - ae)
+        if (Math.abs(drift) > 10 * 60_000L) {
+            Events.add(c, "clock")
+            Policy.exhaustBudgets(c)
+            if (disableReq(c) != 0L) setDisableReq(c, wall)
+            Partner.send(c, "تغيير ساعة الهاتف", "غُيّرت ساعة الهاتف (حوالي ${Math.abs(drift) / 60000} دقيقة). استُنفدت ميزانيات اليوم وأُعيد الانتظار.", "clock", 4, 30)
+            p(c).edit().putLong("cwWall", wall).putLong("cwEl", el).apply()
+        } else if (el - ae > 60_000L) p(c).edit().putLong("cwWall", wall).putLong("cwEl", el).apply()
+    }
 }
