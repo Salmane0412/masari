@@ -20,7 +20,9 @@ data class Cfg(
     val waFilter: Boolean = false,               // filtrer les notifications WhatsApp
     val waAllow: Set<String> = emptySet(),       // noms dont les notifications passent
     val webBlock: Boolean = false,
-    val domains: Set<String> = emptySet()
+    val domains: Set<String> = emptySet(),
+    val nightFrom: Int = -1,                     // mode nuit : début (minutes depuis minuit), -1 = désactivé
+    val nightTo: Int = -1                        // mode nuit : fin
 )
 
 object Policy {
@@ -32,13 +34,14 @@ object Policy {
         if (bo != null) for (k in bo.keys()) { val v = bo.optInt(k, -1); if (v >= 0) b[k] = v }
         return Cfg(set(o.optJSONArray("banned")), set(o.optJSONArray("bannedNames")), set(o.optJSONArray("until")), set(o.optJSONArray("allowed")),
             o.optBoolean("blockAll"), b, o.optBoolean("waFilter"), set(o.optJSONArray("waAllow")), o.optBoolean("webBlock"),
-            set(o.optJSONArray("domains")).map { it.lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet())
+            set(o.optJSONArray("domains")).map { it.lowercase().removePrefix("www.") }.filter { it.contains('.') }.toSet(),
+            o.optInt("nightFrom", -1), o.optInt("nightTo", -1))
     }
     fun toJson(c: Cfg): JSONObject = JSONObject()
         .put("banned", JSONArray(c.banned.toList())).put("bannedNames", JSONArray(c.bannedNames.toList()))
         .put("until", JSONArray(c.until.toList())).put("allowed", JSONArray(c.allowed.toList())).put("blockAll", c.blockAll)
         .put("budgets", JSONObject(c.budgets as Map<*, *>)).put("waFilter", c.waFilter).put("waAllow", JSONArray(c.waAllow.toList()))
-        .put("webBlock", c.webBlock).put("domains", JSONArray(c.domains.toList()))
+        .put("webBlock", c.webBlock).put("domains", JSONArray(c.domains.toList())).put("nightFrom", c.nightFrom).put("nightTo", c.nightTo)
 
     /** Configuration en vigueur (reprend les anciens réglages de la v1 au premier lancement). */
     fun current(c: Context): Cfg {
@@ -52,6 +55,15 @@ object Policy {
         Store.setWebBlock(c, cfg.webBlock); Store.setDomains(c, cfg.domains.joinToString("\n"))
     }
 
+    /** Durée (min) de la fenêtre de nuit ; 0 si désactivée. */
+    fun nightLen(c: Cfg): Int = if (c.nightFrom < 0 || c.nightTo < 0 || c.nightFrom == c.nightTo) 0 else ((c.nightTo - c.nightFrom) + 1440) % 1440
+    /** Vrai si on est dans la fenêtre de nuit (qui peut passer minuit). */
+    fun nightNow(c: Cfg): Boolean {
+        if (nightLen(c) == 0) return false
+        val t = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+        return ((t - c.nightFrom) + 1440) % 1440 < nightLen(c)
+    }
+
     /** La version la plus stricte des deux : ce qui peut s'appliquer sans délai. */
     fun strengthen(cur: Cfg, nw: Cfg): Cfg {
         val budgets = HashMap<String, Int>()
@@ -61,7 +73,8 @@ object Policy {
         }
         val waAllow = if (!cur.waFilter) nw.waAllow else cur.waAllow intersect nw.waAllow
         return Cfg(cur.banned union nw.banned, cur.bannedNames union nw.bannedNames, cur.until union nw.until, cur.allowed intersect nw.allowed,
-            cur.blockAll || nw.blockAll, budgets, cur.waFilter || nw.waFilter, waAllow, cur.webBlock || nw.webBlock, cur.domains union nw.domains)
+            cur.blockAll || nw.blockAll, budgets, cur.waFilter || nw.waFilter, waAllow, cur.webBlock || nw.webBlock, cur.domains union nw.domains,
+            if (nightLen(nw) > nightLen(cur)) nw.nightFrom else cur.nightFrom, if (nightLen(nw) > nightLen(cur)) nw.nightTo else cur.nightTo)
     }
 
     /** Retourne "applied", "pending" ou "bad-code". */

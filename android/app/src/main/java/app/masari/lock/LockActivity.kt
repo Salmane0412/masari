@@ -73,6 +73,13 @@ class LockActivity : Activity() {
             root.addView(button("رجوع للشاشة الرئيسية") { goHome() })
             setContentView(root); return
         }
+        if (reason == "night") {
+            root.addView(label("🌙 وضع الليل", 26f))
+            root.addView(label("هذا وقت الراحة. الهاتف يستريح، وأنت كذلك. المكالمات والرسائل والخرائط والدفع تعمل كالمعتاد. نم مبكرًا لتستيقظ للفجر.", 17f))
+            root.addView(button("افتح مساري") { startActivity(Intent(this, MainActivity::class.java)); finish() })
+            root.addView(button("رجوع للشاشة الرئيسية") { goHome() })
+            setContentView(root); return
+        }
         if (reason == "budget") {
             root.addView(label("⏱ انتهى وقتك اليوم لهذا التطبيق", 24f))
             root.addView(label("استعمله على الحاسوب في وقته، أو اطلب من شريكك رمزًا ليمنحك 15 دقيقة.", 17f))

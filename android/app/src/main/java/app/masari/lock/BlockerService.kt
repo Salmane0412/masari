@@ -86,7 +86,7 @@ class BlockerService : AccessibilityService() {
             // تطبيق ظلّ في المقدمة دون حدث تبديل (استئناف من التطبيقات الأخيرة مثلًا): نعيد الفحص عند تغيّر المحتوى، فلا يفلت المتصفح بضع دقائق
             if (pkg != packageName && pkg !in alwaysAllowed && pkg !in launchers && pkg !in cfg.allowed) {
                 val spent = cfg.budgets[pkg]?.let { it * 60L - Policy.usedSec(this, pkg) <= 0 } == true
-                val why = if (pkg in cfg.banned) "banned" else if (spent) "budget" else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) "until" else null
+                val why = if (pkg in cfg.banned) "banned" else if (spent) "budget" else if (Policy.nightNow(cfg)) "night" else if (!Store.unlocked(this) && (cfg.blockAll || pkg in cfg.until)) "until" else null
                 // لا نحجب إلا إن كانت نافذة هذا التطبيق هي النشطة فعلًا (لا فقاعة أو نافذة خلفية)
                 if (why != null && rootInActiveWindow?.packageName?.toString() == pkg) block(why, pkg)
             }
@@ -107,6 +107,7 @@ class BlockerService : AccessibilityService() {
             budgetCheck = r; main.postDelayed(r, left * 1000 + 500)
             return
         }
+        if (Policy.nightNow(cfg)) { block("night", pkg); return }   // mode nuit : tout est fermé, même après les tâches
         if (Store.unlocked(this)) return
         if (cfg.blockAll || pkg in cfg.until) block("until", pkg)
     }

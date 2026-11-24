@@ -67,6 +67,10 @@
       <button class="btn sm" data-ph="open" data-k="dnd">أو استعمل «عدم الإزعاج» في أندرويد مع جهات الاتصال المهمة</button></div>
     <div class="card rule"><b>🌐 حجب المواقع</b><label class="check"><input type="checkbox" id="ph-web" ${d.webBlock ? 'checked' : ''}> احجب هذه المواقع حتى إنهاء مهام اليوم (والإباحية دائمًا)</label>
       <textarea id="ph-domains" dir="ltr" rows="3" style="min-height:80px">${esc((d.domains || []).join('\n'))}</textarea></div>
+    <div class="card rule"><b>🌙 وضع الليل</b><span class="sub">في هذه الفترة يُغلق كل شيء إلا المكالمات والرسائل والخرائط والدفع والتطبيقات المسموحة دائمًا، حتى بعد إنهاء المهام. التقصير يحتاج انتظار ٢٤ ساعة، والتطويل فوري.</span>
+      <label class="field"><span>من</span><input type="time" id="ph-n-from" value="${nt(d.nightFrom)}"></label>
+      <label class="field"><span>إلى</span><input type="time" id="ph-n-to" value="${nt(d.nightTo)}"></label>
+      <span class="sub">اتركهما فارغين لإيقافه. قبل بدايته بنصف ساعة يصلك تذكير لتستبدل الشاشة بقراءة أو مراجعة.</span></div>
     <div class="card rule"><b>⏰ منبّه الاستيقاظ</b><span class="sub">يرنّ حتى تكتب العبارة بيدك (اللصق ممنوع)، ثم يقرأ لك مهام اليوم.</span>
       <label class="check"><input type="checkbox" id="ph-wk-on" ${wk().on ? 'checked' : ''}> مفعّل</label>
       <label class="field"><span>الوقت</span><input type="time" id="ph-wk-t" value="${esc(wk().t)}"></label>
@@ -103,6 +107,7 @@
     draft.bannedNames = v('ph-bnames').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.blockAll = !!($('#ph-all') || {}).checked; draft.waFilter = !!($('#ph-wa') || {}).checked; draft.webBlock = !!($('#ph-web') || {}).checked;
     try { localStorage.setItem('masari.wake', JSON.stringify({ on: !!($('#ph-wk-on') || {}).checked, t: v('ph-wk-t') || '05:00', phrases: v('ph-wk-p').split(/\n/).map(x => x.trim()).filter(Boolean) })); pushWake(); } catch (e) { }
+    draft.nightFrom = tm(v('ph-n-from')); draft.nightTo = tm(v('ph-n-to')); if (draft.nightFrom < 0 || draft.nightTo < 0) { draft.nightFrom = -1; draft.nightTo = -1; }
     draft.waAllow = v('ph-waallow').split(/[,،]/).map(s => s.trim()).filter(Boolean);
     draft.domains = v('ph-domains').split(/\s+/).map(s => s.trim().toLowerCase()).filter(s => s.includes('.'));
     document.querySelectorAll('[data-phb]').forEach(i => { draft.budgets[i.dataset.phb] = Math.max(0, +i.value || 0); });
@@ -144,6 +149,8 @@
   }
   window.addEventListener('message', e => { if (e.source === window && e.data && e.data.masariGuard) extSync(); });
   window.addEventListener('hashchange', () => setTimeout(extSync, 400));
+  const nt = m => (m == null || m < 0) ? '' : String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const tm = x => { if (!x) return -1; const [h, m] = x.split(':').map(Number); return h * 60 + m; };
   function wk() { try { return Object.assign({ on: false, t: '05:00', phrases: [] }, JSON.parse(localStorage.getItem('masari.wake') || '{}')); } catch (e) { return { on: false, t: '05:00', phrases: [] }; } }
   function pushWake() {
     if (!N() || !N().setWake) return;
@@ -174,6 +181,7 @@
         const txt = list.slice(0, 6).map(x => x.t).join(' · ') || (dow === 5 ? 'لا مهام مجدولة للأسبوع' : 'لا مهام مجدولة غدًا');
         R.push({ at: t.getTime(), title: dow === 5 ? 'مساري: الأسبوع القادم' : 'مساري: غدًا', text: txt });
       }
+      try { const c = J(N().config(), {}); if (c.nightFrom >= 0 && c.nightTo >= 0 && c.nightFrom !== c.nightTo) for (let d = 0; d < 3; d++) { const t = parseD(addDays(todayStr(), d)); t.setHours(0, c.nightFrom - 30, 0, 0); if (t > now) R.push({ at: t.getTime(), title: 'مساري: بعد نصف ساعة يبدأ وضع الليل', text: 'استبدل الشاشة بقراءة أو مراجعة أو الدفتر الورقي' }); } } catch (e) { }
       pushWake();
       R.sort((a, b) => a.at - b.at); N().setReminders(JSON.stringify(R.slice(0, 50)));
     } catch (e) { }
