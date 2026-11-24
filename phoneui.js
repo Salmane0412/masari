@@ -164,6 +164,16 @@
         (S.settings.times || []).forEach((tm, k) => { const t = parseD(day); const [h, m] = tm.split(':').map(Number); t.setHours(h, m, 0, 0); if (t > now) R.push({ at: t.getTime(), title: k === 0 ? 'مساري: وقت الحفظ' : 'مساري: وقت المراجعة', text: k === 0 ? 'افتح ورد اليوم الجديد' : 'راجع ما حفظت قبل أن يتفلّت' }); });
       }
       ((S.tasks && S.tasks.items) || []).filter(x => !x.done && x.due && x.time).forEach(x => { const t = parseD(x.due); const [h, m] = x.time.split(':').map(Number); t.setHours(h, m, 0, 0); if (t > now && t - now < 3 * 864e5) R.push({ at: t.getTime() - 15 * 60000, title: 'مهمة بعد 15 دقيقة', text: x.t }); });
+      // تذكير المساء (٢١:٣٠): مهام الغد؛ وفي مساء الجمعة نظرة على الأسبوع القادم
+      for (let d = 0; d < 3; d++) {
+        const day = addDays(todayStr(), d), nx = addDays(day, 1), t = parseD(day); t.setHours(21, 30, 0, 0);
+        if (t <= now) continue;
+        const open = ((S.tasks && S.tasks.items) || []).filter(x => !x.done);
+        const dow = t.getDay();   // 5 = الجمعة
+        const list = dow === 5 ? open.filter(x => x.due > day && x.due <= addDays(day, 8)) : open.filter(x => x.due === nx);
+        const txt = list.slice(0, 6).map(x => x.t).join(' · ') || (dow === 5 ? 'لا مهام مجدولة للأسبوع' : 'لا مهام مجدولة غدًا');
+        R.push({ at: t.getTime(), title: dow === 5 ? 'مساري: الأسبوع القادم' : 'مساري: غدًا', text: txt });
+      }
       pushWake();
       R.sort((a, b) => a.at - b.at); N().setReminders(JSON.stringify(R.slice(0, 50)));
     } catch (e) { }
